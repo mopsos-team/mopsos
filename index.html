@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Morphology · MOPSOS</title>
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-shell">
+      <div class="header-inner">
+        <a class="site-brand" href="index.html">
+          <span class="brand-mark" aria-hidden="true">Γ</span>
+          <span class="brand-copy">
+            <strong>MOPSOS</strong>
+            <small>Ancient Greek Database of Morphology, Phonology, Syntax, and Scansion</small>
+          </span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="index.html" class="nav-link is-active">Morphology</a>
+          <a href="phonology.html" class="nav-link">Phonology</a>
+          <a href="syntax.html" class="nav-link">Syntax</a>
+          <a href="prosody.html" class="nav-link">Scansion</a>
+          <a href="clustering.html" class="nav-link">Stylometry</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container site-main">
+    <section class="hero card">
+      <p class="kicker">MOPSOS</p>
+      <h1>Morphology (standalone)</h1>
+      <p class="lead">No Jekyll dependency for this page. Direct static HTML + JS.</p>
+    </section>
+
+    <div class="stats-grid">
+      <div class="stat-card"><span class="stat-label">Rows loaded</span><strong id="statRows">0</strong></div>
+      <div class="stat-card"><span class="stat-label">After morphology filter</span><strong id="statFiltered">0</strong></div>
+    </div>
+
+    <div class="card">
+      <h2>1. Data source</h2>
+      <div class="grid-2">
+        <div class="field">
+          <label for="bundledDatasetChoice"><strong>Bundled dataset</strong></label>
+          <select id="bundledDatasetChoice">
+            <option value="assets/data/default.csv">default.csv (Epic corpus)</option>
+            <option value="assets/data/default2.csv">default2.csv (Entire Greek corpus)</option>
+          </select>
+          <div class="btn-row" style="margin-top:.45rem;"><button id="btnLoadBundled" class="btn btn-primary">Load selected bundled CSV</button></div>
+          <div id="loadStatus" class="status muted">No file loaded yet.</div>
+        </div>
+
+        <div class="field">
+          <label for="csvFile"><strong>Upload CSV</strong></label>
+          <input id="csvFile" type="file" accept=".csv,text/csv" />
+          <div class="help" style="margin-top:.5rem;">Expected columns include <code>pos</code>, <code>person</code>, <code>number</code>, <code>tense</code>, <code>mood</code>, <code>voice</code>, <code>gender</code>, <code>case</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. Morphology filter</h2>
+      <div class="grid-3">
+        <div class="field"><label for="filterPos"><strong>pos</strong></label><select id="filterPos"><option value="">(any)</option></select></div>
+        <div class="field"><label for="filterNumber"><strong>number</strong></label><select id="filterNumber"><option value="">(any)</option></select></div>
+        <div class="field"><label for="filterCase"><strong>case</strong></label><select id="filterCase"><option value="">(any)</option></select></div>
+      </div>
+      <div class="btn-row">
+        <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply morphology filter</button>
+        <button id="btnResetFilter" class="btn">Reset</button>
+      </div>
+      <pre id="statusBox" class="status">Load a dataset to begin.</pre>
+    </div>
+
+    <div class="card">
+      <h2>3. Preview</h2>
+      <div id="tableWrap" class="table-wrap"></div>
+    </div>
+
+    <div class="card">
+      <h2>SQLite integration plan (scaffold)</h2>
+      <p class="help">This page includes a provider layer in JS (<code>CsvProvider</code>, <code>SqliteProvider</code>) so switching to SQLite later is a drop-in path. <code>SqliteProvider</code> is currently a deliberate stub until DB plumbing is introduced.</p>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="assets/js/papa-fallback.js"></script>
+  <script src="assets/js/morphology-standalone.js"></script>
+</body>
+</html>

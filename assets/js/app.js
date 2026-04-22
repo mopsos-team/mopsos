@@ -517,7 +517,7 @@
     }
     el.btnViz.disabled = !(rows.length && el.vizPrimary.value);
     el.btnRunAnalysis.disabled = !rows.length;
-    populateClusterControls();
+    if (typeof populateClusterControls === "function") populateClusterControls();
   }
 
   function renderVisualization() {
@@ -710,15 +710,76 @@
     populateVizColumns();
   }
 
+  function parseCsvFallback(text) {
+    const src = String(text ?? "");
+    const lines = src.split(/\r?\n/).filter(line => line.trim().length);
+    if (!lines.length) return { data: [], errors: [], meta: { fields: [] } };
+
+    const delimiters = [",", "\t", ";"];
+    const scoreDelimiter = (line, d) => (line.match(new RegExp(`\\${d}`, "g")) || []).length;
+    const delimiter = delimiters
+      .map(d => ({ d, score: scoreDelimiter(lines[0], d) }))
+      .sort((a, b) => b.score - a.score)[0].d;
+
+    const splitRow = (line) => {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        const next = line[i + 1];
+        if (ch === '"') {
+          if (inQuotes && next === '"') {
+            cur += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+          continue;
+        }
+        if (!inQuotes && ch === delimiter) {
+          out.push(cur);
+          cur = "";
+          continue;
+        }
+        cur += ch;
+      }
+      out.push(cur);
+      return out;
+    };
+
+    const fields = splitRow(lines[0]).map(v => String(v ?? "").trim());
+    const data = lines.slice(1).map((line) => {
+      const cells = splitRow(line);
+      const row = {};
+      for (let i = 0; i < fields.length; i++) row[fields[i]] = String(cells[i] ?? "");
+      return row;
+    });
+    return { data, errors: [], meta: { fields } };
+  }
+
   function parseCsvText(text) {
-    return new Promise((resolve, reject) => {
-      Papa.parse(text, {
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: false,
-        complete: resolve,
-        error: reject
-      });
+    return new Promise((resolve) => {
+      const done = (result) => {
+        if (result && Array.isArray(result.data)) {
+          resolve(result);
+        } else {
+          resolve(parseCsvFallback(text));
+        }
+      };
+      try {
+        if (window.Papa?.parse) {
+          window.Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: false,
+            complete: done,
+            error: () => done(parseCsvFallback(text))
+          });
+          return;
+        }
+      } catch (_) {}
+      resolve(parseCsvFallback(text));
     });
   }
 
@@ -772,7 +833,9 @@ Columns present: ${cols.join(", ")}`);
       showConstraintStatus();
     }
 
-    el.loadStatus.textContent = res.errors?.length ? `Loaded with ${res.errors.length} parse warning(s).` : `Loaded ${fileName}${fromSaved ? " (saved dataset)" : ""}`;
+    el.loadStatus.textContent = res.errors?.length
+      ? `Loaded ${fileName} (${rows.length} rows) with ${res.errors.length} parse warning(s).`
+      : `Loaded ${fileName} (${rows.length} rows).`;
     return true;
   }
 
@@ -782,11 +845,12 @@ Columns present: ${cols.join(", ")}`);
     try {
       const res = await parseCsvText(text);
       el.loadStatus.classList.remove("loading-note");
-      hydrateLoadedDataset(res, fileName, fromSaved);
+      return hydrateLoadedDataset(res, fileName, fromSaved);
     } catch (err) {
       el.loadStatus.classList.remove("loading-note");
       el.loadStatus.textContent = "Failed to parse CSV.";
       status(`CSV parse error: ${String(err)}`);
+      return false;
     }
   }
 
@@ -820,26 +884,23 @@ Columns present: ${cols.join(", ")}`);
 
   async function loadBundledDefaultCsv() {
     const selected = el.bundledDatasetChoice?.value || "default.csv";
-    const selectedUrl = BUNDLED_DATASET_URLS[selected];
-    if (!selectedUrl) {
+    const path = BUNDLED_DATASET_URLS[selected];
+    if (!path) {
       status(`Bundled dataset '${selected}' is not configured. Update BUNDLED_DATASET_URLS in assets/js/app.js.`);
       return;
     }
 
-    setLoadingStatus(el.loadStatus, `Loading bundled CSV from ${selectedUrl} ...`);
-    const fallbacks = [...new Set([selectedUrl, ...Object.values(BUNDLED_DATASET_URLS)])];
-    for (const candidate of fallbacks) {
-      try {
-        const loaded = await fetchBundledCsv(candidate);
-        parseAndLoadCsv(loaded.text, selected, true);
-        status(`Loaded bundled CSV: ${loaded.url}`);
-        return;
-      } catch (_) {}
+    setLoadingStatus(el.loadStatus, `Loading bundled CSV (${path})...`);
+    try {
+      const loaded = await fetchBundledCsv(path);
+      const ok = await parseAndLoadCsv(loaded.text, loaded.url, true);
+      if (ok) status(`Loaded bundled CSV: ${loaded.url}`);
+      else status(`Could not load bundled CSV from ${loaded.url}.`);
+    } catch (err) {
+      el.loadStatus.classList.remove("loading-note");
+      el.loadStatus.textContent = `Could not load bundled dataset (${String(err)})`;
+      status(`Could not load bundled CSV '${path}'.`);
     }
-    el.loadStatus.classList.remove("loading-note");
-    el.loadStatus.textContent = "Bundled CSV not found.";
-    status(`Could not load bundled CSV at '${selectedUrl}'.
-Add the file there or update BUNDLED_DATASET_URLS in assets/js/app.js.`);
   }
 
 
@@ -926,11 +987,15 @@ Add the file there or update BUNDLED_DATASET_URLS in assets/js/app.js.`);
   el.analysisColB.addEventListener("change", runAnalysis);
   el.btnRunAnalysis.addEventListener("click", runAnalysis);
   for (const tab of el.panelTabs) tab.addEventListener("click", () => setActivePanel(tab.dataset.panelTab));
-  el.clusterDataset.addEventListener("change", populateClusterControls);
-  el.clusterFeatureMode.addEventListener("change", populateClusterControls);
-  el.clusterBookCol.addEventListener("change", populateClusterControls);
-  el.clusterTokenCol.addEventListener("change", populateClusterControls);
-  el.btnRunClustering.addEventListener("click", runClustering);
+  if (typeof populateClusterControls === "function") {
+    el.clusterDataset?.addEventListener("change", populateClusterControls);
+    el.clusterFeatureMode?.addEventListener("change", populateClusterControls);
+    el.clusterBookCol?.addEventListener("change", populateClusterControls);
+    el.clusterTokenCol?.addEventListener("change", populateClusterControls);
+  }
+  if (typeof runClustering === "function") {
+    el.btnRunClustering?.addEventListener("click", runClustering);
+  }
 
   refreshSavedDatasetSelects();
   updateButtonStates();
