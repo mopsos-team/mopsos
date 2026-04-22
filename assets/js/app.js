@@ -926,11 +926,11 @@ Add the file there or update BUNDLED_DATASET_URLS in assets/js/app.js.`);
   el.analysisColB.addEventListener("change", runAnalysis);
   el.btnRunAnalysis.addEventListener("click", runAnalysis);
   for (const tab of el.panelTabs) tab.addEventListener("click", () => setActivePanel(tab.dataset.panelTab));
-  el.clusterDataset.addEventListener("change", populateClusterControls);
-  el.clusterFeatureMode.addEventListener("change", populateClusterControls);
-  el.clusterBookCol.addEventListener("change", populateClusterControls);
-  el.clusterTokenCol.addEventListener("change", populateClusterControls);
-  el.btnRunClustering.addEventListener("click", runClustering);
+  el.clusterDataset?.addEventListener("change", populateClusterControls);
+  el.clusterFeatureMode?.addEventListener("change", populateClusterControls);
+  el.clusterBookCol?.addEventListener("change", populateClusterControls);
+  el.clusterTokenCol?.addEventListener("change", populateClusterControls);
+  el.btnRunClustering?.addEventListener("click", runClustering);
 
   refreshSavedDatasetSelects();
   updateButtonStates();
