@@ -710,15 +710,76 @@
     populateVizColumns();
   }
 
+  function parseCsvFallback(text) {
+    const src = String(text ?? "");
+    const lines = src.split(/\r?\n/).filter(line => line.trim().length);
+    if (!lines.length) return { data: [], errors: [], meta: { fields: [] } };
+
+    const delimiters = [",", "\t", ";"];
+    const scoreDelimiter = (line, d) => (line.match(new RegExp(`\\${d}`, "g")) || []).length;
+    const delimiter = delimiters
+      .map(d => ({ d, score: scoreDelimiter(lines[0], d) }))
+      .sort((a, b) => b.score - a.score)[0].d;
+
+    const splitRow = (line) => {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        const next = line[i + 1];
+        if (ch === '"') {
+          if (inQuotes && next === '"') {
+            cur += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+          continue;
+        }
+        if (!inQuotes && ch === delimiter) {
+          out.push(cur);
+          cur = "";
+          continue;
+        }
+        cur += ch;
+      }
+      out.push(cur);
+      return out;
+    };
+
+    const fields = splitRow(lines[0]).map(v => String(v ?? "").trim());
+    const data = lines.slice(1).map((line) => {
+      const cells = splitRow(line);
+      const row = {};
+      for (let i = 0; i < fields.length; i++) row[fields[i]] = String(cells[i] ?? "");
+      return row;
+    });
+    return { data, errors: [], meta: { fields } };
+  }
+
   function parseCsvText(text) {
-    return new Promise((resolve, reject) => {
-      Papa.parse(text, {
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: false,
-        complete: resolve,
-        error: reject
-      });
+    return new Promise((resolve) => {
+      const done = (result) => {
+        if (result && Array.isArray(result.data)) {
+          resolve(result);
+        } else {
+          resolve(parseCsvFallback(text));
+        }
+      };
+      try {
+        if (window.Papa?.parse) {
+          window.Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: false,
+            complete: done,
+            error: () => done(parseCsvFallback(text))
+          });
+          return;
+        }
+      } catch (_) {}
+      resolve(parseCsvFallback(text));
     });
   }
 
