@@ -41,6 +41,7 @@
   {% if page.section == 'morphology' or page.section == 'clustering' or page.section == 'syntax' or page.section == 'prosody' or page.section == 'phonology' %}
   <!-- Lightweight CSV parser -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="{{ '/assets/js/papa-fallback.js' | relative_url }}"></script>
   <script src="{{ '/assets/js/analytics-playbook.js' | relative_url }}"></script>
   {% if page.section == "morphology" %}<script src="{{ '/assets/js/app.js' | relative_url }}"></script>{% endif %}
   {% if page.section == "clustering" %}<script src="{{ '/assets/js/clustering.js' | relative_url }}"></script>{% endif %}
