@@ -299,28 +299,33 @@
 
   function parseCsvText(text, label = 'uploaded.csv') {
     setLoadingStatus(el.syntaxLoadStatus, `Loading ${label} ...`);
-    Papa.parse(text, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (res) => {
-        const rows = res.data || [];
-        const fields = res.meta?.fields || [];
-        const lfsPointer = fields.length === 1 && fields[0].startsWith('version https://git-lfs.github.com/spec/v1');
-        el.syntaxLoadStatus.classList.remove('loading-note');
-        if (lfsPointer) {
-          el.syntaxLoadStatus.textContent = `Loaded ${label}, but it is a Git LFS pointer file, not tabular CSV data.`;
-          state.csvRows = [];
-          return;
+    return new Promise((resolve) => {
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (res) => {
+          const rows = res.data || [];
+          const fields = res.meta?.fields || [];
+          const lfsPointer = fields.length === 1 && fields[0].startsWith('version https://git-lfs.github.com/spec/v1');
+          el.syntaxLoadStatus.classList.remove('loading-note');
+          if (lfsPointer) {
+            el.syntaxLoadStatus.textContent = `Loaded ${label}, but it is a Git LFS pointer file, not tabular CSV data.`;
+            state.csvRows = [];
+            resolve({ ok: false, reason: 'lfs-pointer' });
+            return;
+          }
+          state.csvRows = rows;
+          state.activeSource = 'csv';
+          el.syntaxLoadStatus.textContent = `Loaded ${label} (${rows.length} rows).`;
+          run();
+          resolve({ ok: true, rows: rows.length });
+        },
+        error: (err) => {
+          el.syntaxLoadStatus.classList.remove('loading-note');
+          el.syntaxLoadStatus.textContent = `Failed to parse CSV (${String(err)})`;
+          resolve({ ok: false, reason: 'parse-error', error: String(err) });
         }
-        state.csvRows = rows;
-        state.activeSource = 'csv';
-        el.syntaxLoadStatus.textContent = `Loaded ${label} (${rows.length} rows).`;
-        run();
-      },
-      error: (err) => {
-        el.syntaxLoadStatus.classList.remove('loading-note');
-        el.syntaxLoadStatus.textContent = `Failed to parse CSV (${String(err)})`;
-      }
+      });
     });
   }
 
@@ -345,8 +350,8 @@
     for (const path of paths) {
       try {
         const loaded = await fetchBundledCsv(path);
-        parseCsvText(loaded.text, loaded.url);
-        return;
+        const parsed = await parseCsvText(loaded.text, loaded.url);
+        if (parsed.ok) return;
       } catch (_) {}
     }
     el.syntaxLoadStatus.classList.remove('loading-note');
