@@ -95,19 +95,19 @@ section: prosody
     </div>
   </div>
   <div class="grid-3">
-    <div class="field"><label for="scansionPosFilter"><strong>POS</strong></label><input id="scansionPosFilter" type="text" placeholder="e.g. v" /></div>
-    <div class="field"><label for="scansionPersonFilter"><strong>Person</strong></label><input id="scansionPersonFilter" type="text" placeholder="e.g. 3" /></div>
-    <div class="field"><label for="scansionNumberFilter"><strong>Number</strong></label><input id="scansionNumberFilter" type="text" placeholder="e.g. sg" /></div>
+    <div class="field"><label for="scansionPosFilter"><strong>POS</strong></label><select id="scansionPosFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="scansionPersonFilter"><strong>Person</strong></label><select id="scansionPersonFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="scansionNumberFilter"><strong>Number</strong></label><select id="scansionNumberFilter"><option value="">(any)</option></select></div>
   </div>
   <div class="grid-3">
-    <div class="field"><label for="scansionTenseFilter"><strong>Tense</strong></label><input id="scansionTenseFilter" type="text" placeholder="e.g. aor" /></div>
-    <div class="field"><label for="scansionMoodFilter"><strong>Mood</strong></label><input id="scansionMoodFilter" type="text" placeholder="e.g. ind" /></div>
-    <div class="field"><label for="scansionVoiceFilter"><strong>Voice</strong></label><input id="scansionVoiceFilter" type="text" placeholder="e.g. act" /></div>
+    <div class="field"><label for="scansionTenseFilter"><strong>Tense</strong></label><select id="scansionTenseFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="scansionMoodFilter"><strong>Mood</strong></label><select id="scansionMoodFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="scansionVoiceFilter"><strong>Voice</strong></label><select id="scansionVoiceFilter"><option value="">(any)</option></select></div>
   </div>
   <div class="grid-3">
-    <div class="field"><label for="scansionGenderFilter"><strong>Gender</strong></label><input id="scansionGenderFilter" type="text" placeholder="e.g. masc" /></div>
-    <div class="field"><label for="scansionCaseFilter"><strong>Case</strong></label><input id="scansionCaseFilter" type="text" placeholder="e.g. nom" /></div>
-    <div class="field"><label for="scansionDegreeFilter"><strong>Degree</strong></label><input id="scansionDegreeFilter" type="text" placeholder="e.g. comp" /></div>
+    <div class="field"><label for="scansionGenderFilter"><strong>Gender</strong></label><select id="scansionGenderFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="scansionCaseFilter"><strong>Case</strong></label><select id="scansionCaseFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="scansionDegreeFilter"><strong>Degree</strong></label><select id="scansionDegreeFilter"><option value="">(any)</option></select></div>
   </div>
   <div id="scansionSelectionSummary" class="analysis-wrap"></div>
   <div class="viz-wrap"><h3>Filtered selection table</h3><div id="scansionSelectionTable"></div></div>

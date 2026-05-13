@@ -14,10 +14,6 @@ section: clustering
   <h2>1. Load dataset</h2>
   <div class="grid-3">
     <div class="field">
-      <label for="clusterCsvFile"><strong>CSV file</strong></label>
-      <input id="clusterCsvFile" type="file" accept=".csv,text/csv" />
-    </div>
-    <div class="field">
       <label for="clusterBundledDataset"><strong>Bundled dataset</strong></label>
       <select id="clusterBundledDataset">
         <option value="default.csv">default.csv (Epic corpus)</option>
@@ -37,13 +33,13 @@ section: clustering
 <div class="card">
   <h2>2. Configure features</h2>
   <div class="grid-3">
-    <div class="field"><label for="clusterBookCol"><strong>Book column</strong></label><select id="clusterBookCol" disabled></select></div>
-    <div class="field"><label for="clusterTokenCol"><strong>Token column</strong></label><select id="clusterTokenCol" disabled></select></div>
+    <div class="field"><label for="clusterBookCol"><strong>Book column</strong></label><select id="clusterBookCol" disabled><option value="work" selected>work</option></select></div>
+    <div class="field"><label for="clusterTokenCol"><strong>Token column</strong></label><select id="clusterTokenCol" disabled><option value="form">form</option><option value="lemma" selected>lemma</option></select></div>
     <div class="field"><label for="clusterFeatureMode"><strong>Feature mode</strong></label><select id="clusterFeatureMode"><option value="token">Direct tokens</option><option value="collocation">Collocations (n-grams)</option></select></div>
   </div>
   <div class="grid-3">
     <div class="field"><label for="clusterNgram"><strong>Collocation size n</strong></label><input id="clusterNgram" type="text" value="2" /></div>
-    <div class="field"><label for="clusterVectorModel"><strong>Vector model</strong></label><select id="clusterVectorModel"><option value="binary">Binary presence</option><option value="count">Raw counts</option><option value="tfidf" selected>TF-IDF</option></select></div>
+    <div class="field"><label for="clusterVectorModel"><strong>Vector model</strong></label><select id="clusterVectorModel"><option value="binary">Binary presence</option><option value="count">Raw counts</option><option value="tfidf" selected>TF-IDF</option><option value="bm25">BM25 (Okapi)</option><option value="bm25plus">BM25+</option></select></div>
     <div class="field"><label for="clusterDistance"><strong>Distance metric</strong></label><select id="clusterDistance"><option value="cosine" selected>Cosine</option><option value="jaccard">Jaccard</option><option value="euclidean">Euclidean</option><option value="manhattan">Manhattan</option></select></div>
   </div>
   <div class="grid-3">
@@ -52,29 +48,14 @@ section: clustering
     <div class="field"><label for="clusterMaxDocFreq"><strong>Max document frequency ratio</strong></label><input id="clusterMaxDocFreq" type="text" value="1.00" /></div>
   </div>
   <div class="grid-3">
-    <div class="field"><label for="clusterPosCol"><strong>POS column</strong></label><select id="clusterPosCol" disabled></select></div>
-    <div class="field"><label for="clusterPersonCol"><strong>Person column</strong></label><select id="clusterPersonCol" disabled></select></div>
-    <div class="field"><label for="clusterNumberCol"><strong>Number column</strong></label><select id="clusterNumberCol" disabled></select></div>
+    <div class="field"><label for="clusterPosFilter"><strong>POS filter</strong></label><select id="clusterPosFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="clusterPersonFilter"><strong>Person filter</strong></label><select id="clusterPersonFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="clusterNumberFilter"><strong>Number filter</strong></label><select id="clusterNumberFilter"><option value="">(any)</option></select></div>
   </div>
   <div class="grid-3">
-    <div class="field"><label for="clusterTenseCol"><strong>Tense column</strong></label><select id="clusterTenseCol" disabled></select></div>
-    <div class="field"><label for="clusterMoodCol"><strong>Mood column</strong></label><select id="clusterMoodCol" disabled></select></div>
-    <div class="field"><label for="clusterVoiceCol"><strong>Voice column</strong></label><select id="clusterVoiceCol" disabled></select></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterGenderCol"><strong>Gender column</strong></label><select id="clusterGenderCol" disabled></select></div>
-    <div class="field"><label for="clusterCaseCol"><strong>Case column</strong></label><select id="clusterCaseCol" disabled></select></div>
-    <div class="field"><label for="clusterDegreeCol"><strong>Degree column</strong></label><select id="clusterDegreeCol" disabled></select></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterPosFilter"><strong>POS filter</strong></label><input id="clusterPosFilter" type="text" placeholder="e.g. v" /></div>
-    <div class="field"><label for="clusterPersonFilter"><strong>Person filter</strong></label><input id="clusterPersonFilter" type="text" placeholder="e.g. 3" /></div>
-    <div class="field"><label for="clusterNumberFilter"><strong>Number filter</strong></label><input id="clusterNumberFilter" type="text" placeholder="e.g. sg" /></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterTenseFilter"><strong>Tense filter</strong></label><input id="clusterTenseFilter" type="text" placeholder="e.g. aor" /></div>
-    <div class="field"><label for="clusterMoodFilter"><strong>Mood filter</strong></label><input id="clusterMoodFilter" type="text" placeholder="e.g. ind" /></div>
-    <div class="field"><label for="clusterVoiceFilter"><strong>Voice filter</strong></label><input id="clusterVoiceFilter" type="text" placeholder="e.g. act" /></div>
+    <div class="field"><label for="clusterTenseFilter"><strong>Tense filter</strong></label><select id="clusterTenseFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="clusterMoodFilter"><strong>Mood filter</strong></label><select id="clusterMoodFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="clusterVoiceFilter"><strong>Voice filter</strong></label><select id="clusterVoiceFilter"><option value="">(any)</option></select></div>
   </div>
   <div class="grid-3">
     <div class="field"><label for="clusterGenderFilter"><strong>Gender filter</strong></label><input id="clusterGenderFilter" type="text" placeholder="e.g. masc" /></div>
@@ -84,7 +65,7 @@ section: clustering
 </div>
 
 <div class="card">
-  <h2>3. Choose clustering strategy (10 options)</h2>
+  <h2>3. Choose clustering strategy</h2>
   <div class="grid-3">
     <div class="field"><label for="clusterMethod"><strong>Clustering method</strong></label><select id="clusterMethod">
       <option value="threshold">1) Threshold graph components</option>

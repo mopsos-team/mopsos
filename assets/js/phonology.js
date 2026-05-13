@@ -394,7 +394,7 @@
     }
   }
 
-  el.phonCsvFile.addEventListener('change',e=>{ const f=e.target.files?.[0]; if(f) f.text().then(t=>parseCsv(t,f.name)); });
+  el.phonCsvFile?.addEventListener('change',e=>{ const f=e.target.files?.[0]; if(f) f.text().then(t=>parseCsv(t,f.name)); });
   el.btnPhonLoadBundled.addEventListener('click', () => loadBundled(false));
   el.btnRunPhon.addEventListener('click', run);
   el.btnPhonRerender?.addEventListener('click', () => renderAdvancedPanels(state.lastRun));

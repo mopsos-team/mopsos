@@ -31,8 +31,7 @@
   <main class="container site-main">
     <section class="hero card">
       <p class="kicker">MOPSOS</p>
-      <h1>Morphology (standalone)</h1>
-      <p class="lead">No Jekyll dependency for this page. Direct static HTML + JS.</p>
+      <h1>Morphology</h1>
     </section>
 
     <div class="stats-grid">
@@ -46,7 +45,7 @@
         <div class="field">
           <label for="bundledDatasetChoice"><strong>Bundled dataset</strong></label>
           <select id="bundledDatasetChoice">
-            <option value="assets/data/default.csv">default.csv (Epic corpus)</option>
+            <option value="assets/data/default.csv">Epic Corpus</option>
             <option value="assets/data/default2.csv">default2.csv (Entire Greek corpus)</option>
           </select>
           <div class="btn-row" style="margin-top:.45rem;"><button id="btnLoadBundled" class="btn btn-primary">Load selected bundled CSV</button></div>
@@ -54,8 +53,6 @@
         </div>
 
         <div class="field">
-          <label for="csvFile"><strong>Upload CSV</strong></label>
-          <input id="csvFile" type="file" accept=".csv,text/csv" />
           <div class="help" style="margin-top:.5rem;">Expected columns include <code>pos</code>, <code>person</code>, <code>number</code>, <code>tense</code>, <code>mood</code>, <code>voice</code>, <code>gender</code>, <code>case</code>.</div>
         </div>
       </div>
@@ -80,10 +77,6 @@
       <div id="tableWrap" class="table-wrap"></div>
     </div>
 
-    <div class="card">
-      <h2>SQLite integration plan (scaffold)</h2>
-      <p class="help">This page includes a provider layer in JS (<code>CsvProvider</code>, <code>SqliteProvider</code>) so switching to SQLite later is a drop-in path. <code>SqliteProvider</code> is currently a deliberate stub until DB plumbing is introduced.</p>
-    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>

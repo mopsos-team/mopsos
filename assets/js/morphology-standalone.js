@@ -17,6 +17,66 @@
 
   const state = { rows: [], filtered: [] };
 
+  const POS_LABELS = {
+    a: 'Adjective',
+    c: 'Conjunction',
+    d: 'Adverb',
+    i: 'Interjection',
+    l: 'Article',
+    m: 'Number',
+    n: 'Noun',
+    p: 'Pronoun',
+    r: 'Preposition',
+    v: 'Verb',
+    x: 'Uncategorized'
+  };
+
+  const NUMBER_LABELS = {
+    p: 'Plural',
+    s: 'Singular',
+    d: 'Dual'
+  };
+
+  const CASE_LABELS = {
+    a: 'Accusative',
+    d: 'Dative',
+    g: 'Genitive',
+    n: 'Nominative',
+    v: 'Vocative'
+  };
+  const HIDDEN_PREVIEW_COLUMNS = new Set(['section_id', 'sentence_id', 'is_valid', 'id', 'distance']);
+  const PREFERRED_PREVIEW_COLUMN_ORDER = [
+    'author',
+    'work',
+    'ref',
+    'form',
+    'lemma',
+    'pos',
+    'person',
+    'number',
+    'tense',
+    'mood',
+    'voice',
+    'gender',
+    'case',
+    'degree',
+    'total_distance',
+    'word_count'
+  ];
+
+  function getPreviewColumns(row) {
+    const sourceColumns = Object.keys(row || {}).filter((c) => !HIDDEN_PREVIEW_COLUMNS.has(c));
+    const ordered = PREFERRED_PREVIEW_COLUMN_ORDER.filter((c) => sourceColumns.includes(c));
+    const remainder = sourceColumns.filter((c) => !ordered.includes(c));
+    return [...ordered, ...remainder];
+  }
+
+  function getPreviewHeaderLabel(column) {
+    if (column === 'total_distance') return 'Total Dependency distance';
+    if (column === 'word_count') return 'Word Count';
+    return column;
+  }
+
   class CsvProvider {
     async loadFromUrl(url) {
       const res = await fetch(url, { cache: 'no-store' });
@@ -48,16 +108,7 @@
     }
   }
 
-  // Scaffold for future DB-backed loading path.
-  class SqliteProvider {
-    async query() {
-      throw new Error('SqliteProvider not wired yet. Add sql.js/wasm or backend endpoint.');
-    }
-  }
-
   const csvProvider = new CsvProvider();
-  const sqliteProvider = new SqliteProvider();
-  void sqliteProvider;
 
   function setLoadStatus(msg) {
     if (el.loadStatus) el.loadStatus.textContent = msg;
@@ -84,23 +135,30 @@
     return Array.from(s).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }
 
-  function setFilterOptions(select, values) {
+  function toFilterLabel(field, value) {
+    if (field === 'pos') return POS_LABELS[value] || value;
+    if (field === 'number') return NUMBER_LABELS[value] || value;
+    if (field === 'case') return CASE_LABELS[value] || value;
+    return value;
+  }
+
+  function setFilterOptions(select, values, field) {
     if (!select) return;
     const current = select.value;
     select.innerHTML = '<option value="">(any)</option>';
     for (const v of values) {
       const opt = document.createElement('option');
       opt.value = v;
-      opt.textContent = v;
+      opt.textContent = toFilterLabel(field, v);
       select.appendChild(opt);
     }
     if (values.includes(current)) select.value = current;
   }
 
   function refreshFilterUi() {
-    setFilterOptions(el.filterPos, uniqueValues('pos'));
-    setFilterOptions(el.filterNumber, uniqueValues('number'));
-    setFilterOptions(el.filterCase, uniqueValues('case'));
+    setFilterOptions(el.filterPos, uniqueValues('pos'), 'pos');
+    setFilterOptions(el.filterNumber, uniqueValues('number'), 'number');
+    setFilterOptions(el.filterCase, uniqueValues('case'), 'case');
   }
 
   function renderTable(rows) {
@@ -109,10 +167,10 @@
       el.tableWrap.innerHTML = '<div class="small-muted" style="padding:.75rem;">No rows to display.</div>';
       return;
     }
-    const cols = Object.keys(rows[0]);
+    const cols = getPreviewColumns(rows[0]);
     const sample = rows.slice(0, 30);
     let html = '<table class="preview"><thead><tr>';
-    for (const c of cols) html += `<th>${c}</th>`;
+    for (const c of cols) html += `<th>${getPreviewHeaderLabel(c)}</th>`;
     html += '</tr></thead><tbody>';
     for (const row of sample) {
       html += '<tr>';
