@@ -14,10 +14,6 @@ section: syntax
   <h2>1. Load syntax source</h2>
   <div class="grid-3">
     <div class="field">
-      <label for="syntaxCsvFile"><strong>Upload CSV</strong></label>
-      <input id="syntaxCsvFile" type="file" accept=".csv,text/csv" />
-    </div>
-    <div class="field">
       <label for="syntaxBundledDataset"><strong>Bundled syntax-friendly dataset</strong></label>
       <select id="syntaxBundledDataset">
         <option value="default.csv" selected>default.csv</option>
