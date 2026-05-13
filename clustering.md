@@ -58,9 +58,9 @@ section: clustering
     <div class="field"><label for="clusterVoiceFilter"><strong>Voice filter</strong></label><select id="clusterVoiceFilter"><option value="">(any)</option></select></div>
   </div>
   <div class="grid-3">
-    <div class="field"><label for="clusterGenderFilter"><strong>Gender filter</strong></label><input id="clusterGenderFilter" type="text" placeholder="e.g. masc" /></div>
-    <div class="field"><label for="clusterCaseFilter"><strong>Case filter</strong></label><input id="clusterCaseFilter" type="text" placeholder="e.g. nom" /></div>
-    <div class="field"><label for="clusterDegreeFilter"><strong>Degree filter</strong></label><input id="clusterDegreeFilter" type="text" placeholder="e.g. comp" /></div>
+    <div class="field"><label for="clusterGenderFilter"><strong>Gender filter</strong></label><select id="clusterGenderFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="clusterCaseFilter"><strong>Case filter</strong></label><select id="clusterCaseFilter"><option value="">(any)</option></select></div>
+    <div class="field"><label for="clusterDegreeFilter"><strong>Degree filter</strong></label><select id="clusterDegreeFilter"><option value="">(any)</option></select></div>
   </div>
 </div>
 
