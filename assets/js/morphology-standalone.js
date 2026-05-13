@@ -17,6 +17,34 @@
 
   const state = { rows: [], filtered: [] };
 
+  const POS_LABELS = {
+    a: 'Adjective',
+    c: 'Conjunction',
+    d: 'Adverb',
+    i: 'Interjection',
+    l: 'Article',
+    m: 'Number',
+    n: 'Noun',
+    p: 'Pronoun',
+    r: 'Preposition',
+    v: 'Verb',
+    x: 'Uncategorized'
+  };
+
+  const NUMBER_LABELS = {
+    p: 'Plural',
+    s: 'Singular',
+    d: 'Dual'
+  };
+
+  const CASE_LABELS = {
+    a: 'Accusative',
+    d: 'Dative',
+    g: 'Genitive',
+    n: 'Nominative',
+    v: 'Vocative'
+  };
+
   class CsvProvider {
     async loadFromUrl(url) {
       const res = await fetch(url, { cache: 'no-store' });
@@ -48,16 +76,7 @@
     }
   }
 
-  // Scaffold for future DB-backed loading path.
-  class SqliteProvider {
-    async query() {
-      throw new Error('SqliteProvider not wired yet. Add sql.js/wasm or backend endpoint.');
-    }
-  }
-
   const csvProvider = new CsvProvider();
-  const sqliteProvider = new SqliteProvider();
-  void sqliteProvider;
 
   function setLoadStatus(msg) {
     if (el.loadStatus) el.loadStatus.textContent = msg;
@@ -84,23 +103,30 @@
     return Array.from(s).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }
 
-  function setFilterOptions(select, values) {
+  function toFilterLabel(field, value) {
+    if (field === 'pos') return POS_LABELS[value] || value;
+    if (field === 'number') return NUMBER_LABELS[value] || value;
+    if (field === 'case') return CASE_LABELS[value] || value;
+    return value;
+  }
+
+  function setFilterOptions(select, values, field) {
     if (!select) return;
     const current = select.value;
     select.innerHTML = '<option value="">(any)</option>';
     for (const v of values) {
       const opt = document.createElement('option');
       opt.value = v;
-      opt.textContent = v;
+      opt.textContent = toFilterLabel(field, v);
       select.appendChild(opt);
     }
     if (values.includes(current)) select.value = current;
   }
 
   function refreshFilterUi() {
-    setFilterOptions(el.filterPos, uniqueValues('pos'));
-    setFilterOptions(el.filterNumber, uniqueValues('number'));
-    setFilterOptions(el.filterCase, uniqueValues('case'));
+    setFilterOptions(el.filterPos, uniqueValues('pos'), 'pos');
+    setFilterOptions(el.filterNumber, uniqueValues('number'), 'number');
+    setFilterOptions(el.filterCase, uniqueValues('case'), 'case');
   }
 
   function renderTable(rows) {
