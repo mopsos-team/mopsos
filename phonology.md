@@ -13,10 +13,6 @@ section: phonology
   <h2>1. Load dataset</h2>
   <div class="grid-3">
     <div class="field">
-      <label for="phonCsvFile"><strong>CSV file</strong></label>
-      <input id="phonCsvFile" type="file" accept=".csv,text/csv" />
-    </div>
-    <div class="field">
       <label for="phonBundledDataset"><strong>Bundled dataset</strong></label>
       <select id="phonBundledDataset">
         <option value="default.csv">default.csv (Epic corpus)</option>

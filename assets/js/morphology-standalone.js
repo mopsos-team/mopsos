@@ -44,6 +44,38 @@
     n: 'Nominative',
     v: 'Vocative'
   };
+  const HIDDEN_PREVIEW_COLUMNS = new Set(['section_id', 'sentence_id', 'is_valid', 'id', 'distance']);
+  const PREFERRED_PREVIEW_COLUMN_ORDER = [
+    'author',
+    'work',
+    'ref',
+    'form',
+    'lemma',
+    'pos',
+    'person',
+    'number',
+    'tense',
+    'mood',
+    'voice',
+    'gender',
+    'case',
+    'degree',
+    'total_distance',
+    'word_count'
+  ];
+
+  function getPreviewColumns(row) {
+    const sourceColumns = Object.keys(row || {}).filter((c) => !HIDDEN_PREVIEW_COLUMNS.has(c));
+    const ordered = PREFERRED_PREVIEW_COLUMN_ORDER.filter((c) => sourceColumns.includes(c));
+    const remainder = sourceColumns.filter((c) => !ordered.includes(c));
+    return [...ordered, ...remainder];
+  }
+
+  function getPreviewHeaderLabel(column) {
+    if (column === 'total_distance') return 'Total Dependency distance';
+    if (column === 'word_count') return 'Word Count';
+    return column;
+  }
 
   class CsvProvider {
     async loadFromUrl(url) {
@@ -135,10 +167,10 @@
       el.tableWrap.innerHTML = '<div class="small-muted" style="padding:.75rem;">No rows to display.</div>';
       return;
     }
-    const cols = Object.keys(rows[0]);
+    const cols = getPreviewColumns(rows[0]);
     const sample = rows.slice(0, 30);
     let html = '<table class="preview"><thead><tr>';
-    for (const c of cols) html += `<th>${c}</th>`;
+    for (const c of cols) html += `<th>${getPreviewHeaderLabel(c)}</th>`;
     html += '</tr></thead><tbody>';
     for (const row of sample) {
       html += '<tr>';
