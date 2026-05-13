@@ -4,11 +4,19 @@
     "default2.csv": "assets/data/default2.csv"
   };
   const SHARED_CLUSTER_SOURCE_KEY = "gmf_clustering_sources_v1";
+  const MORPH_LABELS = {
+    pos: { a: "Adjective", c: "Conjunction", d: "Adverb", i: "Interjection", l: "Article", m: "Number", n: "Noun", p: "Pronoun", r: "Preposition", v: "Verb", x: "Uncategorized" },
+    number: { s: "Singular", p: "Plural", d: "Dual" },
+    gender: { m: "Masculine", f: "Feminine", n: "Neuter" },
+    case: { n: "Nominative", g: "Genitive", d: "Dative", a: "Accusative", v: "Vocative" },
+    degree: { p: "Positive", c: "Comparative", s: "Superlative" }
+  };
 
   const state = {
     rawRows: [],
     columns: [],
-    run: null
+    run: null,
+    morphCols: {}
   };
 
   const el = {
@@ -167,22 +175,56 @@
     select.disabled = !cols.length;
   }
 
+  function formatMorphOption(field, value) {
+    const norm = String(value || "").trim().toLowerCase();
+    const label = MORPH_LABELS[field]?.[norm];
+    return label || value;
+  }
+
+  function setSelectOptions(select, values, field = "") {
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="">(any)</option>';
+    for (const v of values) {
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = formatMorphOption(field, v);
+      select.appendChild(o);
+    }
+    if (values.includes(current)) select.value = current;
+  }
+
+  function uniqueValuesForColumn(col) {
+    if (!col) return [];
+    return [...new Set(state.rawRows.map(r => normStr(r[col])).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }
+
   function populateColumns() {
     const cols = state.columns;
-    const bookGuess = pickMorphGuess(cols, "book");
     const tokenGuess = pickMorphGuess(cols, "lemma") || pickMorphGuess(cols, "form") || cols[0] || "";
 
-    fillColumnSelect(el.clusterBookCol, cols, bookGuess);
-    fillColumnSelect(el.clusterTokenCol, cols, tokenGuess);
-    fillColumnSelect(el.clusterPosCol, cols, pickMorphGuess(cols, "pos"));
-    fillColumnSelect(el.clusterPersonCol, cols, pickMorphGuess(cols, "person"));
-    fillColumnSelect(el.clusterNumberCol, cols, pickMorphGuess(cols, "number"));
-    fillColumnSelect(el.clusterTenseCol, cols, pickMorphGuess(cols, "tense"));
-    fillColumnSelect(el.clusterMoodCol, cols, pickMorphGuess(cols, "mood"));
-    fillColumnSelect(el.clusterVoiceCol, cols, pickMorphGuess(cols, "voice"));
-    fillColumnSelect(el.clusterGenderCol, cols, pickMorphGuess(cols, "gender"));
-    fillColumnSelect(el.clusterCaseCol, cols, pickMorphGuess(cols, "case"));
-    fillColumnSelect(el.clusterDegreeCol, cols, pickMorphGuess(cols, "degree"));
+    fillColumnSelect(el.clusterBookCol, ["work"], "work");
+    fillColumnSelect(el.clusterTokenCol, ["form", "lemma"], tokenGuess === "form" ? "form" : "lemma");
+    state.morphCols = {
+      pos: pickMorphGuess(cols, "pos"),
+      person: pickMorphGuess(cols, "person"),
+      number: pickMorphGuess(cols, "number"),
+      tense: pickMorphGuess(cols, "tense"),
+      mood: pickMorphGuess(cols, "mood"),
+      voice: pickMorphGuess(cols, "voice"),
+      gender: pickMorphGuess(cols, "gender"),
+      case: pickMorphGuess(cols, "case"),
+      degree: pickMorphGuess(cols, "degree")
+    };
+    setSelectOptions(el.clusterPosFilter, uniqueValuesForColumn(state.morphCols.pos), "pos");
+    setSelectOptions(el.clusterPersonFilter, uniqueValuesForColumn(state.morphCols.person), "person");
+    setSelectOptions(el.clusterNumberFilter, uniqueValuesForColumn(state.morphCols.number), "number");
+    setSelectOptions(el.clusterTenseFilter, uniqueValuesForColumn(state.morphCols.tense), "tense");
+    setSelectOptions(el.clusterMoodFilter, uniqueValuesForColumn(state.morphCols.mood), "mood");
+    setSelectOptions(el.clusterVoiceFilter, uniqueValuesForColumn(state.morphCols.voice), "voice");
+    setSelectOptions(el.clusterGenderFilter, uniqueValuesForColumn(state.morphCols.gender), "gender");
+    setSelectOptions(el.clusterCaseFilter, uniqueValuesForColumn(state.morphCols.case), "case");
+    setSelectOptions(el.clusterDegreeFilter, uniqueValuesForColumn(state.morphCols.degree), "degree");
 
     syncControlStates();
   }
@@ -215,15 +257,15 @@
 
   function matchesMorphFilters(row) {
     const specs = [
-      [el.clusterPosCol?.value, el.clusterPosFilter?.value],
-      [el.clusterPersonCol?.value, el.clusterPersonFilter?.value],
-      [el.clusterNumberCol?.value, el.clusterNumberFilter?.value],
-      [el.clusterTenseCol?.value, el.clusterTenseFilter?.value],
-      [el.clusterMoodCol?.value, el.clusterMoodFilter?.value],
-      [el.clusterVoiceCol?.value, el.clusterVoiceFilter?.value],
-      [el.clusterGenderCol?.value, el.clusterGenderFilter?.value],
-      [el.clusterCaseCol?.value, el.clusterCaseFilter?.value],
-      [el.clusterDegreeCol?.value, el.clusterDegreeFilter?.value]
+      [state.morphCols.pos, el.clusterPosFilter?.value],
+      [state.morphCols.person, el.clusterPersonFilter?.value],
+      [state.morphCols.number, el.clusterNumberFilter?.value],
+      [state.morphCols.tense, el.clusterTenseFilter?.value],
+      [state.morphCols.mood, el.clusterMoodFilter?.value],
+      [state.morphCols.voice, el.clusterVoiceFilter?.value],
+      [state.morphCols.gender, el.clusterGenderFilter?.value],
+      [state.morphCols.case, el.clusterCaseFilter?.value],
+      [state.morphCols.degree, el.clusterDegreeFilter?.value]
     ];
     for (const [col, filterVal] of specs) {
       const q = normStr(filterVal).toLowerCase();
@@ -287,6 +329,7 @@
     const N = books.length;
 
     const X = books.map(() => new Float64Array(V));
+    const docLengths = new Float64Array(N);
     const df = new Float64Array(V);
 
     for (let i = 0; i < N; i++) {
@@ -294,6 +337,7 @@
       for (const [term, count] of freq.entries()) {
         const j = vocab.get(term);
         X[i][j] = count;
+        docLengths[i] += count;
       }
       for (let j = 0; j < V; j++) if (X[i][j] > 0) df[j] += 1;
     }
@@ -306,6 +350,22 @@
       for (let j = 0; j < V; j++) {
         const idf = Math.log((N + 1) / (1 + df[j])) + 1;
         for (let i = 0; i < N; i++) X[i][j] *= idf;
+      }
+    }
+
+    if (model === "bm25" || model === "bm25plus") {
+      const avgdl = docLengths.reduce((a, b) => a + b, 0) / Math.max(1, N);
+      const k1 = 1.2;
+      const b = 0.75;
+      const delta = model === "bm25plus" ? 1.0 : 0.0;
+      for (let j = 0; j < V; j++) {
+        const idf = Math.log(1 + ((N - df[j] + 0.5) / (df[j] + 0.5)));
+        for (let i = 0; i < N; i++) {
+          const tf = X[i][j];
+          if (!tf) continue;
+          const denom = tf + k1 * (1 - b + b * (docLengths[i] / Math.max(avgdl, 1e-9)));
+          X[i][j] = idf * (((tf * (k1 + 1)) / denom) + delta);
+        }
       }
     }
 
@@ -948,7 +1008,7 @@
     }
   }
 
-  el.clusterCsvFile.addEventListener("change", (e) => {
+  el.clusterCsvFile?.addEventListener("change", (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
     f.text().then(txt => parseCsv(txt, f.name));
@@ -958,13 +1018,11 @@
   [
     el.clusterBookCol, el.clusterTokenCol, el.clusterFeatureMode, el.clusterMethod,
     el.clusterExcludeFunction, el.clusterMinDocFreq, el.clusterMaxDocFreq,
-    el.clusterPosCol, el.clusterPersonCol, el.clusterNumberCol, el.clusterTenseCol,
-    el.clusterMoodCol, el.clusterVoiceCol, el.clusterGenderCol, el.clusterCaseCol, el.clusterDegreeCol
   ].filter(Boolean).forEach(x => x.addEventListener("change", syncControlStates));
   [
     el.clusterPosFilter, el.clusterPersonFilter, el.clusterNumberFilter, el.clusterTenseFilter,
     el.clusterMoodFilter, el.clusterVoiceFilter, el.clusterGenderFilter, el.clusterCaseFilter, el.clusterDegreeFilter
-  ].filter(Boolean).forEach(x => x.addEventListener("input", syncControlStates));
+  ].filter(Boolean).forEach(x => x.addEventListener("change", syncControlStates));
   el.btnRunCluster.addEventListener("click", run);
   el.btnClusterBenchmark.addEventListener("click", runBenchmark);
   el.btnClusterStress?.addEventListener("click", runStressTest);
