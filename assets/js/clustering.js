@@ -313,6 +313,7 @@
     const N = books.length;
 
     const X = books.map(() => new Float64Array(V));
+    const docLengths = new Float64Array(N);
     const df = new Float64Array(V);
 
     for (let i = 0; i < N; i++) {
@@ -320,6 +321,7 @@
       for (const [term, count] of freq.entries()) {
         const j = vocab.get(term);
         X[i][j] = count;
+        docLengths[i] += count;
       }
       for (let j = 0; j < V; j++) if (X[i][j] > 0) df[j] += 1;
     }
@@ -332,6 +334,22 @@
       for (let j = 0; j < V; j++) {
         const idf = Math.log((N + 1) / (1 + df[j])) + 1;
         for (let i = 0; i < N; i++) X[i][j] *= idf;
+      }
+    }
+
+    if (model === "bm25" || model === "bm25plus") {
+      const avgdl = docLengths.reduce((a, b) => a + b, 0) / Math.max(1, N);
+      const k1 = 1.2;
+      const b = 0.75;
+      const delta = model === "bm25plus" ? 1.0 : 0.0;
+      for (let j = 0; j < V; j++) {
+        const idf = Math.log(1 + ((N - df[j] + 0.5) / (df[j] + 0.5)));
+        for (let i = 0; i < N; i++) {
+          const tf = X[i][j];
+          if (!tf) continue;
+          const denom = tf + k1 * (1 - b + b * (docLengths[i] / Math.max(avgdl, 1e-9)));
+          X[i][j] = idf * (((tf * (k1 + 1)) / denom) + delta);
+        }
       }
     }
 
