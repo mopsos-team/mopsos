@@ -104,9 +104,9 @@
   }
 
   function toFilterLabel(field, value) {
-    if (field === 'pos') return `${value} = ${POS_LABELS[value] || value}`;
-    if (field === 'number') return `${value} = ${NUMBER_LABELS[value] || value}`;
-    if (field === 'case') return `${value} = ${CASE_LABELS[value] || value}`;
+    if (field === 'pos') return POS_LABELS[value] || value;
+    if (field === 'number') return NUMBER_LABELS[value] || value;
+    if (field === 'case') return CASE_LABELS[value] || value;
     return value;
   }
 
