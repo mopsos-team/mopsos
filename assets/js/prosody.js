@@ -557,6 +557,14 @@
     const bookVals = [...new Set(lineRows.map(r => String(r.book || '').trim()).filter(Boolean))]
       .sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
     setSelectOptions(el.scansionBookFilter, bookVals, 'All books');
+    const selectionRows = buildSelectionRows(scope);
+    const morphFields = ['pos','person','number','tense','mood','voice','gender','case','degree'];
+    for (const f of morphFields) {
+      const vals = [...new Set(selectionRows.map(r => String(r[f] || '').trim()).filter(Boolean))]
+        .sort((a,b)=>a.localeCompare(b, undefined, { numeric:true }));
+      const id = `scansion${f.charAt(0).toUpperCase()}${f.slice(1)}Filter`;
+      setSelectOptions(el[id], vals, '(any)');
+    }
   }
 
   function buildSelectionRows(scope = el.scansionWork?.value || 'all') {
@@ -1024,7 +1032,7 @@
   [el.scansionBookFilter, el.scansionFootFilter, el.scansionHemiFilter, el.scansionQuantityFilter].forEach(x => x?.addEventListener('change', applySelectionFilters));
   el.scansionWordQuery?.addEventListener('input', applySelectionFilters);
   [el.scansionWordMatchMode, el.scansionWordColumn, el.scansionRegexInsensitive, el.scansionRegexUnicode].forEach(x => x?.addEventListener('change', applySelectionFilters));
-  [el.scansionPosFilter, el.scansionPersonFilter, el.scansionNumberFilter, el.scansionTenseFilter, el.scansionMoodFilter, el.scansionVoiceFilter, el.scansionGenderFilter, el.scansionCaseFilter, el.scansionDegreeFilter].forEach(x => x?.addEventListener('input', applySelectionFilters));
+  [el.scansionPosFilter, el.scansionPersonFilter, el.scansionNumberFilter, el.scansionTenseFilter, el.scansionMoodFilter, el.scansionVoiceFilter, el.scansionGenderFilter, el.scansionCaseFilter, el.scansionDegreeFilter].forEach(x => x?.addEventListener('change', applySelectionFilters));
   el.btnProsodyRerender?.addEventListener('click', () => { renderAdvancedProsodyVisuals(state.rows); renderLineScansionBrowser(); });
   el.btnRenderLineScansion?.addEventListener('click', renderLineScansionBrowser);
   el.scansionLineScope?.addEventListener('change', renderLineScansionBrowser);
