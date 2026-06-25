@@ -1014,7 +1014,7 @@
     f.text().then(txt => parseCsv(txt, f.name));
   });
   el.btnClusterLoadBundled.addEventListener("click", () => loadBundled(false));
-  el.btnClusterLoadShared.addEventListener("click", loadSharedDataset);
+  el.btnClusterLoadShared?.addEventListener("click", loadSharedDataset);
   [
     el.clusterBookCol, el.clusterTokenCol, el.clusterFeatureMode, el.clusterMethod,
     el.clusterExcludeFunction, el.clusterMinDocFreq, el.clusterMaxDocFreq,
