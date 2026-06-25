@@ -11,6 +11,7 @@ section: phonology
 
 <div class="card">
   <h2>Choose lemmata or inflected forms for phonological analysis</h2>
+  <div id="phonLoadingBar" class="load-progress"><span>Loading</span></div>
   <div class="grid-3">
     <div class="field" style="display:none">
       <label for="phonBundledDataset"><strong>Bundled dataset</strong></label>
