@@ -10,41 +10,7 @@ section: syntax
   <p class="lead">Build dependency views either from tab-separated token lines or directly from CSVs that include <code>section_id</code>, <code>id</code>, and <code>distance</code>.</p>
 </section>
 
-<div class="card">
-  <h2>1. Load syntax source</h2>
-  <div class="grid-3">
-    <div class="field" style="display:none">
-      <label for="syntaxBundledDataset"><strong>Bundled syntax-friendly dataset</strong></label>
-      <select id="syntaxBundledDataset">
-        <option value="default.csv" selected>default.csv</option>
-      </select>
-      <div class="btn-row" style="margin-top:.35rem;"><button id="btnSyntaxLoadBundled" class="btn">Load bundled CSV</button></div>
-    </div>
-    <div class="field">
-      <label for="syntaxSectionSelect"><strong>Section</strong></label>
-      <select id="syntaxSectionSelect"></select>
-    </div>
-  </div>
-  <div class="grid-3">
-    <div class="field inline-group">
-      <label class="inline"><input id="syntaxUseDistance" type="checkbox" checked /> Infer head from <code>distance</code> (id + distance)</label>
-    </div>
-    <div class="field">
-      <label for="syntaxRelFilter"><strong>Filter relation</strong></label>
-      <input id="syntaxRelFilter" type="text" placeholder="e.g. obj, nsubj" />
-    </div>
-    <div class="field">
-      <label for="syntaxPosFilter"><strong>Filter POS</strong></label>
-      <input id="syntaxPosFilter" type="text" placeholder="e.g. v, n" />
-    </div>
-  </div>
-  <div id="syntaxLoadStatus" class="status muted">No syntax dataset loaded yet.</div>
-  <div class="btn-row">
-    <button id="btnBuildSyntax" class="btn btn-primary">Build syntax views</button>
-    <button id="btnSyntaxSample" class="btn">Load sample TSV</button>
-    <button id="btnSyntaxExport" class="btn">Export syntax report (CSV)</button>
-  </div>
-</div>
+<div id="syntaxLoadStatus" class="load-progress"><span>Loading</span></div>
 
 <div class="card">
   <h2>2. Optional TSV input (manual)</h2>
