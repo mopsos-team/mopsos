@@ -12,7 +12,7 @@ section: phonology
 <div class="card">
   <h2>1. Load dataset</h2>
   <div class="grid-3">
-    <div class="field">
+    <div class="field" style="display:none">
       <label for="phonBundledDataset"><strong>Bundled dataset</strong></label>
       <select id="phonBundledDataset">
         <option value="default.csv">default.csv (Epic corpus)</option>
