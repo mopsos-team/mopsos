@@ -13,6 +13,7 @@
     phonTokenCol: document.getElementById('phonTokenCol'),
     btnRunPhon: document.getElementById('btnRunPhon'),
     phonLoadStatus: document.getElementById('phonLoadStatus'),
+    phonLoadingBar: document.getElementById('phonLoadingBar'),
     phonSummary: document.getElementById('phonSummary'),
     phonPhonemeBars: document.getElementById('phonPhonemeBars'),
     phonShapeBars: document.getElementById('phonShapeBars'),
