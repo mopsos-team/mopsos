@@ -16,7 +16,6 @@ section: phonology
       <label for="phonBundledDataset"><strong>Bundled dataset</strong></label>
       <select id="phonBundledDataset">
         <option value="default.csv">default.csv (Epic corpus)</option>
-        <option value="default2.csv">default2.csv (Entire Greek corpus)</option>
       </select>
       <div class="btn-row" style="margin-top:.35rem;"><button id="btnPhonLoadBundled" class="btn">Load bundled CSV</button></div>
     </div>
