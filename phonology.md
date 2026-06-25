@@ -25,8 +25,7 @@ section: phonology
       <select id="phonTokenCol" disabled></select>
     </div>
   </div>
-  <div class="btn-row"><button id="btnRunPhon" class="btn btn-primary" disabled>Run phonology analysis</button></div>
-  <div id="phonLoadStatus" class="status muted">No phonology dataset loaded yet.</div>
+    <div class="btn-row"><button id="btnRunPhon" class="btn btn-primary" disabled>Run phonology analysis</button></div>
 </div>
 
 <div class="card">
