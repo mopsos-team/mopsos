@@ -13,7 +13,7 @@ section: syntax
 <div class="card">
   <h2>1. Load syntax source</h2>
   <div class="grid-3">
-    <div class="field">
+    <div class="field" style="display:none">
       <label for="syntaxBundledDataset"><strong>Bundled syntax-friendly dataset</strong></label>
       <select id="syntaxBundledDataset">
         <option value="default.csv" selected>default.csv</option>
