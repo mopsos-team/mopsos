@@ -135,7 +135,7 @@
   }
 
   function parseCsv(text, fileName = "uploaded.csv") {
-    setStatus(`Loading ${fileName} ...`);
+    if (el.clusterLoadStatus) el.clusterLoadStatus.style.display = "";
     Papa.parse(text, {
       header: true,
       skipEmptyLines: true,
@@ -143,7 +143,7 @@
       complete: (res) => {
         state.rawRows = (res.data || []).map((r, i) => ({ ...r, _row_order: i }));
         state.columns = res.meta?.fields || (state.rawRows[0] ? Object.keys(state.rawRows[0]) : []);
-        setStatus(`Loaded ${fileName} with ${state.rawRows.length} rows.`);
+        if (el.clusterLoadStatus) el.clusterLoadStatus.style.display = "none";
         populateColumns();
         resetOutputs();
         setupZoomButtons();
