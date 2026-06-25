@@ -20,7 +20,6 @@ section: prosody
         <option value="all" selected>All works</option>
         <option value="iliad">Iliad</option>
         <option value="odyssey">Odyssey</option>
-        <option value="homer">Combined Homer files</option>
       </select>
     </div>
     <div class="field startup-actions">
