@@ -73,9 +73,18 @@
       <div id="tableWrap" class="table-wrap"></div>
     </div>
 
+    <div class="card">
+      <h2>4. SQL console</h2>
+      <p class="help" style="margin-top:-.35rem;">
+        In-memory SQLite over the loaded dataset (table <code>morphology</code>). Read-only.
+        Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>.
+      </p>
+      <div id="sqlConsoleBody"></div>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js"></script>
   <script src="assets/js/papa-fallback.js"></script>
   <script src="assets/js/morphology-standalone.js"></script>
 </body>
