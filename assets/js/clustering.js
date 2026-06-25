@@ -996,8 +996,7 @@
   }
 
   async function loadBundled(autoRun = false) {
-    const choice = el.clusterBundledDataset.value;
-    const url = BUNDLED_DATASET_URLS[choice];
+    const url = BUNDLED_DATASET_URLS["default.csv"];
     if (!url) return;
     try {
       const loaded = await fetchBundledCsv(url);
@@ -1013,7 +1012,7 @@
     if (!f) return;
     f.text().then(txt => parseCsv(txt, f.name));
   });
-  el.btnClusterLoadBundled.addEventListener("click", () => loadBundled(false));
+  el.btnClusterLoadBundled?.addEventListener("click", () => loadBundled(false));
   el.btnClusterLoadShared?.addEventListener("click", loadSharedDataset);
   [
     el.clusterBookCol, el.clusterTokenCol, el.clusterFeatureMode, el.clusterMethod,
