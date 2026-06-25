@@ -439,7 +439,7 @@
 
   async function loadScansionCorpus() {
     if (!el.scansionLoadStatus) return;
-    setLoadingStatus(el.scansionLoadStatus, 'Loading scansion corpus tables...');
+    el.scansionLoadStatus.style.display = '';
     const loaded = {};
     const errs = [];
     for (const f of SCANSION_FILES) {
@@ -454,8 +454,8 @@
     state.corpus = loaded;
     state.corpusLoaded = Object.keys(loaded).length > 0;
     if (!state.corpusLoaded) {
-      el.scansionLoadStatus.classList.remove('loading-note');
-      el.scansionLoadStatus.textContent = `Could not load scansion files. Put CSVs in assets/data/scansion/.`;
+      el.scansionLoadStatus.className = 'status muted';
+      el.scansionLoadStatus.textContent = `Could not load scansion files.`;
       return;
     }
     try {
@@ -465,8 +465,7 @@
       state.morphIndex = null;
     }
     const rowCt = Object.values(loaded).reduce((a, rows) => a + rows.length, 0);
-    el.scansionLoadStatus.classList.remove('loading-note');
-    el.scansionLoadStatus.textContent = `Loaded ${Object.keys(loaded).length}/${SCANSION_FILES.length} files (${rowCt} rows).${errs.length ? ` Missing: ${errs.length} file(s).` : ''}`;
+    el.scansionLoadStatus.style.display = 'none';
     renderCorpusStats(el.scansionWork?.value || 'all');
   }
 
