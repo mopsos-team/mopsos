@@ -10,19 +10,7 @@ section: clustering
   <p class="lead">Clustering, similarity, and network analysis.</p>
 </section>
 
-<div class="card">
-  <h2>1. Load dataset</h2>
-  <div class="grid-3">
-   <div class="field" style="display:none">
-      <label for="clusterBundledDataset"><strong>Bundled dataset</strong></label>
-      <select id="clusterBundledDataset">
-        <option value="default.csv">default.csv (Epic corpus)</option>
-      </select>
-      <div class="btn-row" style="margin-top:.35rem;"><button id="btnClusterLoadBundled" class="btn">Load bundled CSV</button></div>
-    </div>
-  </div>
-  <div id="clusterLoadStatus" class="loading-bar"><span>Loading</span></div>
-</div>
+<div id="clusterLoadStatus" class="load-progress"><span>Loading</span></div>
 
 <div class="card">
   <h2>2. Configure features</h2>
