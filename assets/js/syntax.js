@@ -1,5 +1,5 @@
 (() => {
-  const BUNDLED = { "default.csv": "assets/data/default.csv", "default2.csv": "assets/data/default2.csv" };
+  const BUNDLED = { "default.csv": "assets/data/default.csv" };
 
   const el = {
     syntaxCsvFile: document.getElementById('syntaxCsvFile'),
