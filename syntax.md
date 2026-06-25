@@ -17,7 +17,6 @@ section: syntax
       <label for="syntaxBundledDataset"><strong>Bundled syntax-friendly dataset</strong></label>
       <select id="syntaxBundledDataset">
         <option value="default.csv" selected>default.csv</option>
-        <option value="default2.csv">default2.csv</option>
       </select>
       <div class="btn-row" style="margin-top:.35rem;"><button id="btnSyntaxLoadBundled" class="btn">Load bundled CSV</button></div>
     </div>
