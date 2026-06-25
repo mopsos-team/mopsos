@@ -5,8 +5,7 @@
   const CLUSTER_SOURCE_KEY = "gmf_clustering_sources_v1";
   const LAST_AUTO_SLOT = "last_uploaded_auto";
   const BUNDLED_DATASET_URLS = {
-    "default.csv": "assets/data/default.csv",
-    "default2.csv": "assets/data/default2.csv"
+    "default.csv": "assets/data/default.csv"
   };
 
   const VALUE_LABELS = {
