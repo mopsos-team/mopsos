@@ -17,7 +17,6 @@ section: clustering
       <label for="clusterBundledDataset"><strong>Bundled dataset</strong></label>
       <select id="clusterBundledDataset">
         <option value="default.csv">default.csv (Epic corpus)</option>
-        <option value="default2.csv">default2.csv (Entire Greek corpus)</option>
       </select>
       <div class="btn-row" style="margin-top:.35rem;"><button id="btnClusterLoadBundled" class="btn">Load bundled CSV</button></div>
     </div>
