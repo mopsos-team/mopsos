@@ -232,7 +232,6 @@
 
 
   function parseCsv(text, name='uploaded.csv') {
-    setLoadingStatus(el.phonLoadStatus, `Loading ${name}...`);
     Papa.parse(text, { header:true, skipEmptyLines:true, complete: (res) => {
       state.rows = res.data || [];
       state.cols = res.meta?.fields || (state.rows[0] ? Object.keys(state.rows[0]) : []);
@@ -245,11 +244,10 @@
       if (g) el.phonTokenCol.value = g;
       el.phonTokenCol.disabled = !el.phonTokenCol.options.length;
       el.btnRunPhon.disabled = !state.rows.length;
-      el.phonLoadStatus.classList.remove('loading-note');
-      el.phonLoadStatus.textContent = `Loaded ${name} (${state.rows.length} rows).`;
+      if (el.phonLoadingBar) el.phonLoadingBar.style.display = 'none';
     }});
-  }
 
+  
   function freqMapAdd(map,k){ if(!k) return; map.set(k,(map.get(k)||0)+1); }
 
   function renderBars(target, map, top=20) {
@@ -385,14 +383,12 @@
   async function loadBundled(autoRun = false) {
     const path = BUNDLED[el.phonBundledDataset.value];
     if (!path) return;
-    setLoadingStatus(el.phonLoadStatus, `Loading bundled CSV (${path})...`);
     try {
       const loaded = await fetchBundledCsv(path);
       parseCsv(loaded.text, loaded.url);
       if (autoRun) setTimeout(() => { if (!el.btnRunPhon.disabled) run(); }, 0);
     } catch (err) {
-      el.phonLoadStatus.classList.remove('loading-note');
-      el.phonLoadStatus.textContent = `Could not load bundled dataset (${String(err)})`;
+      if (el.phonLoadingBar) el.phonLoadingBar.innerHTML = `<span>Could not load dataset</span>`;
     }
   }
 
