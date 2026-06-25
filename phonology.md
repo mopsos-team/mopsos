@@ -10,7 +10,7 @@ section: phonology
 </section>
 
 <div class="card">
-  <h2>1. Load dataset</h2>
+  <h2>Choose lemmata or inflected forms for phonological analysis</h2>
   <div class="grid-3">
     <div class="field" style="display:none">
       <label for="phonBundledDataset"><strong>Bundled dataset</strong></label>
