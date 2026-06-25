@@ -246,8 +246,8 @@
       el.btnRunPhon.disabled = !state.rows.length;
       if (el.phonLoadingBar) el.phonLoadingBar.style.display = 'none';
     }});
+  }
 
-  
   function freqMapAdd(map,k){ if(!k) return; map.set(k,(map.get(k)||0)+1); }
 
   function renderBars(target, map, top=20) {
