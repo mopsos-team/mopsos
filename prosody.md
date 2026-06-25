@@ -11,7 +11,7 @@ section: prosody
 </section>
 
 <div class="card">
-  <h2>1. Homer scansion corpus (assets/data/scansion)</h2>
+  <h2>1. Homer scansion corpus</h2>
   <p class="help">Load precomputed Homeric scansion tables (files, lines, words, syllables) for corpus-level metrical statistics.</p>
   <div class="grid-3">
     <div class="field">
@@ -29,7 +29,7 @@ section: prosody
       <button id="btnScansionRefresh" class="btn">Refresh statistics</button>
     </div>
   </div>
-  <div id="scansionLoadStatus" class="status muted">Scansion corpus not loaded yet.</div>
+  <div id="scansionLoadStatus" class="load-progress"><span>Loading</span></div>
   <div id="scansionCorpusSummary" class="analysis-wrap"></div>
   <div class="grid-2">
     <div class="viz-wrap"><h3>Lines by work</h3><div id="scansionLinesByWork"></div></div>
