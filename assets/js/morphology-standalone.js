@@ -121,7 +121,6 @@
   function normalize(v) { return String(v ?? '').trim(); }
 
   function updateStats() {
-    if (el.statRows) el.statRows.textContent = String(state.rows.length);
     if (el.statFiltered) el.statFiltered.textContent = String(state.filtered.length || 0);
     if (el.btnApplyFilter) el.btnApplyFilter.disabled = !state.rows.length;
   }
@@ -187,6 +186,7 @@
     refreshFilterUi();
     updateStats();
     renderTable(state.rows);
+    if (el.statRows) el.statRows.style.display = 'none';
     setLoadStatus(`Loaded ${sourceLabel} (${state.rows.length} rows).`);
     setStatus(`Dataset ready. Choose morphology filters and click Apply.`);
   }
