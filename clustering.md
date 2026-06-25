@@ -20,13 +20,8 @@ section: clustering
       </select>
       <div class="btn-row" style="margin-top:.35rem;"><button id="btnClusterLoadBundled" class="btn">Load bundled CSV</button></div>
     </div>
-    <div class="field">
-      <label for="clusterSharedDataset"><strong>From Morphology filters</strong></label>
-      <select id="clusterSharedDataset"></select>
-      <div class="btn-row" style="margin-top:.35rem;"><button id="btnClusterLoadShared" class="btn">Load selected filtered dataset</button></div>
-    </div>
   </div>
-  <div id="clusterLoadStatus" class="status muted">No clustering dataset loaded yet.</div>
+  <div id="clusterLoadStatus" class="loading-bar"><span>Loading</span></div>
 </div>
 
 <div class="card">
