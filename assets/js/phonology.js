@@ -1,5 +1,5 @@
 (() => {
-  const BUNDLED = { "default.csv": "assets/data/default.csv", "default2.csv": "assets/data/default2.csv" };
+  const BUNDLED = { "default.csv": "assets/data/default.csv" };
   const VOWELS = /[αεηιουω]/i;
   const CONSONANTS = /[βγδζθκλμνξπρστφχψ]/i;
   const DIPHTHONGS = new Set(['αι','ει','οι','υι','ου','αυ','ευ','ηυ','ωυ']);
