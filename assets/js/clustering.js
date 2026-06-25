@@ -1,7 +1,6 @@
 (() => {
   const BUNDLED_DATASET_URLS = {
-    "default.csv": "assets/data/default.csv",
-    "default2.csv": "assets/data/default2.csv"
+    "default.csv": "assets/data/default.csv"
   };
   const SHARED_CLUSTER_SOURCE_KEY = "gmf_clustering_sources_v1";
   const MORPH_LABELS = {
