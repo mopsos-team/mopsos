@@ -106,7 +106,8 @@
     }
   }
 
-  function refreshSharedSourceSelect() {
+   function refreshSharedSourceSelect() {
+    if (!el.clusterSharedDataset) return;
     const payload = readSharedSources();
     const names = Object.keys(payload).sort();
     el.clusterSharedDataset.innerHTML = "";
