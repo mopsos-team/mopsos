@@ -236,12 +236,13 @@
       state.rows = res.data || [];
       state.cols = res.meta?.fields || (state.rows[0] ? Object.keys(state.rows[0]) : []);
       el.phonTokenCol.innerHTML = '';
-      for (const c of state.cols) {
+      for (const c of ['form', 'lemma']) {
+        if (!state.cols.includes(c)) continue;
         const o = document.createElement('option'); o.value = c; o.textContent = c; el.phonTokenCol.appendChild(o);
       }
-      const g = state.cols.find(c=>c.toLowerCase()==='form') || state.cols.find(c=>c.toLowerCase()==='lemma') || state.cols[0] || '';
+      const g = state.cols.includes('form') ? 'form' : (state.cols.includes('lemma') ? 'lemma' : '');
       if (g) el.phonTokenCol.value = g;
-      el.phonTokenCol.disabled = !state.cols.length;
+      el.phonTokenCol.disabled = !el.phonTokenCol.options.length;
       el.btnRunPhon.disabled = !state.rows.length;
       el.phonLoadStatus.classList.remove('loading-note');
       el.phonLoadStatus.textContent = `Loaded ${name} (${state.rows.length} rows).`;
