@@ -59,7 +59,7 @@
   function applyDistanceInference(rows) {
     const byId = new Map(rows.map(r => [r.id, r]));
     for (const r of rows) {
-      if (el.syntaxUseDistance?.checked && Number.isFinite(r.distance) && r.distance !== 0) {
+      if ((el.syntaxUseDistance ? el.syntaxUseDistance.checked : true) && Number.isFinite(r.distance) && r.distance !== 0) {
         const inferredHead = r.id + r.distance;
         if (byId.has(inferredHead)) r.head = inferredHead;
       }
@@ -67,18 +67,35 @@
     }
   }
 
-  function parseInputTsv(text) {
-    const blocks = String(text || '').trim().split(/\n\s*\n/).filter(Boolean);
-    return blocks.map((b, bi) => {
-      const rows = b.split(/\r?\n/).map(line => {
-        const p = line.trim().split('\t');
-        return normalizeTokenRow({
-          id: p[0], form: p[1], lemma: p[2], pos: p[3], head: p[4], deprel: p[5], distance: p[6]
-        }, bi + 1);
-      }).filter(Boolean);
-      applyDistanceInference(rows);
-      return rows;
-    }).filter(x => x.length);
+  function parseCsvText(text, label = 'uploaded.csv') {
+    return new Promise((resolve) => {
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (res) => {
+          const rows = res.data || [];
+          const fields = res.meta?.fields || [];
+          const lfsPointer = fields.length === 1 && fields[0].startsWith('version https://git-lfs.github.com/spec/v1');
+          if (lfsPointer) {
+            el.syntaxLoadStatus.className = 'status muted';
+            el.syntaxLoadStatus.textContent = `Loaded ${label}, but it is a Git LFS pointer file, not tabular CSV data.`;
+            state.csvRows = [];
+            resolve({ ok: false, reason: 'lfs-pointer' });
+            return;
+          }
+          state.csvRows = rows;
+          state.activeSource = 'csv';
+          el.syntaxLoadStatus.style.display = 'none';
+          run();
+          resolve({ ok: true, rows: rows.length });
+        },
+        error: (err) => {
+          el.syntaxLoadStatus.className = 'status muted';
+          el.syntaxLoadStatus.textContent = `Failed to parse CSV (${String(err)})`;
+          resolve({ ok: false, reason: 'parse-error', error: String(err) });
+        }
+      });
+    });
   }
 
   function groupCsvBySection(rows) {
@@ -346,7 +363,6 @@
     const selected = el.syntaxBundledDataset?.value || 'default.csv';
     const configured = BUNDLED[selected];
     const paths = [...new Set([configured, ...Object.values(BUNDLED)].filter(Boolean))];
-    setLoadingStatus(el.syntaxLoadStatus, `Loading bundled syntax CSV (${selected}) ...`);
     for (const path of paths) {
       try {
         const loaded = await fetchBundledCsv(path);
@@ -354,7 +370,7 @@
         if (parsed.ok) return;
       } catch (_) {}
     }
-    el.syntaxLoadStatus.classList.remove('loading-note');
+    el.syntaxLoadStatus.className = 'status muted';
     el.syntaxLoadStatus.textContent = `Could not load any configured bundled syntax CSV.`;
   }
 
