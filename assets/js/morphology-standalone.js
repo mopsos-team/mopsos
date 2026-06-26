@@ -304,7 +304,7 @@
 
     // What the console shows on first load / on Reset.
     defaultQuery:
-      `SELECT pos, count(*) AS n\nFROM ${TABLE}\nGROUP BY pos\nORDER BY n DESC;`,
+      `SELECT form, "case", work, ref\nFROM ${TABLE}\nWHERE lemma = "Μοῦσα"\nORDER BY work, ref ASC;`,
 
     // Quick-fill example buttons: [button label, SQL].
     examples: [
@@ -462,17 +462,12 @@
   }
 
   function buildUi() {
-    const host = document.querySelector('.site-main')
-      || document.querySelector('main')
-      || document.body;
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <h2>SQL console</h2>
-      <p class="help" style="margin-top:-.35rem;">
-        In-memory SQLite over the loaded dataset (table <code>${esc(TABLE)}</code>). Read-only.
-        Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>.
-      </p>
+    const body = document.getElementById('sqlConsoleBody');
+    if (!body) {
+      console.warn('[sql-console] #sqlConsoleBody not found.');
+      return false;
+    }
+    body.innerHTML = `
       <textarea id="sqlConsoleInput" spellcheck="false"
         style="width:100%;min-height:120px;resize:vertical;font-family:monospace;
                font-size:.85rem;line-height:1.5;padding:.7rem .8rem;white-space:pre;"></textarea>
@@ -485,11 +480,11 @@
       <pre id="sqlConsoleStatus" class="status" style="margin-top:.6rem;">Loading SQLite…</pre>
       <div id="sqlConsoleOut" class="table-wrap" style="margin-top:.6rem;"></div>
     `;
-    host.appendChild(card);
+    return true;
   }
 
   function init() {
-    buildUi();
+    if (!buildUi()) return;
     $id('sqlConsoleInput').value = SQL_CONFIG.defaultQuery;
     $id('sqlConsoleRun').addEventListener('click', runQuery);
     $id('sqlConsoleReset').addEventListener('click', () => {
