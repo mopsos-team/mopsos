@@ -28,7 +28,8 @@
     p: 'Pronoun',
     r: 'Preposition',
     v: 'Verb',
-    x: 'Uncategorized'
+    x: 'Uncategorized',
+    g: 'Particle'
   };
 
   const NUMBER_LABELS = {
