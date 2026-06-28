@@ -24,14 +24,42 @@ section: phonology
 <div id="phonLoadingBar" class="load-progress"><span>Loading corpus into SQLite…</span></div>
 
 <div class="card">
-  <h2>1. Token source (SQL)</h2>
-  <p class="help" style="margin-top:-.35rem;">This query selects the tokens to analyse. It must return at least one text column of word forms.</p>
-  <textarea id="phonSql" spellcheck="false" style="width:100%;min-height:96px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;line-height:1.5;padding:.7rem .8rem;white-space:pre;">SELECT form, lemma FROM morphology;</textarea>
-  <div id="phonSqlExamples" class="btn-row" style="margin-top:.45rem;flex-wrap:wrap;"></div>
-  <div class="grid-3" style="margin-top:.5rem;">
-    <div class="field"><label for="phonTokenCol"><strong>Token / form column</strong></label><select id="phonTokenCol" disabled></select></div>
+  <h2>1. What to analyze</h2>
+  <p class="help" style="margin-top:-.35rem;">Choose which tokens to analyse and (optionally) limit them, then run. For full control, open Advanced.</p>
+  <div class="grid-3">
+    <div class="field">
+      <label for="phonAnalyze"><strong>Analyze</strong></label>
+      <select id="phonAnalyze">
+        <option value="form" selected>Word forms</option>
+        <option value="lemma">Lemmata (distinct)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="phonLimitPos"><strong>Part of speech</strong></label>
+      <select id="phonLimitPos" disabled><option value="">(all)</option></select>
+    </div>
+    <div class="field" id="phonLimitCaseWrap" hidden>
+      <label for="phonLimitCase"><strong>Case</strong></label>
+      <select id="phonLimitCase"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="phonLimitWork"><strong>Work</strong></label>
+      <select id="phonLimitWork" disabled><option value="">(all)</option></select>
+    </div>
   </div>
-  <div class="btn-row"><button id="btnRunPhon" class="btn btn-primary" disabled>Run query &amp; analyze</button></div>
+  <div class="btn-row"><button id="btnRunPhon" class="btn btn-primary" disabled>Run analysis</button></div>
+
+  <button class="adv-toggle btn btn-sm" data-adv="phonAdvPanel" style="margin-top:.5rem;">Advanced: custom SQL ▾</button>
+  <div id="phonAdvPanel" class="adv-panel" hidden>
+    <p class="help" style="margin-top:-.1rem;">A read-only query selecting the tokens to analyse; it must return at least one text column of word forms. <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs.</p>
+    <textarea id="phonSql" spellcheck="false">SELECT form, lemma FROM morphology;</textarea>
+    <div id="phonSqlExamples" class="btn-row" style="margin-top:.45rem;flex-wrap:wrap;"></div>
+    <div class="grid-3" style="margin-top:.5rem;">
+      <div class="field"><label for="phonTokenCol"><strong>Token / form column</strong></label><select id="phonTokenCol" disabled></select></div>
+    </div>
+    <div class="btn-row"><button id="btnRunPhonSql" class="btn">Run custom SQL</button></div>
+  </div>
+
   <pre id="phonStatus" class="status" style="margin-top:.6rem;">Waiting for corpus…</pre>
 </div>
 

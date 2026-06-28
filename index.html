@@ -23,10 +23,15 @@
         <nav class="site-nav" aria-label="Main navigation">
           <a href="morphotactics.html" class="nav-link">Morphotactics</a>
           <a href="index.html" class="nav-link is-active">Morphology</a>
-          <a href="phonology.html" class="nav-link">Phonology</a>
-          <a href="syntax.html" class="nav-link">Syntax</a>
-          <a href="prosody.html" class="nav-link">Scansion</a>
-          <a href="clustering.html" class="nav-link">Stylometry</a>
+          <div class="nav-dropdown">
+            <button class="nav-link nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Analyses <span class="caret">▾</span></button>
+            <div class="nav-dropdown-menu" hidden>
+              <a href="phonology.html" class="nav-link">Phonology</a>
+              <a href="syntax.html" class="nav-link">Syntax</a>
+              <a href="prosody.html" class="nav-link">Scansion</a>
+              <a href="clustering.html" class="nav-link">Stylometry</a>
+            </div>
+          </div>
         </nav>
       </div>
     </div>
@@ -36,47 +41,81 @@
     <section class="hero card">
       <p class="kicker">MOPSOS</p>
       <h1>Morphology</h1>
-      <p class="tab-desc">Browse and query the morphologically annotated corpus: every token tagged for part of speech, case, number, tense, mood, voice, gender, and degree.</p>
+      <p class="tab-desc">Browse and query the morphologically annotated corpus — every token tagged for part of speech, case, number, tense, mood, voice, gender, and degree — and chart how those features are distributed.</p>
       <div class="tab-meta-row">
         <button class="info-btn" data-info="morphInfo">What is this?</button>
       </div>
       <div id="morphInfo" class="info-panel" hidden>
         <h4>Morphology tab</h4>
-        <p>This tab is driven entirely by an in-browser SQLite database built from the corpus (table <code>morphology</code>). There are two ways to explore it:</p>
+        <p>Everything here runs against an in-browser SQLite database built from the corpus (table <code>morphology</code>). Three ways to use it:</p>
         <ul>
-          <li><strong>Quick filter</strong> — pick a part of speech, number, and/or case from the drop-downs. MOPSOS writes the matching SQL for you, runs it, and shows the results <strong>50 at a time</strong> (use the pager, or “Show all on one page”).</li>
-          <li><strong>SQL console</strong> — write read-only SQL yourself (<code>SELECT</code> / <code>WITH</code> / <code>PRAGMA</code>). Results here are <strong>not paginated</strong> — your <code>LIMIT</code> is respected as written.</li>
+          <li><strong>Quick filter</strong> — pick a part of speech and MOPSOS shows only the grammatical features that actually apply to it, each offering only the values that occur. Results are paginated 50 per page, and columns that don't apply are hidden automatically.</li>
+          <li><strong>Custom SQL</strong> — tucked inside the Quick filter, for writing read-only SQL yourself (<code>SELECT</code> / <code>WITH</code> / <code>PRAGMA</code>). Press <kbd>Enter</kbd> to run.</li>
+          <li><strong>Explore &amp; visualize</strong> — count tokens by any dimension (book, lemma, case…), optionally broken down by a second dimension, under any filter — e.g. which books have the most aorist optatives, or how noun number and case combine.</li>
         </ul>
-        <p>Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>.</p>
       </div>
     </section>
 
-    <div id="morphLoadStatus" class="load-progress"><span>Loading corpus into SQLite…</span></div>
+    <div id="morphLoadStatus" class="load-progress"><span>Loading corpus…</span></div>
 
-    <div class="card filter-builder">
+    <div class="card">
       <h2>Quick filter</h2>
-      <p class="help" style="margin-top:-.35rem;">Choose any combination below. MOPSOS builds and runs the SQL for you; results are paginated 50 per page.</p>
-      <div class="grid-3">
-        <div class="field"><label for="filterPos"><strong>Part of speech</strong></label><select id="filterPos" disabled><option value="">(any)</option></select></div>
-        <div class="field"><label for="filterNumber"><strong>Number</strong></label><select id="filterNumber" disabled><option value="">(any)</option></select></div>
-        <div class="field"><label for="filterCase"><strong>Case</strong></label><select id="filterCase" disabled><option value="">(any)</option></select></div>
-      </div>
+      <p class="help" style="margin-top:-.35rem;">Pick a part of speech to reveal the features that apply to it; choose any values and Apply. Results are paginated 50 per page.</p>
+      <div id="qfGroup" class="filter-group"></div>
       <div class="btn-row">
         <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply filter</button>
         <button id="btnResetFilter" class="btn">Reset</button>
-        <button id="btnFilterToConsole" class="btn">Send query to SQL console</button>
+        <button class="adv-toggle btn btn-sm" data-adv="qfSqlPanel">Write custom SQL query ▾</button>
       </div>
-      <pre id="filterSqlBox" class="status" style="margin-top:.6rem;">Pick filters and click Apply.</pre>
-      <div id="filterResults" style="margin-top:.6rem;"></div>
+
+      <div id="qfSqlPanel" class="adv-panel" hidden>
+        <p class="help">Read-only SQL over table <code>morphology</code>. Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. <kbd>Enter</kbd> runs · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line · results are not paginated.</p>
+        <textarea id="qfSqlInput" spellcheck="false"></textarea>
+        <div class="btn-row" style="margin-top:.5rem;">
+          <button id="qfSqlRun" class="btn btn-primary">Run</button>
+          <button id="qfSqlReset" class="btn">Reset</button>
+        </div>
+        <div id="qfSqlExamples" class="btn-row" style="margin-top:.45rem;flex-wrap:wrap;"></div>
+        <pre id="qfSqlStatus" class="status" style="margin-top:.55rem;">Ready — write SQL and press Enter.</pre>
+        <div id="qfSqlOut" style="margin-top:.5rem;"></div>
+      </div>
+
+      <div id="qfResults" style="margin-top:.7rem;"></div>
     </div>
 
     <div class="card">
-      <h2>SQL console</h2>
-      <p class="help" style="margin-top:-.35rem;">
-        In-memory SQLite over the loaded corpus (table <code>morphology</code>), read-only.
-        Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. Results are shown in full (no pagination).
-      </p>
-      <div id="sqlConsoleBody"></div>
+      <h2>Explore &amp; visualize</h2>
+      <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, optionally broken down by a second one (which draws a heat-map). Add filters to focus, e.g. set the part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
+      <div class="grid-3">
+        <div class="field">
+          <label for="exDim1"><strong>Count by</strong></label>
+          <select id="exDim1" disabled></select>
+        </div>
+        <div class="field">
+          <label for="exDim2"><strong>Break down by</strong></label>
+          <select id="exDim2" disabled></select>
+        </div>
+        <div class="field">
+          <label for="exTopN"><strong>Show top</strong></label>
+          <select id="exTopN">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+      <details style="margin:.2rem 0 .5rem;">
+        <summary class="help" style="cursor:pointer;">Filters (optional)</summary>
+        <div id="exGroup" class="filter-group" style="margin-top:.5rem;"></div>
+      </details>
+      <div class="btn-row">
+        <button id="btnExRun" class="btn btn-primary" disabled>Draw chart</button>
+        <button id="btnExReset" class="btn">Reset filters</button>
+      </div>
+      <h3 id="exTitle" style="margin:.8rem 0 .15rem;"></h3>
+      <p id="exDesc" class="small-muted" style="margin:0 0 .4rem;"></p>
+      <div id="exChart" class="viz-wrap"></div>
     </div>
   </main>
 

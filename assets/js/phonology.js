@@ -232,9 +232,24 @@
   // ---- DOM ----------------------------------------------------------
   var el = {};
   function grab() {
-    ["phonLoadingBar","phonSql","phonSqlExamples","phonTokenCol","btnRunPhon","phonStatus",
+    ["phonLoadingBar","phonSql","phonSqlExamples","phonTokenCol","btnRunPhon","btnRunPhonSql","phonStatus",
+     "phonAnalyze","phonLimitPos","phonLimitCase","phonLimitCaseWrap","phonLimitWork","phonAdvPanel",
      "phonView","phonTopN","phonViewDesc","phonSummary","phonChart","phonTable"]
       .forEach(function (id) { el[id] = document.getElementById(id); });
+  }
+
+  function sqlStr(s) { return "'" + String(s).replace(/'/g, "''") + "'"; }
+
+  // Build the token-source query from the drop-downs in card 1.
+  function buildSourceSql() {
+    var asLemma = el.phonAnalyze && el.phonAnalyze.value === "lemma";
+    var col = asLemma ? "lemma" : "form";
+    var where = ['"' + col + '" IS NOT NULL', '"' + col + "\" NOT IN ('','-')"];
+    if (el.phonLimitPos && el.phonLimitPos.value) where.push("pos = " + sqlStr(el.phonLimitPos.value));
+    if (el.phonLimitCase && !el.phonLimitCaseWrap.hasAttribute("hidden") && el.phonLimitCase.value) where.push('"case" = ' + sqlStr(el.phonLimitCase.value));
+    if (el.phonLimitWork && el.phonLimitWork.value) where.push("work = " + sqlStr(el.phonLimitWork.value));
+    var sel = asLemma ? "SELECT DISTINCT lemma AS form" : "SELECT form";
+    return sel + " FROM morphology WHERE " + where.join(" AND ") + ";";
   }
 
   var EXAMPLES = [
@@ -249,9 +264,9 @@
 
   function setStatus(msg) { if (el.phonStatus) el.phonStatus.textContent = msg; }
 
-  function runQueryAndAnalyze() {
+  function runQueryAndAnalyze(sqlOverride) {
     if (!window.MopsosSQL || !window.MopsosSQL.isReady()) { setStatus("Corpus not ready yet…"); return; }
-    var sql = (el.phonSql.value || "").trim();
+    var sql = (sqlOverride != null ? sqlOverride : (el.phonSql.value || "")).trim();
     if (!sql) { setStatus("Enter a SQL query first."); return; }
     if (!window.MopsosSQL.isReadOnly(sql)) { setStatus("Only read-only queries (SELECT / WITH) are allowed here."); return; }
     setStatus("Running query…");
@@ -374,11 +389,25 @@
   }
 
   // ---- Init ---------------------------------------------------------
+  function refreshCaseLimiter() {
+    if (!el.phonLimitCaseWrap) return;
+    var pos = el.phonLimitPos ? el.phonLimitPos.value : "";
+    var applies = pos ? window.MopsosSQL.nonEmptyColumns(["case"], { pos: pos }).length > 0 : false;
+    if (applies) {
+      var vals = window.MopsosSQL.distinctFor("case", { pos: pos });
+      window.MopsosUI.fillSelect(el.phonLimitCase, vals, { field: "case", head: "(any)" });
+      el.phonLimitCaseWrap.removeAttribute("hidden");
+    } else {
+      el.phonLimitCase.value = "";
+      el.phonLimitCaseWrap.setAttribute("hidden", "");
+    }
+  }
+
   function init() {
     grab();
     if (!el.phonSql) return; // not on this page
 
-    // examples
+    // advanced custom-SQL examples
     EXAMPLES.forEach(function (ex) {
       var b = document.createElement("button");
       b.className = "btn btn-sm"; b.textContent = ex.label;
@@ -386,7 +415,9 @@
       el.phonSqlExamples.appendChild(b);
     });
 
-    el.btnRunPhon.addEventListener("click", runQueryAndAnalyze);
+    el.btnRunPhon.addEventListener("click", function () { runQueryAndAnalyze(buildSourceSql()); });
+    if (el.btnRunPhonSql) el.btnRunPhonSql.addEventListener("click", function () { runQueryAndAnalyze(); });
+    if (el.phonLimitPos) el.phonLimitPos.addEventListener("change", refreshCaseLimiter);
     el.phonView.addEventListener("change", renderAll);
     el.phonTopN.addEventListener("change", renderAll);
     el.phonTokenCol.addEventListener("change", reanalyzeColumnOnly);
@@ -397,9 +428,15 @@
     setStatus("Loading corpus…");
     window.MopsosSQL.ready().then(function () {
       if (el.phonLoadingBar) el.phonLoadingBar.style.display = "none";
+      // populate limiter drop-downs (labels only)
+      window.MopsosUI.fillSelect(el.phonLimitPos, window.MopsosSQL.distinct("pos"), { field: "pos", head: "(all)" });
+      window.MopsosUI.fillSelect(el.phonLimitWork, window.MopsosSQL.distinct("work"), { head: "(all)" });
+      el.phonLimitPos.disabled = false;
+      el.phonLimitWork.disabled = false;
+      refreshCaseLimiter();
       el.btnRunPhon.disabled = false;
       setStatus("Corpus ready (" + window.MopsosSQL.rowCount().toLocaleString() + " rows). Running default analysis…");
-      runQueryAndAnalyze();
+      runQueryAndAnalyze(buildSourceSql());
     }).catch(function (e) {
       setStatus("Failed to load corpus: " + e.message);
     });

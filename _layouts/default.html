@@ -25,10 +25,17 @@
         <nav class="site-nav" aria-label="Main navigation">
           <a href="{{ '/morphotactics.html' | relative_url }}" class="nav-link{% if page.section == 'morphotactics' %} is-active{% endif %}">Morphotactics</a>
           <a href="{{ '/index.html' | relative_url }}" class="nav-link{% if page.section == 'morphology' %} is-active{% endif %}">Morphology</a>
-          <a href="{{ '/phonology.html' | relative_url }}" class="nav-link{% if page.section == 'phonology' %} is-active{% endif %}">Phonology</a>
-          <a href="{{ '/syntax.html' | relative_url }}" class="nav-link{% if page.section == 'syntax' %} is-active{% endif %}">Syntax</a>
-          <a href="{{ '/prosody.html' | relative_url }}" class="nav-link{% if page.section == 'prosody' %} is-active{% endif %}">Scansion</a>
-          <a href="{{ '/clustering.html' | relative_url }}" class="nav-link{% if page.section == 'clustering' %} is-active{% endif %}">Stylometry</a>
+          <div class="nav-dropdown">
+            {% assign in_analyses = false %}
+            {% if page.section == 'phonology' or page.section == 'syntax' or page.section == 'prosody' or page.section == 'clustering' %}{% assign in_analyses = true %}{% endif %}
+            <button class="nav-link nav-dropdown-toggle{% if in_analyses %} is-active{% endif %}" aria-expanded="false" aria-haspopup="true">Analyses <span class="caret">▾</span></button>
+            <div class="nav-dropdown-menu" hidden>
+              <a href="{{ '/phonology.html' | relative_url }}" class="nav-link{% if page.section == 'phonology' %} is-active{% endif %}">Phonology</a>
+              <a href="{{ '/syntax.html' | relative_url }}" class="nav-link{% if page.section == 'syntax' %} is-active{% endif %}">Syntax</a>
+              <a href="{{ '/prosody.html' | relative_url }}" class="nav-link{% if page.section == 'prosody' %} is-active{% endif %}">Scansion</a>
+              <a href="{{ '/clustering.html' | relative_url }}" class="nav-link{% if page.section == 'clustering' %} is-active{% endif %}">Stylometry</a>
+            </div>
+          </div>
         </nav>
       </div>
     </div>
@@ -45,7 +52,7 @@
   <script src="{{ '/assets/js/papa-fallback.js' | relative_url }}"></script>
   <script src="{{ '/assets/js/analytics-playbook.js' | relative_url }}"></script>
 
-  {% if page.section == 'morphotactics' or page.section == 'phonology' or page.section == 'clustering' %}
+  {% if page.section == 'morphotactics' or page.section == 'phonology' or page.section == 'clustering' or page.section == 'prosody' %}
   <!-- In-browser SQLite + D3 (SQL-integrated tabs) -->
   <script src="https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>

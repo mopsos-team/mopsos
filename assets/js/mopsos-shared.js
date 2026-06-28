@@ -28,8 +28,23 @@
     }
   };
 
+  const PREBUILT = "assets/data/corpus.sqlite.gz";
+
   const quoteId = (name) => '"' + String(name).replace(/"/g, '""') + '"';
+  const sqlStr = (v) => "'" + String(v).replace(/'/g, "''") + "'";
   const READONLY = /^\s*(--[^\n]*\n|\/\*[\s\S]*?\*\/|\s)*(select|with|explain|pragma)\b/i;
+
+  /** Build a SQL WHERE body from a {col:value} object (skips empty values). */
+  function buildWhere(filters) {
+    if (!filters) return "";
+    const parts = [];
+    for (const k of Object.keys(filters)) {
+      const v = filters[k];
+      if (v === undefined || v === null || v === "") continue;
+      parts.push(quoteId(k) + " = " + sqlStr(v));
+    }
+    return parts.join(" AND ");
+  }
 
   let SQL = null;       // sql.js module
   let db = null;        // active database
@@ -90,8 +105,13 @@
     db.run("BEGIN;");
     for (const row of rows) {
       stmt.run(cols.map((c) => {
-        const v = row[c];
-        return (v === undefined || v === "") ? null : v;
+        let v = row[c];
+        if (v === undefined || v === "") return null;
+        if (c === "is_valid") {
+          const s = String(v).trim().toLowerCase();
+          return s === "true" ? 1 : (s === "false" ? 0 : v);
+        }
+        return v;
       }));
     }
     db.run("COMMIT;");
@@ -100,11 +120,54 @@
     rowCount = rows.length;
   }
 
+  async function fetchArrayBuffer(path) {
+    const variants = [...new Set([
+      path,
+      new URL(path, document.baseURI).toString(),
+      path.startsWith("/") ? path : "/" + path,
+      path.startsWith("./") ? path.slice(2) : "./" + path
+    ])];
+    let lastErr = null;
+    for (const candidate of variants) {
+      try {
+        const res = await fetch(candidate, { cache: "force-cache" });
+        if (res.ok) return await res.arrayBuffer();
+        lastErr = new Error("HTTP " + res.status + " @ " + candidate);
+      } catch (err) { lastErr = err; }
+    }
+    throw lastErr || new Error("Could not fetch " + path);
+  }
+
+  async function gunzip(buf) {
+    if (typeof DecompressionStream !== "function") throw new Error("DecompressionStream unsupported");
+    const stream = new Response(buf).body.pipeThrough(new DecompressionStream("gzip"));
+    return await new Response(stream).arrayBuffer();
+  }
+
+  /** Open the pre-built, gzipped SQLite database directly (fast path). */
+  async function loadPrebuilt() {
+    const gz = await fetchArrayBuffer(PREBUILT);
+    const raw = await gunzip(gz);
+    if (db) db.close();
+    db = new SQL.Database(new Uint8Array(raw));
+    const ti = db.exec("PRAGMA table_info(" + quoteId(CONFIG.table) + ");");
+    columns = (ti && ti.length) ? ti[0].values.map((r) => r[1]) : [];
+    const rc = db.exec("SELECT COUNT(*) FROM " + quoteId(CONFIG.table) + ";");
+    rowCount = (rc && rc.length) ? rc[0].values[0][0] : 0;
+    if (!columns.length) throw new Error("prebuilt DB missing table " + CONFIG.table);
+  }
+
   async function init() {
     await ensureSqlModule();
-    const text = await fetchCsv(CONFIG.csvUrl);
-    const rows = await parseCsv(text);
-    buildDatabase(rows);
+    try {
+      await loadPrebuilt();
+    } catch (err) {
+      // Fallback: parse the CSV and build the database in-browser.
+      if (window.console) console.warn("[mopsos] prebuilt DB unavailable; parsing CSV instead:", err && err.message);
+      const text = await fetchCsv(CONFIG.csvUrl);
+      const rows = await parseCsv(text);
+      buildDatabase(rows);
+    }
     return { columns, rowCount };
   }
 
@@ -151,6 +214,38 @@
       const sql = "SELECT DISTINCT " + quoteId(col) + " AS v FROM " + quoteId(CONFIG.table) +
         " WHERE " + quoteId(col) + " IS NOT NULL AND " + quoteId(col) + " <> '' ORDER BY v;";
       return this.query(sql).values.map((r) => r[0]).filter((v) => v !== null && v !== undefined);
+    },
+
+    /**
+     * Distinct values of `col` that actually occur, excluding NA ('', '-'),
+     * optionally restricted by a {col:value} filter object. Used for
+     * part-of-speech-dependent dropdowns (e.g. cases that exist for verbs).
+     */
+    distinctFor(col, filters) {
+      if (!db || !columns.includes(col)) return [];
+      const where = buildWhere(filters);
+      const sql = "SELECT DISTINCT " + quoteId(col) + " AS v FROM " + quoteId(CONFIG.table) +
+        " WHERE " + quoteId(col) + " IS NOT NULL AND " + quoteId(col) + " NOT IN ('','-')" +
+        (where ? " AND " + where : "") + " ORDER BY v;";
+      return this.query(sql).values.map((r) => r[0]).filter((v) => v !== null && v !== undefined);
+    },
+
+    /**
+     * Of `candidates`, return those columns that hold at least one non-NA value
+     * under the given filter — i.e. the attributes relevant to a selection.
+     */
+    nonEmptyColumns(candidates, filters) {
+      if (!db) return [];
+      const where = buildWhere(filters);
+      const out = [];
+      for (const c of candidates) {
+        if (!columns.includes(c)) continue;
+        const sql = "SELECT 1 FROM " + quoteId(CONFIG.table) + " WHERE " + quoteId(c) +
+          " IS NOT NULL AND " + quoteId(c) + " NOT IN ('','-')" +
+          (where ? " AND " + where : "") + " LIMIT 1;";
+        if (this.scalar(sql) !== null) out.push(c);
+      }
+      return out;
     },
 
     /** Single scalar (first column, first row) or null. */
@@ -289,10 +384,9 @@
       const state = { page: 0, showAll: false };
 
       const cellHtml = (col, v) => {
-        if (v === null || v === undefined) return "&#8709;";
+        if (v === null || v === undefined || v === "" || v === "-") return "&#8709;";
         if (labelMap[col]) {
-          const lab = this.label(labelMap[col], v);
-          return lab === String(v) ? esc(v) : esc(lab) + ' <span class="code-chip">' + esc(v) + "</span>";
+          return esc(this.label(labelMap[col], v));
         }
         return esc(v);
       };
@@ -348,13 +442,43 @@
       };
 
       draw();
+    },
+
+    /**
+     * Wire a click-to-open nav dropdown. The menu is fixed-positioned so it
+     * escapes the nav's horizontal-scroll overflow.
+     *   <div class="nav-dropdown">
+     *     <button class="nav-link nav-dropdown-toggle">Analyses ▾</button>
+     *     <div class="nav-dropdown-menu" hidden> ...links... </div>
+     *   </div>
+     */
+    wireNavDropdown(root) {
+      const scope = root || document;
+      scope.querySelectorAll(".nav-dropdown").forEach((dd) => {
+        const toggle = dd.querySelector(".nav-dropdown-toggle");
+        const menu = dd.querySelector(".nav-dropdown-menu");
+        if (!toggle || !menu || toggle.dataset.wired) return;
+        toggle.dataset.wired = "1";
+        const place = () => {
+          const r = toggle.getBoundingClientRect();
+          menu.style.top = (r.bottom + 6) + "px";
+          menu.style.left = Math.max(8, r.left) + "px";
+        };
+        const close = () => { menu.setAttribute("hidden", ""); toggle.setAttribute("aria-expanded", "false"); };
+        const open = () => { place(); menu.removeAttribute("hidden"); toggle.setAttribute("aria-expanded", "true"); };
+        toggle.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); menu.hasAttribute("hidden") ? open() : close(); });
+        document.addEventListener("click", (e) => { if (!dd.contains(e.target)) close(); });
+        document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+        window.addEventListener("resize", () => { if (!menu.hasAttribute("hidden")) place(); });
+        window.addEventListener("scroll", () => { if (!menu.hasAttribute("hidden")) place(); }, true);
+      });
     }
   };
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => { api.wireInfoButtons(); api.wireAdvancedToggles(); });
+    document.addEventListener("DOMContentLoaded", () => { api.wireInfoButtons(); api.wireAdvancedToggles(); api.wireNavDropdown(); });
   } else {
-    api.wireInfoButtons(); api.wireAdvancedToggles();
+    api.wireInfoButtons(); api.wireAdvancedToggles(); api.wireNavDropdown();
   }
 
   window.MopsosUI = api;
@@ -420,7 +544,7 @@
 
       const d3 = window.d3;
       const top = opts.top || items.length;
-      const data = items.slice().sort((a, b) => b.value - a.value).slice(0, top);
+      const data = (opts.preserveOrder ? items.slice() : items.slice().sort((a, b) => b.value - a.value)).slice(0, top);
 
       const width = 760;
       const rowH = 26;
