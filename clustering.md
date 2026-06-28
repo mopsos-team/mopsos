@@ -7,84 +7,138 @@ section: clustering
 <section class="hero card">
   <p class="kicker">MOPSOS</p>
   <h1>Stylometry</h1>
-  <p class="lead">Clustering, similarity, and network analysis.</p>
+  <p class="tab-desc">Group texts — or any other unit — by how they use the language. Choose what to cluster, optionally limit the data, and the pipeline builds a feature matrix straight from SQL, computes distances, clusters, and draws everything with D3.</p>
+  <div class="tab-meta-row">
+    <button class="info-btn" data-info="clusterInfo">What is this?</button>
+  </div>
+  <div id="clusterInfo" class="info-panel" hidden>
+    <h4>Stylometry tab</h4>
+    <p>Each unit you cluster (a work, an author, a part-of-speech class…) becomes a "document". Its features are the frequencies of the tokens it contains, weighted (TF-IDF by default), turned into a vector, and compared with a distance metric. The resulting distance matrix is a 2-D array passed directly to the clustering and visualisation routines, so the whole pipeline is matrix-in / matrix-out and integrates cleanly with SQL.</p>
+    <ul>
+      <li><strong>Cluster by</strong> sets what each point represents. For part of speech, number, and case you can pick a specific value (e.g. cluster works by how they use verbs) or cluster the categories themselves.</li>
+      <li><strong>Limit to</strong> restricts the corpus to a single value of any variable before features are built.</li>
+      <li><strong>Advanced features / clustering options</strong> expose the feature model, distance metric, method, and number of clusters. Sensible defaults are used otherwise.</li>
+    </ul>
+  </div>
 </section>
 
-<div id="clusterLoadStatus" class="load-progress"><span>Loading</span></div>
+<div id="clusterLoadStatus" class="load-progress"><span>Loading corpus into SQLite…</span></div>
 
 <div class="card">
-  <h2>2. Configure features</h2>
-  <div class="grid-3">
-    <div class="field"><label for="clusterBookCol"><strong>Book column</strong></label><select id="clusterBookCol" disabled><option value="work" selected>work</option></select></div>
-    <div class="field"><label for="clusterTokenCol"><strong>Token column</strong></label><select id="clusterTokenCol" disabled><option value="form">form</option><option value="lemma" selected>lemma</option></select></div>
-    <div class="field"><label for="clusterFeatureMode"><strong>Feature mode</strong></label><select id="clusterFeatureMode"><option value="token">Direct tokens</option><option value="collocation">Collocations (n-grams)</option></select></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterNgram"><strong>Collocation size n</strong></label><input id="clusterNgram" type="text" value="2" /></div>
-    <div class="field"><label for="clusterVectorModel"><strong>Vector model</strong></label><select id="clusterVectorModel"><option value="binary">Binary presence</option><option value="count">Raw counts</option><option value="tfidf" selected>TF-IDF</option><option value="bm25">BM25 (Okapi)</option><option value="bm25plus">BM25+</option></select></div>
-    <div class="field"><label for="clusterDistance"><strong>Distance metric</strong></label><select id="clusterDistance"><option value="cosine" selected>Cosine</option><option value="jaccard">Jaccard</option><option value="euclidean">Euclidean</option><option value="manhattan">Manhattan</option></select></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterExcludeFunction"><strong>Exclude function words</strong></label><select id="clusterExcludeFunction"><option value="off" selected>No</option><option value="on">Yes</option></select></div>
-    <div class="field"><label for="clusterMinDocFreq"><strong>Min document frequency ratio</strong></label><input id="clusterMinDocFreq" type="text" value="0.00" /></div>
-    <div class="field"><label for="clusterMaxDocFreq"><strong>Max document frequency ratio</strong></label><input id="clusterMaxDocFreq" type="text" value="1.00" /></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterPosFilter"><strong>POS filter</strong></label><select id="clusterPosFilter"><option value="">(any)</option></select></div>
-    <div class="field"><label for="clusterPersonFilter"><strong>Person filter</strong></label><select id="clusterPersonFilter"><option value="">(any)</option></select></div>
-    <div class="field"><label for="clusterNumberFilter"><strong>Number filter</strong></label><select id="clusterNumberFilter"><option value="">(any)</option></select></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterTenseFilter"><strong>Tense filter</strong></label><select id="clusterTenseFilter"><option value="">(any)</option></select></div>
-    <div class="field"><label for="clusterMoodFilter"><strong>Mood filter</strong></label><select id="clusterMoodFilter"><option value="">(any)</option></select></div>
-    <div class="field"><label for="clusterVoiceFilter"><strong>Voice filter</strong></label><select id="clusterVoiceFilter"><option value="">(any)</option></select></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterGenderFilter"><strong>Gender filter</strong></label><select id="clusterGenderFilter"><option value="">(any)</option></select></div>
-    <div class="field"><label for="clusterCaseFilter"><strong>Case filter</strong></label><select id="clusterCaseFilter"><option value="">(any)</option></select></div>
-    <div class="field"><label for="clusterDegreeFilter"><strong>Degree filter</strong></label><select id="clusterDegreeFilter"><option value="">(any)</option></select></div>
-  </div>
-</div>
-
-<div class="card">
-  <h2>3. Choose clustering strategy</h2>
-  <div class="grid-3">
-    <div class="field"><label for="clusterMethod"><strong>Clustering method</strong></label><select id="clusterMethod">
-      <option value="threshold">1) Threshold graph components</option>
-      <option value="single">2) Agglomerative single-link</option>
-      <option value="complete">3) Agglomerative complete-link</option>
-      <option value="average">4) Agglomerative average-link</option>
-      <option value="ward">5) Agglomerative ward (euclidean-ish)</option>
-      <option value="kmeans">6) K-means</option>
-      <option value="kmedoids">7) K-medoids</option>
-      <option value="dbscan">8) DBSCAN</option>
-      <option value="labelprop">9) Label propagation (graph)</option>
-      <option value="mds_kmeans">10) MDS + K-means</option>
-    </select></div>
-    <div class="field"><label for="clusterK"><strong>Target clusters (k)</strong></label><input id="clusterK" type="text" value="6" /></div>
-    <div class="field"><label for="clusterThreshold"><strong>Similarity threshold</strong></label><input id="clusterThreshold" type="text" value="0.25" /></div>
-  </div>
-  <div class="grid-3">
-    <div class="field"><label for="clusterEps"><strong>DBSCAN epsilon (distance)</strong></label><input id="clusterEps" type="text" value="0.65" /></div>
-    <div class="field"><label for="clusterMinPts"><strong>DBSCAN minPts</strong></label><input id="clusterMinPts" type="text" value="2" /></div>
-    <div class="field"><label for="clusterTopFeatures"><strong>Top features per cluster</strong></label><input id="clusterTopFeatures" type="text" value="10" /></div>
-  </div>
-  <div class="btn-row"><button id="btnRunCluster" class="btn btn-primary" disabled>Run clustering pipeline</button><button id="btnClusterBenchmark" class="btn" disabled>Benchmark methods</button><button id="btnClusterStress" class="btn" disabled>Stress test all methods</button><button id="btnClusterExport" class="btn">Export assignments (CSV)</button></div>
-  <div id="clusterStressOut" class="analysis-wrap"><div class="small-muted">Stress test output will appear here.</div></div>
-</div>
-
-<div class="card">
-  <h2>4. Visualizations</h2>
-  <div id="clusterSummary" class="analysis-wrap"></div>
-  <div class="viz-wrap"><h3>Method benchmark</h3><div id="clusterBenchmark"></div></div>
+  <h2>1. Configure features</h2>
+  <p class="help" style="margin-top:-.35rem;">Pick what each point represents and (optionally) restrict the data. Everything else has sensible defaults under Advanced features.</p>
   <div class="grid-2">
-    <div class="viz-wrap"><h3>MDS scatter</h3><svg id="clusterMdsSvg" class="cluster-svg" viewBox="0 0 760 420"></svg></div>
-    <div class="viz-wrap"><h3>Cluster size bars</h3><div id="clusterSizeBars"></div></div>
+    <div class="field">
+      <label for="clusterByVar"><strong>Cluster by</strong></label>
+      <select id="clusterByVar" disabled>
+        <option value="work" selected>Books / works</option>
+        <option value="author">Authors</option>
+        <option value="lemma">Lemmata</option>
+        <option value="form">Word forms</option>
+        <option value="pos">Part of speech</option>
+        <option value="number">Grammatical number</option>
+        <option value="case">Case</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="clusterLimitVar"><strong>Limit to</strong></label>
+      <select id="clusterLimitVar" disabled>
+        <option value="" selected>(no limit)</option>
+        <option value="author">Author</option>
+        <option value="work">Work</option>
+        <option value="pos">Part of speech</option>
+        <option value="person">Person</option>
+        <option value="number">Number</option>
+        <option value="tense">Tense</option>
+        <option value="mood">Mood</option>
+        <option value="voice">Voice</option>
+        <option value="gender">Gender</option>
+        <option value="case">Case</option>
+        <option value="degree">Degree</option>
+      </select>
+    </div>
+  </div>
+  <div class="submenu-row" id="clusterBySubRow" hidden>
+    <div class="field">
+      <label for="clusterBySub"><strong id="clusterBySubLabel">Which value?</strong></label>
+      <select id="clusterBySub"></select>
+    </div>
+  </div>
+  <div class="submenu-row" id="clusterLimitValRow" hidden>
+    <div class="field">
+      <label for="clusterLimitVal"><strong id="clusterLimitValLabel">Limit value</strong></label>
+      <select id="clusterLimitVal"></select>
+    </div>
+  </div>
+
+  <button class="adv-toggle" data-adv="clusterFeatAdv">Advanced features</button>
+  <div id="clusterFeatAdv" class="adv-panel" hidden>
+    <div class="grid-3">
+      <div class="field"><label for="clusterTokenCol"><strong>Feature (token) column</strong></label><select id="clusterTokenCol"><option value="lemma" selected>lemma</option><option value="form">form</option></select></div>
+      <div class="field"><label for="clusterFeatureMode"><strong>Feature mode</strong></label><select id="clusterFeatureMode"><option value="token" selected>Direct tokens</option><option value="collocation">Collocations (n-grams)</option></select></div>
+      <div class="field"><label for="clusterNgram"><strong>Collocation size n</strong></label><input id="clusterNgram" type="text" value="2" /></div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label for="clusterVectorModel"><strong>Vector model</strong></label><select id="clusterVectorModel"><option value="binary">Binary presence</option><option value="count">Raw counts</option><option value="tfidf" selected>TF-IDF</option><option value="bm25">BM25 (Okapi)</option><option value="bm25plus">BM25+</option></select></div>
+      <div class="field"><label for="clusterDistance"><strong>Distance metric</strong></label><select id="clusterDistance"><option value="cosine" selected>Cosine</option><option value="jaccard">Jaccard</option><option value="euclidean">Euclidean</option><option value="manhattan">Manhattan</option></select></div>
+      <div class="field"><label for="clusterExcludeFunction"><strong>Exclude function words</strong></label><select id="clusterExcludeFunction"><option value="off" selected>No</option><option value="on">Yes</option></select></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label for="clusterMinDocFreq"><strong>Min document frequency ratio</strong></label><input id="clusterMinDocFreq" type="text" value="0.00" /></div>
+      <div class="field"><label for="clusterMaxDocFreq"><strong>Max document frequency ratio</strong></label><input id="clusterMaxDocFreq" type="text" value="1.00" /></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>2. Clustering strategy</h2>
+  <p id="clusterStrategyNote" class="help" style="margin-top:-.2rem;">Default: <strong>Ward agglomerative clustering</strong> into <strong>6</strong> clusters using the distance metric above. Open Advanced clustering options to change the method or the number of clusters.</p>
+  <button class="adv-toggle" data-adv="clusterStratAdv">Advanced clustering options</button>
+  <div id="clusterStratAdv" class="adv-panel" hidden>
+    <div class="grid-3">
+      <div class="field"><label for="clusterMethod"><strong>Clustering method</strong></label><select id="clusterMethod">
+        <option value="threshold">Threshold graph components</option>
+        <option value="single">Agglomerative single-link</option>
+        <option value="complete">Agglomerative complete-link</option>
+        <option value="average">Agglomerative average-link</option>
+        <option value="ward" selected>Agglomerative Ward</option>
+        <option value="kmeans">K-means</option>
+        <option value="kmedoids">K-medoids</option>
+        <option value="dbscan">DBSCAN</option>
+        <option value="labelprop">Label propagation (graph)</option>
+        <option value="mds_kmeans">MDS + K-means</option>
+      </select></div>
+      <div class="field"><label for="clusterK"><strong>Target clusters (k)</strong></label><input id="clusterK" type="text" value="6" /></div>
+      <div class="field"><label for="clusterThreshold"><strong>Similarity threshold</strong></label><input id="clusterThreshold" type="text" value="0.25" /></div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label for="clusterEps"><strong>DBSCAN epsilon (distance)</strong></label><input id="clusterEps" type="text" value="0.65" /></div>
+      <div class="field"><label for="clusterMinPts"><strong>DBSCAN minPts</strong></label><input id="clusterMinPts" type="text" value="2" /></div>
+      <div class="field"><label for="clusterTopFeatures"><strong>Top features per cluster</strong></label><input id="clusterTopFeatures" type="text" value="10" /></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button id="btnRunCluster" class="btn btn-primary" disabled>Run clustering</button>
+    <button id="btnClusterBenchmark" class="btn" disabled>Benchmark methods</button>
+    <button id="btnClusterStress" class="btn" disabled>Stress test</button>
+    <button id="btnClusterExport" class="btn">Export assignments (CSV)</button>
+  </div>
+  <details style="margin-top:.6rem;"><summary class="small-muted" style="cursor:pointer;">Generated SQL</summary><pre id="clusterSql" class="status" style="white-space:pre-wrap;margin-top:.4rem;"></pre></details>
+  <div id="clusterStressOut" class="analysis-wrap" style="margin-top:.5rem;"><div class="small-muted">Benchmark / stress-test output will appear here.</div></div>
+</div>
+
+<div class="card">
+  <h2>3. Visualizations</h2>
+  <div id="clusterSummary" class="analysis-wrap"></div>
+  <div class="grid-2">
+    <div class="viz-wrap"><h3>MDS scatter</h3><div id="clusterMds"></div></div>
+    <div class="viz-wrap"><h3>Cluster sizes</h3><div id="clusterSizeBars"></div></div>
   </div>
   <div class="grid-2">
     <div class="viz-wrap"><h3>Similarity heatmap</h3><div id="clusterHeatmap"></div></div>
-    <div class="viz-wrap"><h3>Network (threshold edges)</h3><svg id="clusterNetworkSvg" class="cluster-svg" viewBox="0 0 760 420"></svg></div>
+    <div class="viz-wrap"><h3>Similarity network</h3><div id="clusterNetwork"></div></div>
   </div>
   <div class="viz-wrap"><h3>Similarity distribution</h3><div id="clusterSimilarityDist"></div></div>
   <div class="viz-wrap"><h3>Cluster feature signatures</h3><div id="clusterFeatures"></div></div>
+  <div class="viz-wrap"><h3>Method benchmark</h3><div id="clusterBenchmark"></div></div>
 </div>

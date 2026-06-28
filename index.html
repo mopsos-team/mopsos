@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
+  <div class="bg-glow bg-glow-left" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-right" aria-hidden="true"></div>
+
   <header class="site-header">
     <div class="container header-shell">
       <div class="header-inner">
@@ -18,6 +21,7 @@
           </span>
         </a>
         <nav class="site-nav" aria-label="Main navigation">
+          <a href="morphotactics.html" class="nav-link">Morphotactics</a>
           <a href="index.html" class="nav-link is-active">Morphology</a>
           <a href="phonology.html" class="nav-link">Phonology</a>
           <a href="syntax.html" class="nav-link">Syntax</a>
@@ -32,52 +36,45 @@
     <section class="hero card">
       <p class="kicker">MOPSOS</p>
       <h1>Morphology</h1>
+      <p class="tab-desc">Browse and query the morphologically annotated corpus: every token tagged for part of speech, case, number, tense, mood, voice, gender, and degree.</p>
+      <div class="tab-meta-row">
+        <button class="info-btn" data-info="morphInfo">What is this?</button>
+      </div>
+      <div id="morphInfo" class="info-panel" hidden>
+        <h4>Morphology tab</h4>
+        <p>This tab is driven entirely by an in-browser SQLite database built from the corpus (table <code>morphology</code>). There are two ways to explore it:</p>
+        <ul>
+          <li><strong>Quick filter</strong> — pick a part of speech, number, and/or case from the drop-downs. MOPSOS writes the matching SQL for you, runs it, and shows the results <strong>50 at a time</strong> (use the pager, or “Show all on one page”).</li>
+          <li><strong>SQL console</strong> — write read-only SQL yourself (<code>SELECT</code> / <code>WITH</code> / <code>PRAGMA</code>). Results here are <strong>not paginated</strong> — your <code>LIMIT</code> is respected as written.</li>
+        </ul>
+        <p>Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>.</p>
+      </div>
     </section>
 
-   <div id="statRows" class="load-progress"><span>Loading</span></div>
+    <div id="morphLoadStatus" class="load-progress"><span>Loading corpus into SQLite…</span></div>
 
-    <div class="card" style="display:none">
-      <h2>1. Data source</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="bundledDatasetChoice"><strong>Bundled dataset</strong></label>
-          <select id="bundledDatasetChoice">
-            <option value="assets/data/default.csv">Epic Corpus</option>
-          </select>
-          <div class="btn-row" style="margin-top:.45rem;"><button id="btnLoadBundled" class="btn btn-primary">Load selected bundled CSV</button></div>
-          <div id="loadStatus" class="status muted">No file loaded yet.</div>
-        </div>
-
-        <div class="field">
-          <div class="help" style="margin-top:.5rem;">Expected columns include <code>pos</code>, <code>person</code>, <code>number</code>, <code>tense</code>, <code>mood</code>, <code>voice</code>, <code>gender</code>, <code>case</code>.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>2. Morphology filter</h2>
+    <div class="card filter-builder">
+      <h2>Quick filter</h2>
+      <p class="help" style="margin-top:-.35rem;">Choose any combination below. MOPSOS builds and runs the SQL for you; results are paginated 50 per page.</p>
       <div class="grid-3">
-        <div class="field"><label for="filterPos"><strong>pos</strong></label><select id="filterPos"><option value="">(any)</option></select></div>
-        <div class="field"><label for="filterNumber"><strong>number</strong></label><select id="filterNumber"><option value="">(any)</option></select></div>
-        <div class="field"><label for="filterCase"><strong>case</strong></label><select id="filterCase"><option value="">(any)</option></select></div>
+        <div class="field"><label for="filterPos"><strong>Part of speech</strong></label><select id="filterPos" disabled><option value="">(any)</option></select></div>
+        <div class="field"><label for="filterNumber"><strong>Number</strong></label><select id="filterNumber" disabled><option value="">(any)</option></select></div>
+        <div class="field"><label for="filterCase"><strong>Case</strong></label><select id="filterCase" disabled><option value="">(any)</option></select></div>
       </div>
       <div class="btn-row">
-        <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply morphology filter</button>
+        <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply filter</button>
         <button id="btnResetFilter" class="btn">Reset</button>
+        <button id="btnFilterToConsole" class="btn">Send query to SQL console</button>
       </div>
-      <pre id="statusBox" class="status">Load a dataset to begin.</pre>
+      <pre id="filterSqlBox" class="status" style="margin-top:.6rem;">Pick filters and click Apply.</pre>
+      <div id="filterResults" style="margin-top:.6rem;"></div>
     </div>
 
     <div class="card">
-      <h2>3. Preview</h2>
-      <div id="tableWrap" class="table-wrap"></div>
-    </div>
-
-    <div class="card">
-      <h2>4. SQL console</h2>
+      <h2>SQL console</h2>
       <p class="help" style="margin-top:-.35rem;">
-        In-memory SQLite over the loaded dataset (table <code>morphology</code>). Read-only.
-        Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>.
+        In-memory SQLite over the loaded corpus (table <code>morphology</code>), read-only.
+        Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. Results are shown in full (no pagination).
       </p>
       <div id="sqlConsoleBody"></div>
     </div>
@@ -85,7 +82,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="assets/js/papa-fallback.js"></script>
+  <script src="assets/js/mopsos-shared.js"></script>
   <script src="assets/js/morphology-standalone.js"></script>
 </body>
 </html>

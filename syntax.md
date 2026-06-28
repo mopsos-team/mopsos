@@ -7,7 +7,19 @@ section: syntax
 <section class="hero card">
   <p class="kicker">MOPSOS</p>
   <h1>Syntax Workbench</h1>
-  <p class="lead">Build dependency views either from tab-separated token lines or directly from CSVs that include <code>section_id</code>, <code>id</code>, and <code>distance</code>.</p>
+  <p class="tab-desc">Explore how words relate to one another in the sentence: dependency trees, phrase-structure sketches, and corpus-wide profiles of grammatical relations and dependency distance.</p>
+  <div class="tab-meta-row">
+    <button class="info-btn" data-info="syntaxInfo">What is this?</button>
+  </div>
+  <div id="syntaxInfo" class="info-panel" hidden>
+    <h4>Syntax tab</h4>
+    <p>Syntax is the study of how words combine into larger structures. This workbench lets you inspect those structures two ways:</p>
+    <ul>
+      <li><strong>Manual TSV input</strong> — paste annotated token rows (id, form, lemma, pos, head, deprel, optional distance) to draw a dependency tree and a phrase-structure sketch for a single sentence.</li>
+      <li><strong>Corpus profiles</strong> — summaries built from the loaded corpus, including the distribution of grammatical relations, construction hits, and how dependency distance (the signed gap between a token and its head) is distributed across categories.</li>
+    </ul>
+    <p>Dependency distance is read from the <code>distance</code> column; positive values mean the head follows the dependent, negative values mean it precedes.</p>
+  </div>
 </section>
 
 <div id="syntaxLoadStatus" class="load-progress"><span>Loading</span></div>

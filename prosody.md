@@ -7,7 +7,19 @@ section: prosody
 <section class="hero card">
   <p class="kicker">MOPSOS</p>
   <h1>Scansion</h1>
-  <p class="lead">Metrical Scansion and Rhythm</p>
+  <p class="tab-desc">Analyse the metre of Greek verse: scan hexameter lines into feet, profile syllable quantities, and measure rhythm and pacing across the Homeric corpus or your own input.</p>
+  <div class="tab-meta-row">
+    <button class="info-btn" data-info="prosodyInfo">What is this?</button>
+  </div>
+  <div id="prosodyInfo" class="info-panel" hidden>
+    <h4>Scansion tab</h4>
+    <p>Scansion is the analysis of a line's metrical structure — marking which syllables are long and which are short, and grouping them into feet. This tab works at two scales:</p>
+    <ul>
+      <li><strong>Corpus statistics</strong> — load precomputed Homeric scansion tables to see lines by work, the most common foot patterns, the overall long/short quantity profile, and line-level pacing.</li>
+      <li><strong>Manual scansion</strong> — supply your own line to have its syllables marked for quantity and resolved into dactylic feet.</li>
+    </ul>
+    <p>Quantity reflects vowel length and syllable weight (a syllable closed by a consonant or containing a long vowel/diphthong is heavy); feet are the recurring rhythmic units, dactyls (— ‿ ‿) and spondees (— —) in hexameter.</p>
+  </div>
 </section>
 
 <div class="card">
