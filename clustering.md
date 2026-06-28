@@ -16,7 +16,7 @@ section: clustering
     <p>Each unit you cluster (a work, an author, a part-of-speech class…) becomes a "document". Its features are the frequencies of the tokens it contains, turned into a profile and compared with a distance measure; units that come out close together are grouped into the same cluster.</p>
     <ul>
       <li><strong>Cluster by</strong> sets what each point represents. For part of speech, number, and case you can pick a specific value (e.g. cluster works by how they use verbs) or cluster the categories themselves.</li>
-      <li><strong>Limit to</strong> restricts the corpus to a single value of any variable before features are built.</li>
+      <li><strong>Limit to</strong> restricts the corpus before features are built — by work, by author, or by grammar (pick a part of speech, then add only the features that apply to it).</li>
       <li><strong>Advanced features / clustering options</strong> expose the feature model, distance metric, method, and number of clusters. Sensible defaults are used otherwise.</li>
     </ul>
   </div>
@@ -41,21 +41,8 @@ section: clustering
       </select>
     </div>
     <div class="field">
-      <label for="clusterLimitVar"><strong>Limit to</strong></label>
-      <select id="clusterLimitVar" disabled>
-        <option value="" selected>(no limit)</option>
-        <option value="author">Author</option>
-        <option value="work">Work</option>
-        <option value="pos">Part of speech</option>
-        <option value="person">Person</option>
-        <option value="number">Number</option>
-        <option value="tense">Tense</option>
-        <option value="mood">Mood</option>
-        <option value="voice">Voice</option>
-        <option value="gender">Gender</option>
-        <option value="case">Case</option>
-        <option value="degree">Degree</option>
-      </select>
+      <label for="clusterLimitWork"><strong>Limit to work</strong></label>
+      <select id="clusterLimitWork" disabled><option value="">(all works)</option></select>
     </div>
   </div>
   <div class="submenu-row" id="clusterBySubRow" hidden>
@@ -64,11 +51,16 @@ section: clustering
       <select id="clusterBySub"></select>
     </div>
   </div>
-  <div class="submenu-row" id="clusterLimitValRow" hidden>
+  <div class="grid-2">
     <div class="field">
-      <label for="clusterLimitVal"><strong id="clusterLimitValLabel">Limit value</strong></label>
-      <select id="clusterLimitVal"></select>
+      <label for="clusterLimitAuthor"><strong>Limit to author</strong></label>
+      <select id="clusterLimitAuthor" disabled><option value="">(all authors)</option></select>
     </div>
+  </div>
+  <div class="field" style="margin-top:.2rem;">
+    <label><strong>Limit to grammar</strong></label>
+    <p class="help" style="margin:-.1rem 0 .45rem;">Choose a part of speech first; then only the features that apply to it can be added — so compatible attributes combine (e.g. tense + number on a verb) while incompatible ones (e.g. person + case) never appear together.</p>
+    <div id="clusterLimitGroup" class="filter-group"></div>
   </div>
 
   <button class="adv-toggle" data-adv="clusterFeatAdv">Advanced features</button>

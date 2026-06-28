@@ -42,73 +42,6 @@
   const naGuard = (c) => q(c) + " IS NOT NULL AND " + q(c) + " NOT IN ('','-')";
   const displayName = (field, code) => (UI.LABELS[field] ? UI.label(field, code) : String(code));
 
-  /* ----- reusable part-of-speech-aware filter group ----------------------- */
-
-  function fieldSelect(labelText) {
-    const wrap = document.createElement("div");
-    wrap.className = "field";
-    const lab = document.createElement("label");
-    lab.innerHTML = "<strong>" + UI.esc(labelText) + "</strong>";
-    const sel = document.createElement("select");
-    wrap.appendChild(lab);
-    wrap.appendChild(sel);
-    return wrap;
-  }
-
-  function makeFeatureFilterGroup(host, onChange) {
-    host.innerHTML = "";
-    const grid = document.createElement("div");
-    grid.className = "grid-3";
-    host.appendChild(grid);
-
-    const posWrap = fieldSelect("Part of speech");
-    const posSel = posWrap.querySelector("select");
-    posSel.dataset.field = "pos";
-    grid.appendChild(posWrap);
-
-    function rerenderFeatures() {
-      grid.querySelectorAll("[data-featwrap]").forEach((n) => n.remove());
-      const pos = posSel.value;
-      const feats = pos ? SQL.nonEmptyColumns(FEATURE_COLS, { pos: pos }) : DEFAULT_FEATURES;
-      for (const f of feats) {
-        const wrap = fieldSelect(UI.fieldTitle(f));
-        wrap.dataset.featwrap = "1";
-        const sel = wrap.querySelector("select");
-        sel.dataset.field = f;
-        const vals = pos ? SQL.distinctFor(f, { pos: pos }) : SQL.distinctFor(f);
-        UI.fillSelect(sel, vals, { field: f, head: "(any)" });
-        sel.addEventListener("change", () => onChange && onChange());
-        grid.appendChild(wrap);
-      }
-    }
-
-    UI.fillSelect(posSel, SQL.distinct("pos"), { field: "pos", head: "(any) part of speech" });
-    posSel.addEventListener("change", () => { rerenderFeatures(); onChange && onChange(); });
-    rerenderFeatures();
-
-    return {
-      read() {
-        const f = {};
-        grid.querySelectorAll("select[data-field]").forEach((s) => { if (s.value) f[s.dataset.field] = s.value; });
-        return f;
-      },
-      setState(filters) {
-        if (!filters) return;
-        posSel.value = filters.pos || "";
-        rerenderFeatures();
-        for (const k in filters) {
-          if (k === "pos") continue;
-          const sel = grid.querySelector('select[data-field="' + k + '"]');
-          if (sel) sel.value = filters[k];
-        }
-      },
-      reset() {
-        posSel.value = "";
-        rerenderFeatures();
-      }
-    };
-  }
-
   /* ----- column pruning (hide attributes irrelevant to the selection) ----- */
 
   function prune(result) {
@@ -129,6 +62,7 @@
     UI.saveState("morph", {
       qf: qf ? qf.read() : {},
       ex: ex ? ex.read() : {},
+      exChartType: $("exChartType").value, exNodeUnit: $("exNodeUnit").value,
       exDim1: $("exDim1").value, exDim2: $("exDim2").value, exTopN: $("exTopN").value,
       sql: $("qfSqlInput").value
     });
@@ -212,10 +146,18 @@
 
   let ex = null;
 
+  function syncExplorerControls() {
+    const type = $("exChartType").value;
+    $("exDim1Wrap").hidden = (type === "network");
+    $("exDim2Wrap").hidden = (type !== "heatmap");
+    $("exNodeUnitWrap").hidden = (type !== "network");
+  }
+
   function runExplorer() {
     saveMorphState();
     const filters = ex.read();
     const w = whereOf(filters);
+    const type = $("exChartType").value;
     const dim1 = $("exDim1").value;
     const dim2 = $("exDim2").value;
     const topN = parseInt($("exTopN").value, 10) || 20;
@@ -228,18 +170,35 @@
       : "";
 
     try {
-      if (!dim2 || dim2 === dim1) {
-        const sql = "SELECT " + q(dim1) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +
-          " WHERE " + naGuard(dim1) + (w ? " AND " + w : "") +
-          " GROUP BY k ORDER BY c DESC LIMIT " + topN + ";";
-        const rows = SQL.objects(sql);
-        title.textContent = "Token count by " + UI.fieldTitle(dim1);
-        desc.textContent = "Top " + rows.length + " values" + filterText + ".";
-        Chart.bars(chart, rows.map((r) => ({ label: displayName(dim1, r.k), value: r.c })),
-          { valueLabel: "tokens", emptyMsg: "No tokens match." });
-      } else {
-        const sql = "SELECT " + q(dim1) + " AS r, " + q(dim2) + " AS c2, COUNT(*) AS c FROM " + q(TABLE) +
-          " WHERE " + naGuard(dim1) + " AND " + naGuard(dim2) + (w ? " AND " + w : "") +
+      if (type === "network") {
+        const unit = $("exNodeUnit").value;
+        const nodeRows = SQL.objects("SELECT " + q(unit) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +
+          " WHERE " + naGuard(unit) + (w ? " AND " + w : "") +
+          " GROUP BY k ORDER BY c DESC LIMIT " + Math.min(topN, 40) + ";");
+        if (nodeRows.length < 2) {
+          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Not enough words match to build a network.</div>';
+          title.textContent = ""; desc.textContent = ""; return;
+        }
+        const ids = nodeRows.map((r) => r.k);
+        const freq = {}; nodeRows.forEach((r) => { freq[r.k] = r.c; });
+        const inList = ids.map(sqlStr).join(", ");
+        const coSql = "WITH f AS (SELECT sentence_id, " + q(unit) + " AS u FROM " + q(TABLE) +
+          " WHERE " + naGuard(unit) + (w ? " AND " + w : "") + " AND " + q(unit) + " IN (" + inList + ")) " +
+          "SELECT a.u AS s, b.u AS t, COUNT(*) AS w FROM f a JOIN f b " +
+          "ON a.sentence_id = b.sentence_id AND a.u < b.u " +
+          "GROUP BY s, t HAVING w >= 2 ORDER BY w DESC LIMIT 250;";
+        const edges = SQL.objects(coSql);
+        const maxC = Math.max.apply(null, nodeRows.map((r) => r.c));
+        const maxW = edges.length ? Math.max.apply(null, edges.map((e) => e.w)) : 1;
+        const nodes = ids.map((id) => ({ id: id, label: id, r: 6 + 14 * Math.sqrt((freq[id] || 1) / maxC) }));
+        const links = edges.map((e) => ({ source: e.s, target: e.t, weight: e.w / maxW }));
+        title.textContent = "Co-occurrence network of " + (unit === "lemma" ? "lemmata" : "word forms");
+        desc.textContent = nodes.length + " words, " + links.length + " links (sharing a sentence ≥ 2×)" + filterText + ". Drag nodes to explore.";
+        Chart.network(chart, nodes, links, { linkDistance: 80, charge: -230, emptyMsg: "No co-occurrences found." });
+      } else if (type === "heatmap") {
+        const d2 = dim2 || dim1;
+        const sql = "SELECT " + q(dim1) + " AS r, " + q(d2) + " AS c2, COUNT(*) AS c FROM " + q(TABLE) +
+          " WHERE " + naGuard(dim1) + " AND " + naGuard(d2) + (w ? " AND " + w : "") +
           " GROUP BY r, c2;";
         const data = SQL.objects(sql);
         const rowTot = {}, colTot = {}, cell = {};
@@ -251,12 +210,21 @@
         const rowVals = Object.keys(rowTot).sort((a, b) => rowTot[b] - rowTot[a]).slice(0, Math.min(topN, 30));
         const colVals = Object.keys(colTot).sort((a, b) => colTot[b] - colTot[a]).slice(0, 30);
         const matrix = rowVals.map((rv) => colVals.map((cv) => cell[rv + "\u0000" + cv] || 0));
-        title.textContent = UI.fieldTitle(dim1) + " × " + UI.fieldTitle(dim2);
+        title.textContent = UI.fieldTitle(dim1) + " × " + UI.fieldTitle(d2);
         desc.textContent = "Token counts for each combination" + filterText + ". Darker = more frequent.";
         Chart.heatmap(chart, matrix,
           rowVals.map((v) => displayName(dim1, v)),
-          colVals.map((v) => displayName(dim2, v)),
+          colVals.map((v) => displayName(d2, v)),
           { valueLabel: "tokens", showValues: rowVals.length <= 15 && colVals.length <= 15 });
+      } else {
+        const sql = "SELECT " + q(dim1) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +
+          " WHERE " + naGuard(dim1) + (w ? " AND " + w : "") +
+          " GROUP BY k ORDER BY c DESC LIMIT " + topN + ";";
+        const rows = SQL.objects(sql);
+        title.textContent = "Token count by " + UI.fieldTitle(dim1);
+        desc.textContent = "Top " + rows.length + " values" + filterText + ".";
+        Chart.bars(chart, rows.map((r) => ({ label: displayName(dim1, r.k), value: r.c })),
+          { valueLabel: "tokens", emptyMsg: "No tokens match." });
       }
     } catch (e) {
       chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Chart error: ' + UI.esc(e.message) + "</div>";
@@ -277,8 +245,8 @@
     }
     if ($("morphLoadStatus")) $("morphLoadStatus").style.display = "none";
 
-    qf = makeFeatureFilterGroup($("qfGroup"), null);
-    ex = makeFeatureFilterGroup($("exGroup"), null);
+    qf = UI.featureFilterGroup($("qfGroup"), {});
+    ex = UI.featureFilterGroup($("exGroup"), {});
 
     $("btnApplyFilter").disabled = false;
     $("btnApplyFilter").addEventListener("click", applyQuickFilter);
@@ -294,6 +262,8 @@
     $("exDim1").disabled = false;
     $("exDim2").disabled = false;
     $("btnExRun").disabled = false;
+    $("exChartType").addEventListener("change", () => { syncExplorerControls(); runExplorer(); });
+    $("exNodeUnit").addEventListener("change", runExplorer);
     $("btnExRun").addEventListener("click", runExplorer);
     $("btnExReset").addEventListener("click", () => { ex.reset(); runExplorer(); });
 
@@ -302,11 +272,14 @@
     if (st) {
       if (st.qf) qf.setState(st.qf);
       if (st.ex) ex.setState(st.ex);
+      if (st.exChartType) $("exChartType").value = st.exChartType;
+      if (st.exNodeUnit) $("exNodeUnit").value = st.exNodeUnit;
       if (st.exDim1) $("exDim1").value = st.exDim1;
       if (st.exDim2 != null) $("exDim2").value = st.exDim2;
       if (st.exTopN) $("exTopN").value = st.exTopN;
       if (st.sql) $("qfSqlInput").value = st.sql;
     }
+    syncExplorerControls();
 
     applyQuickFilter();   // initial browse (restored filter if any)
     runExplorer();        // initial chart (restored dims if any)

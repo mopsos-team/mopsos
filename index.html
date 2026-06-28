@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Morphology · MOPSOS</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
@@ -14,7 +18,7 @@
     <div class="container header-shell">
       <div class="header-inner">
         <a class="site-brand" href="index.html">
-          <span class="brand-mark" aria-hidden="true">Γ</span>
+          <span class="brand-mark" aria-hidden="true">Μ</span>
           <span class="brand-copy">
             <strong>MOPSOS</strong>
             <small>Database of Ancient Greek Morphology, Prosody, Syntax, and Scansion</small>
@@ -85,15 +89,30 @@
 
     <div class="card">
       <h2>Explore &amp; visualize</h2>
-      <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, optionally broken down by a second one (which draws a heat-map). Add filters to focus, e.g. set the part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
+      <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, cross-tabulate two of them, or draw a co-occurrence network of words that share a sentence. Add filters to focus — e.g. set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
       <div class="grid-3">
         <div class="field">
+          <label for="exChartType"><strong>Chart</strong></label>
+          <select id="exChartType">
+            <option value="bars" selected>Bar chart</option>
+            <option value="heatmap">Heat-map (two dimensions)</option>
+            <option value="network">Co-occurrence network</option>
+          </select>
+        </div>
+        <div class="field" id="exDim1Wrap">
           <label for="exDim1"><strong>Count by</strong></label>
           <select id="exDim1" disabled></select>
         </div>
-        <div class="field">
+        <div class="field" id="exDim2Wrap">
           <label for="exDim2"><strong>Break down by</strong></label>
           <select id="exDim2" disabled></select>
+        </div>
+        <div class="field" id="exNodeUnitWrap" hidden>
+          <label for="exNodeUnit"><strong>Nodes are</strong></label>
+          <select id="exNodeUnit">
+            <option value="lemma" selected>Lemmata</option>
+            <option value="form">Word forms</option>
+          </select>
         </div>
         <div class="field">
           <label for="exTopN"><strong>Show top</strong></label>

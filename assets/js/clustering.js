@@ -25,10 +25,11 @@
   const state = { run: null, base: null };
 
   const el = {};
+  let limitGroup = null;
   function grab() {
     [
       "clusterLoadStatus", "clusterByVar", "clusterBySub", "clusterBySubRow", "clusterBySubLabel",
-      "clusterLimitVar", "clusterLimitVal", "clusterLimitValRow", "clusterLimitValLabel",
+      "clusterLimitWork", "clusterLimitAuthor", "clusterLimitGroup",
       "clusterTokenCol", "clusterFeatureMode", "clusterNgram", "clusterVectorModel", "clusterDistance",
       "clusterExcludeFunction", "clusterMinDocFreq", "clusterMaxDocFreq",
       "clusterMethod", "clusterK", "clusterThreshold", "clusterEps", "clusterMinPts", "clusterTopFeatures",
@@ -338,9 +339,10 @@
 
     const filters = [];
     if (hardFilter) filters.push(hardFilter);
-    const limitVar = el.clusterLimitVar.value;
-    const limitVal = el.clusterLimitVal ? el.clusterLimitVal.value : "";
-    if (limitVar && limitVal) filters.push({ col: limitVar, val: limitVal });
+    if (el.clusterLimitWork && el.clusterLimitWork.value) filters.push({ col: "work", val: el.clusterLimitWork.value });
+    if (el.clusterLimitAuthor && el.clusterLimitAuthor.value) filters.push({ col: "author", val: el.clusterLimitAuthor.value });
+    const gram = limitGroup ? limitGroup.read() : {};
+    Object.keys(gram).forEach((col) => filters.push({ col: col, val: gram[col] }));
 
     const tokenCol = el.clusterTokenCol.value;
     const mode = el.clusterFeatureMode.value;
@@ -426,7 +428,7 @@
   // =====================================================================
   //  RUN + RENDER
   // =====================================================================
-  var CLUSTER_STATE_IDS = ["clusterByVar", "clusterBySub", "clusterLimitVar", "clusterLimitVal",
+  var CLUSTER_STATE_IDS = ["clusterByVar", "clusterBySub", "clusterLimitWork", "clusterLimitAuthor",
     "clusterTokenCol", "clusterFeatureMode", "clusterNgram", "clusterVectorModel", "clusterDistance",
     "clusterExcludeFunction", "clusterMinDocFreq", "clusterMaxDocFreq", "clusterMethod", "clusterK",
     "clusterThreshold", "clusterEps", "clusterMinPts", "clusterTopFeatures"];
@@ -438,6 +440,7 @@
       var e = el[id]; if (!e) return;
       o[id] = (e.type === "checkbox") ? e.checked : e.value;
     });
+    if (limitGroup) o.limitGroup = limitGroup.read();
     window.MopsosUI.saveState("cluster", o);
   }
 
@@ -601,14 +604,12 @@
     el.clusterBySub.value = "";
   }
 
-  function populateLimitVal() {
-    const v = el.clusterLimitVar.value;
-    if (!v) { el.clusterLimitValRow.hidden = true; return; }
-    el.clusterLimitValRow.hidden = false;
-    el.clusterLimitValLabel.textContent = "Which " + window.MopsosUI.fieldTitle(v).toLowerCase() + "?";
-    window.MopsosUI.fillSelect(el.clusterLimitVal, window.MopsosSQL.distinct(v),
-      { field: v, head: "(no limit)" });
-    el.clusterLimitVal.value = "";
+  function populateLimits() {
+    window.MopsosUI.fillSelect(el.clusterLimitWork, window.MopsosSQL.distinct("work"), { head: "(all works)" });
+    window.MopsosUI.fillSelect(el.clusterLimitAuthor, window.MopsosSQL.distinct("author"), { head: "(all authors)" });
+    el.clusterLimitWork.disabled = false;
+    el.clusterLimitAuthor.disabled = false;
+    limitGroup = window.MopsosUI.featureFilterGroup(el.clusterLimitGroup, { requirePos: true });
   }
 
   // =====================================================================
@@ -620,7 +621,6 @@
 
     el.clusterByVar.addEventListener("change", populateSub);
     el.clusterBySub.addEventListener("change", () => {});
-    el.clusterLimitVar.addEventListener("change", populateLimitVal);
 
     el.btnRunCluster.addEventListener("click", run);
     el.btnClusterBenchmark.addEventListener("click", runBenchmark);
@@ -634,21 +634,21 @@
       // stop the animated loading bar; reuse the element as a static status line
       if (el.clusterLoadStatus) { el.clusterLoadStatus.classList.remove("load-progress"); el.clusterLoadStatus.classList.add("status"); }
       el.clusterByVar.disabled = false;
-      el.clusterLimitVar.disabled = false;
       el.btnRunCluster.disabled = false;
       el.btnClusterBenchmark.disabled = false;
       el.btnClusterStress.disabled = false;
       populateSub();
-      populateLimitVal();
+      populateLimits();
       // restore the person's previous selections, if any
       var st = window.MopsosUI && window.MopsosUI.loadState("cluster");
       if (st) {
         if (st.clusterByVar != null) { el.clusterByVar.value = st.clusterByVar; populateSub(); }
         if (st.clusterBySub != null) el.clusterBySub.value = st.clusterBySub;
-        if (st.clusterLimitVar != null) { el.clusterLimitVar.value = st.clusterLimitVar; populateLimitVal(); }
-        if (st.clusterLimitVal != null) el.clusterLimitVal.value = st.clusterLimitVal;
+        if (st.clusterLimitWork != null) el.clusterLimitWork.value = st.clusterLimitWork;
+        if (st.clusterLimitAuthor != null) el.clusterLimitAuthor.value = st.clusterLimitAuthor;
+        if (st.limitGroup && limitGroup) limitGroup.setState(st.limitGroup);
         CLUSTER_STATE_IDS.forEach(function (id) {
-          if (["clusterByVar", "clusterBySub", "clusterLimitVar", "clusterLimitVal"].indexOf(id) >= 0) return;
+          if (["clusterByVar", "clusterBySub", "clusterLimitWork", "clusterLimitAuthor"].indexOf(id) >= 0) return;
           var e = el[id]; if (!e || st[id] == null) return;
           if (e.type === "checkbox") e.checked = st[id]; else e.value = st[id];
         });

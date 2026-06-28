@@ -343,6 +343,96 @@
       } catch (e) { return null; }
     },
 
+    /**
+     * Build a part-of-speech-aware filter group. Picking a part of speech
+     * reveals only the grammatical features that actually occur for it (so
+     * only mutually compatible attributes can be combined — e.g. tense + number
+     * on a verb, never person + case), each offering only the values present.
+     * opts.requirePos: when true, no feature appears until a part of speech is
+     * chosen (limiting by, say, number alone is meaningless).
+     * Returns { read(), setState(obj), reset() }.
+     */
+    featureFilterGroup(host, opts) {
+      opts = opts || {};
+      const self = this;
+      const SQL = window.MopsosSQL;
+      const FEATURE_COLS = ["number", "case", "gender", "tense", "mood", "voice", "person", "degree"];
+      const DEFAULTS = ["number", "case", "gender", "tense", "mood"];
+      host.innerHTML = "";
+      const grid = document.createElement("div");
+      grid.className = "grid-3";
+      host.appendChild(grid);
+
+      function fieldSelect(labelText) {
+        const w = document.createElement("div"); w.className = "field";
+        const l = document.createElement("label"); l.innerHTML = "<strong>" + self.esc(labelText) + "</strong>";
+        const s = document.createElement("select");
+        w.appendChild(l); w.appendChild(s); return w;
+      }
+      const posWrap = fieldSelect("Part of speech");
+      const posSel = posWrap.querySelector("select");
+      posSel.dataset.field = "pos";
+      grid.appendChild(posWrap);
+
+      function snapshot() {
+        const f = {};
+        grid.querySelectorAll("select[data-field]").forEach((s) => { if (s.value) f[s.dataset.field] = s.value; });
+        return f;
+      }
+
+      function rerender() {
+        const cur = snapshot();
+        const pos = cur.pos || "";
+        let candidates;
+        if (pos) candidates = FEATURE_COLS;
+        else candidates = opts.requirePos ? [] : DEFAULTS;
+        // A feature is offered only if it still takes a value given the OTHER
+        // current choices — so once 'person' is picked, 'case' disappears
+        // (no token carries both), and vice versa.
+        const show = [];
+        candidates.forEach((f) => {
+          const others = Object.assign({}, cur); delete others[f];
+          if (SQL.nonEmptyColumns([f], others).length) show.push(f);
+        });
+        Object.keys(cur).forEach((f) => { if (f !== "pos" && show.indexOf(f) < 0) show.push(f); });
+
+        grid.querySelectorAll("[data-featwrap]").forEach((n) => n.remove());
+        show.forEach((f) => {
+          const w = fieldSelect(self.fieldTitle(f));
+          w.dataset.featwrap = "1";
+          const s = w.querySelector("select");
+          s.dataset.field = f;
+          const others = Object.assign({}, cur); delete others[f];
+          const vals = pos || Object.keys(others).length ? SQL.distinctFor(f, others) : SQL.distinctFor(f);
+          self.fillSelect(s, vals, { field: f, head: "(any)" });
+          if (cur[f] && vals.indexOf(cur[f]) >= 0) s.value = cur[f];
+          s.addEventListener("change", () => { rerender(); opts.onChange && opts.onChange(); });
+          grid.appendChild(w);
+        });
+      }
+
+      this.fillSelect(posSel, SQL.distinct("pos"),
+        { field: "pos", head: opts.requirePos ? "(choose a part of speech)" : "(any) part of speech" });
+      posSel.addEventListener("change", () => { rerender(); opts.onChange && opts.onChange(); });
+      rerender();
+
+      return {
+        read() { return snapshot(); },
+        setState(filters) {
+          if (!filters) return;
+          posSel.value = filters.pos || "";
+          rerender();
+          // apply remaining features one at a time so dependent options exist
+          Object.keys(filters).forEach((k) => {
+            if (k === "pos") return;
+            const s = grid.querySelector('select[data-field="' + k + '"]');
+            if (s) { s.value = filters[k]; rerender(); }
+          });
+        },
+        reset() { posSel.value = ""; rerender(); }
+      };
+    },
+
     /** Fill a <select> with options, optional human labels and a "(any)" head. */
     fillSelect(select, values, opts) {
       opts = opts || {};
@@ -565,13 +655,93 @@
     if (el) el.innerHTML = '<div class="small-muted" style="padding:.7rem;">' + (msg || "No data to display.") + "</div>";
   }
 
+  function triggerDownload(href, filename) {
+    const a = document.createElement("a");
+    a.href = href; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function sizeOf(svgNode) {
+    const vb = (svgNode.getAttribute("viewBox") || "").split(/\s+/).map(Number);
+    return { w: vb[2] || svgNode.clientWidth || 800, h: vb[3] || svgNode.clientHeight || 400 };
+  }
+
+  function serializeSvg(svgNode, withBg) {
+    const { w, h } = sizeOf(svgNode);
+    const clone = svgNode.cloneNode(true);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    clone.setAttribute("width", w);
+    clone.setAttribute("height", h);
+    clone.style.fontFamily = '"IBM Plex Sans", system-ui, sans-serif';
+    if (withBg) {
+      const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      bg.setAttribute("x", 0); bg.setAttribute("y", 0);
+      bg.setAttribute("width", w); bg.setAttribute("height", h);
+      bg.setAttribute("fill", "#ffffff");
+      clone.insertBefore(bg, clone.firstChild);
+    }
+    return { xml: new XMLSerializer().serializeToString(clone), w: w, h: h };
+  }
+
+  function downloadSvg(svgNode, name) {
+    const { xml } = serializeSvg(svgNode, true);
+    const blob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    triggerDownload(url, name + ".svg");
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  function downloadPng(svgNode, name, scale) {
+    scale = scale || 2;
+    const { xml, w, h } = serializeSvg(svgNode, true);
+    const url = URL.createObjectURL(new Blob([xml], { type: "image/svg+xml;charset=utf-8" }));
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = w * scale; canvas.height = h * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        const u = URL.createObjectURL(blob);
+        triggerDownload(u, name + ".png");
+        setTimeout(() => URL.revokeObjectURL(u), 4000);
+      });
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+  }
+
+  function addDownloadToolbar(container) {
+    const base = (container.id || "mopsos-figure").replace(/[^\w-]+/g, "_");
+    const name = () => base + "_" + new Date().toISOString().slice(0, 10);
+    const bar = document.createElement("div");
+    bar.className = "fig-toolbar";
+    const mk = (label, fn) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "fig-dl"; b.textContent = label;
+      b.addEventListener("click", () => {
+        const node = container.querySelector("svg.d3-svg");
+        if (node) fn(node, name());
+      });
+      return b;
+    };
+    bar.appendChild(mk("Download PNG", downloadPng));
+    bar.appendChild(mk("Download SVG", downloadSvg));
+    container.insertBefore(bar, container.firstChild);
+  }
+
   function svg(el, width, height) {
-    return window.d3.select(el).append("svg")
+    const sel = window.d3.select(el).append("svg")
       .attr("viewBox", "0 0 " + width + " " + height)
       .attr("preserveAspectRatio", "xMidYMid meet")
       .attr("class", "d3-svg")
       .style("width", "100%")
       .style("height", "auto");
+    addDownloadToolbar(el);
+    return sel;
   }
 
   const api = {
@@ -902,7 +1072,7 @@
         .attr("stroke-width", (d) => 1 + (d.weight || 0) * 3).attr("stroke-opacity", (d) => Math.max(0.2, d.weight || 0.4));
 
       const node = root.append("g").selectAll("g").data(N).join("g").style("cursor", "grab");
-      node.append("circle").attr("r", (d) => opts.radius || 9)
+      node.append("circle").attr("r", (d) => d.r || opts.radius || 9)
         .attr("fill", (d) => Number.isFinite(d.group) ? api.color(d.group) : api.color(0))
         .attr("stroke", "#fff").attr("stroke-width", 1.5)
         .on("mousemove", (ev, d) => {
