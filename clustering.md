@@ -7,13 +7,13 @@ section: clustering
 <section class="hero card">
   <p class="kicker">MOPSOS</p>
   <h1>Stylometry</h1>
-  <p class="tab-desc">Group texts — or any other unit — by how they use the language. Choose what to cluster, optionally limit the data, and the pipeline builds a feature matrix straight from SQL, computes distances, clusters, and draws everything with D3.</p>
+  <p class="tab-desc">Group texts — or any other unit — by how they use the language. Choose what to cluster, optionally limit the data, and MOPSOS turns each unit into a profile, measures how similar they are, and groups them.</p>
   <div class="tab-meta-row">
     <button class="info-btn" data-info="clusterInfo">What is this?</button>
   </div>
   <div id="clusterInfo" class="info-panel" hidden>
     <h4>Stylometry tab</h4>
-    <p>Each unit you cluster (a work, an author, a part-of-speech class…) becomes a "document". Its features are the frequencies of the tokens it contains, weighted (TF-IDF by default), turned into a vector, and compared with a distance metric. The resulting distance matrix is a 2-D array passed directly to the clustering and visualisation routines, so the whole pipeline is matrix-in / matrix-out and integrates cleanly with SQL.</p>
+    <p>Each unit you cluster (a work, an author, a part-of-speech class…) becomes a "document". Its features are the frequencies of the tokens it contains, turned into a profile and compared with a distance measure; units that come out close together are grouped into the same cluster.</p>
     <ul>
       <li><strong>Cluster by</strong> sets what each point represents. For part of speech, number, and case you can pick a specific value (e.g. cluster works by how they use verbs) or cluster the categories themselves.</li>
       <li><strong>Limit to</strong> restricts the corpus to a single value of any variable before features are built.</li>
@@ -22,7 +22,7 @@ section: clustering
   </div>
 </section>
 
-<div id="clusterLoadStatus" class="load-progress"><span>Loading corpus into SQLite…</span></div>
+<div id="clusterLoadStatus" class="load-progress"><span>Loading corpus…</span></div>
 
 <div class="card">
   <h2>1. Configure features</h2>
@@ -92,7 +92,7 @@ section: clustering
 
 <div class="card">
   <h2>2. Clustering strategy</h2>
-  <p id="clusterStrategyNote" class="help" style="margin-top:-.2rem;">Default: <strong>Ward agglomerative clustering</strong> into <strong>6</strong> clusters using the distance metric above. Open Advanced clustering options to change the method or the number of clusters.</p>
+  <p id="clusterStrategyNote" class="help" style="margin-top:-.2rem;">Sensible defaults are applied. Open Advanced clustering options to change the method or the number of clusters.</p>
   <button class="adv-toggle" data-adv="clusterStratAdv">Advanced clustering options</button>
   <div id="clusterStratAdv" class="adv-panel" hidden>
     <div class="grid-3">

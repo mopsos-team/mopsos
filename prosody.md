@@ -7,13 +7,13 @@ section: prosody
 <section class="hero card">
   <p class="kicker">MOPSOS</p>
   <h1>Scansion</h1>
-  <p class="tab-desc">Analyse the metre of Homeric hexameter — scan lines into feet, profile syllable quantities, and measure rhythm across the Iliad and Odyssey — all computed live with SQL and drawn with D3.</p>
+  <p class="tab-desc">Analyse the metre of Homeric hexameter — scan lines into feet, profile syllable quantities, and measure rhythm across the Iliad and Odyssey.</p>
   <div class="tab-meta-row">
     <button class="info-btn" data-info="prosodyInfo">What is this?</button>
   </div>
   <div id="prosodyInfo" class="info-panel" hidden>
     <h4>Scansion tab</h4>
-    <p>Scansion is the analysis of a line's metrical structure — marking which syllables are long and which are short, and grouping them into feet. Every Homeric line in the corpus has been scanned into its six hexameter feet (table <code>scansion_lines</code>), where each foot is either a dactyl (<code>LSS</code>, — ‿ ‿) or a spondee (<code>LL</code>, — —).</p>
+    <p>Scansion is the analysis of a line's metrical structure — marking which syllables are long and which are short, and grouping them into feet. Every Homeric line in the corpus has been scanned into its six hexameter feet, where each foot is either a dactyl (— ‿ ‿) or a spondee (— —).</p>
     <ul>
       <li><strong>Pick one view at a time</strong> from the drop-down — lines per book, the commonest foot patterns, dactyl/spondee balance by position, the long/short profile, line length, speech vs. narrative, and more.</li>
       <li><strong>Limit the scope</strong> to the Iliad, the Odyssey, or a single book before running.</li>

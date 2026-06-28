@@ -310,6 +310,7 @@
   }
 
   function renderAll() {
+    savePhonState();
     var view = el.phonView.value;
     el.phonViewDesc.textContent = VIEW_DESCS[view] || "";
     renderSummary();
@@ -403,6 +404,18 @@
     }
   }
 
+  function savePhonState() {
+    if (!el.phonAnalyze) return;
+    window.MopsosUI.saveState("phon", {
+      analyze: el.phonAnalyze.value,
+      limitPos: el.phonLimitPos.value,
+      limitCase: el.phonLimitCaseWrap.hasAttribute("hidden") ? "" : el.phonLimitCase.value,
+      limitWork: el.phonLimitWork.value,
+      view: el.phonView.value,
+      topN: el.phonTopN.value
+    });
+  }
+
   function init() {
     grab();
     if (!el.phonSql) return; // not on this page
@@ -433,9 +446,20 @@
       window.MopsosUI.fillSelect(el.phonLimitWork, window.MopsosSQL.distinct("work"), { head: "(all)" });
       el.phonLimitPos.disabled = false;
       el.phonLimitWork.disabled = false;
+      var st = window.MopsosUI.loadState("phon");
+      if (st) {
+        if (st.analyze) el.phonAnalyze.value = st.analyze;
+        if (st.limitPos != null) el.phonLimitPos.value = st.limitPos;
+        if (st.limitWork != null) el.phonLimitWork.value = st.limitWork;
+      }
       refreshCaseLimiter();
+      if (st) {
+        if (st.limitCase && !el.phonLimitCaseWrap.hasAttribute("hidden")) el.phonLimitCase.value = st.limitCase;
+        if (st.view) el.phonView.value = st.view;
+        if (st.topN) el.phonTopN.value = st.topN;
+      }
       el.btnRunPhon.disabled = false;
-      setStatus("Corpus ready (" + window.MopsosSQL.rowCount().toLocaleString() + " rows). Running default analysis…");
+      setStatus("Corpus ready. Analyzing…");
       runQueryAndAnalyze(buildSourceSql());
     }).catch(function (e) {
       setStatus("Failed to load corpus: " + e.message);

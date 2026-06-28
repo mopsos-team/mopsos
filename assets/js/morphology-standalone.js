@@ -92,6 +92,16 @@
         grid.querySelectorAll("select[data-field]").forEach((s) => { if (s.value) f[s.dataset.field] = s.value; });
         return f;
       },
+      setState(filters) {
+        if (!filters) return;
+        posSel.value = filters.pos || "";
+        rerenderFeatures();
+        for (const k in filters) {
+          if (k === "pos") continue;
+          const sel = grid.querySelector('select[data-field="' + k + '"]');
+          if (sel) sel.value = filters[k];
+        }
+      },
       reset() {
         posSel.value = "";
         rerenderFeatures();
@@ -115,7 +125,17 @@
   let qf = null;
   const RESULT_CAP = 5000;
 
+  function saveMorphState() {
+    UI.saveState("morph", {
+      qf: qf ? qf.read() : {},
+      ex: ex ? ex.read() : {},
+      exDim1: $("exDim1").value, exDim2: $("exDim2").value, exTopN: $("exTopN").value,
+      sql: $("qfSqlInput").value
+    });
+  }
+
   function applyQuickFilter() {
+    saveMorphState();
     const filters = qf.read();
     const cols = PREVIEW_COLS.filter((c) => SQL.columns().includes(c));
     const where = whereOf(filters);
@@ -165,6 +185,7 @@
       const { columns, values } = SQL.query(sql);
       UI.renderTable(out, columns, values, { paginate: false });
       status.textContent = "OK — " + values.length + " row" + (values.length === 1 ? "" : "s") + ".";
+      saveMorphState();
     } catch (e) {
       status.textContent = "SQL error: " + e.message;
     }
@@ -192,6 +213,7 @@
   let ex = null;
 
   function runExplorer() {
+    saveMorphState();
     const filters = ex.read();
     const w = whereOf(filters);
     const dim1 = $("exDim1").value;
@@ -275,8 +297,19 @@
     $("btnExRun").addEventListener("click", runExplorer);
     $("btnExReset").addEventListener("click", () => { ex.reset(); runExplorer(); });
 
-    applyQuickFilter();   // initial browse
-    runExplorer();        // initial chart (tokens by book)
+    // restore the person's previous selections, if any
+    const st = UI.loadState("morph");
+    if (st) {
+      if (st.qf) qf.setState(st.qf);
+      if (st.ex) ex.setState(st.ex);
+      if (st.exDim1) $("exDim1").value = st.exDim1;
+      if (st.exDim2 != null) $("exDim2").value = st.exDim2;
+      if (st.exTopN) $("exTopN").value = st.exTopN;
+      if (st.sql) $("qfSqlInput").value = st.sql;
+    }
+
+    applyQuickFilter();   // initial browse (restored filter if any)
+    runExplorer();        // initial chart (restored dims if any)
     runCustomSql();       // prime the folded console
   }
 

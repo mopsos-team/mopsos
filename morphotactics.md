@@ -13,18 +13,17 @@ section: morphotactics
   </div>
   <div id="mtInfo" class="info-panel" hidden>
     <h4>Morphotactics tab</h4>
-    <p>Morphotactics is the study of how morphemes and morphological features are ordered and combined. Every view here is computed live with SQL over the corpus (table <code>morphology</code>) and drawn with D3:</p>
+    <p>Morphotactics is the study of how morphemes and morphological features are ordered and combined. Each view explores a different aspect of the corpus:</p>
     <ul>
       <li><strong>Word-class sequencing</strong> — a transition matrix of part of speech → next part of speech for adjacent tokens within a sentence.</li>
       <li><strong>Feature co-occurrence</strong> — how two features (e.g. case × number) combine inside the same word, optionally restricted to one part of speech.</li>
       <li><strong>Exponence (form endings)</strong> — the most frequent word-final letter sequences that realise a chosen feature bundle.</li>
       <li><strong>Paradigm slots</strong> — how often each value of a feature is filled for a chosen part of speech.</li>
     </ul>
-    <p>The exact SQL behind each view is shown under the chart so it can be copied into the Morphology tab’s SQL console.</p>
   </div>
 </section>
 
-<div id="mtLoadStatus" class="load-progress"><span>Loading corpus into SQLite…</span></div>
+<div id="mtLoadStatus" class="load-progress"><span>Loading corpus…</span></div>
 
 <div class="card">
   <h2>Choose a view</h2>

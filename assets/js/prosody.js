@@ -166,6 +166,7 @@
 
   function run() {
     if (!SQL || !SQL.isReady()) return;
+    UI.saveState("scan", { view: el.scanView.value, work: el.scanWork.value, book: el.scanBook.value, topN: el.scanTopN.value });
     var view = VIEWS[el.scanView.value] || VIEWS.lines_by_book;
     el.scanViewDesc.textContent = view.desc;
     clearOut();
@@ -202,7 +203,16 @@
     SQL.ready().then(function () {
       if (el.scanLoadStatus) el.scanLoadStatus.style.display = "none";
       el.btnRunScan.disabled = false;
+      var st = UI.loadState("scan");
+      if (st) {
+        if (st.view) el.scanView.value = st.view;
+        if (st.work != null) el.scanWork.value = st.work;
+      }
       populateBooks();
+      if (st) {
+        if (st.book != null && !el.scanBook.disabled) el.scanBook.value = st.book;
+        if (st.topN) el.scanTopN.value = st.topN;
+      }
       run();
     }).catch(function (e) {
       if (el.scanLoadStatus) el.scanLoadStatus.innerHTML = '<span>Could not load scansion corpus: ' + UI.esc(e.message) + "</span>";

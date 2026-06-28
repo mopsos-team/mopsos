@@ -426,7 +426,23 @@
   // =====================================================================
   //  RUN + RENDER
   // =====================================================================
+  var CLUSTER_STATE_IDS = ["clusterByVar", "clusterBySub", "clusterLimitVar", "clusterLimitVal",
+    "clusterTokenCol", "clusterFeatureMode", "clusterNgram", "clusterVectorModel", "clusterDistance",
+    "clusterExcludeFunction", "clusterMinDocFreq", "clusterMaxDocFreq", "clusterMethod", "clusterK",
+    "clusterThreshold", "clusterEps", "clusterMinPts", "clusterTopFeatures"];
+
+  function saveClusterState() {
+    if (!window.MopsosUI) return;
+    var o = {};
+    CLUSTER_STATE_IDS.forEach(function (id) {
+      var e = el[id]; if (!e) return;
+      o[id] = (e.type === "checkbox") ? e.checked : e.value;
+    });
+    window.MopsosUI.saveState("cluster", o);
+  }
+
   function run() {
+    saveClusterState();
     const cfg = readConfig();
     setStatus("Building features…");
     const base = getBase(cfg, true);
@@ -613,8 +629,10 @@
 
     if (window.MopsosUI) { window.MopsosUI.wireInfoButtons(); window.MopsosUI.wireAdvancedToggles(); }
 
-    setStatus("Loading corpus into SQLite…");
+    setStatus("Loading corpus…");
     window.MopsosSQL.ready().then(() => {
+      // stop the animated loading bar; reuse the element as a static status line
+      if (el.clusterLoadStatus) { el.clusterLoadStatus.classList.remove("load-progress"); el.clusterLoadStatus.classList.add("status"); }
       el.clusterByVar.disabled = false;
       el.clusterLimitVar.disabled = false;
       el.btnRunCluster.disabled = false;
@@ -622,7 +640,20 @@
       el.btnClusterStress.disabled = false;
       populateSub();
       populateLimitVal();
-      setStatus("Corpus ready (" + window.MopsosSQL.rowCount().toLocaleString() + " rows). Running default clustering…");
+      // restore the person's previous selections, if any
+      var st = window.MopsosUI && window.MopsosUI.loadState("cluster");
+      if (st) {
+        if (st.clusterByVar != null) { el.clusterByVar.value = st.clusterByVar; populateSub(); }
+        if (st.clusterBySub != null) el.clusterBySub.value = st.clusterBySub;
+        if (st.clusterLimitVar != null) { el.clusterLimitVar.value = st.clusterLimitVar; populateLimitVal(); }
+        if (st.clusterLimitVal != null) el.clusterLimitVal.value = st.clusterLimitVal;
+        CLUSTER_STATE_IDS.forEach(function (id) {
+          if (["clusterByVar", "clusterBySub", "clusterLimitVar", "clusterLimitVal"].indexOf(id) >= 0) return;
+          var e = el[id]; if (!e || st[id] == null) return;
+          if (e.type === "checkbox") e.checked = st[id]; else e.value = st[id];
+        });
+      }
+      setStatus("Corpus ready. Clustering…");
       setTimeout(run, 20);
     }).catch((e) => setStatus("Failed to load corpus: " + e.message));
   }

@@ -24,7 +24,7 @@
           <a href="morphotactics.html" class="nav-link">Morphotactics</a>
           <a href="index.html" class="nav-link is-active">Morphology</a>
           <div class="nav-dropdown">
-            <button class="nav-link nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Analyses <span class="caret">▾</span></button>
+            <button class="nav-link nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Other <span class="caret">▾</span></button>
             <div class="nav-dropdown-menu" hidden>
               <a href="phonology.html" class="nav-link">Phonology</a>
               <a href="syntax.html" class="nav-link">Syntax</a>
@@ -47,10 +47,10 @@
       </div>
       <div id="morphInfo" class="info-panel" hidden>
         <h4>Morphology tab</h4>
-        <p>Everything here runs against an in-browser SQLite database built from the corpus (table <code>morphology</code>). Three ways to use it:</p>
+        <p>There are three ways to explore the corpus:</p>
         <ul>
           <li><strong>Quick filter</strong> — pick a part of speech and MOPSOS shows only the grammatical features that actually apply to it, each offering only the values that occur. Results are paginated 50 per page, and columns that don't apply are hidden automatically.</li>
-          <li><strong>Custom SQL</strong> — tucked inside the Quick filter, for writing read-only SQL yourself (<code>SELECT</code> / <code>WITH</code> / <code>PRAGMA</code>). Press <kbd>Enter</kbd> to run.</li>
+          <li><strong>Custom queries</strong> — tucked inside the Quick filter, for writing your own read-only queries by hand. Press <kbd>Enter</kbd> to run.</li>
           <li><strong>Explore &amp; visualize</strong> — count tokens by any dimension (book, lemma, case…), optionally broken down by a second dimension, under any filter — e.g. which books have the most aorist optatives, or how noun number and case combine.</li>
         </ul>
       </div>

@@ -144,10 +144,44 @@
     return await new Response(stream).arrayBuffer();
   }
 
-  /** Open the pre-built, gzipped SQLite database directly (fast path). */
+  /* --- one-time cache of the decompressed database in IndexedDB --------- */
+  const IDB_NAME = "mopsos", IDB_STORE = "corpus", IDB_KEY = "corpus.sqlite.v2";
+  function idbOpen() {
+    return new Promise((resolve, reject) => {
+      if (!window.indexedDB) return reject(new Error("no indexedDB"));
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(IDB_STORE)) req.result.createObjectStore(IDB_STORE); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbGet(key) {
+    const idb = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const r = idb.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).get(key);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => reject(r.error);
+    });
+  }
+  async function idbSet(key, val) {
+    const idb = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = idb.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).put(val, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  /** Open the pre-built SQLite database, fetching + decompressing only once. */
   async function loadPrebuilt() {
-    const gz = await fetchArrayBuffer(PREBUILT);
-    const raw = await gunzip(gz);
+    let raw = null;
+    try { raw = await idbGet(IDB_KEY); } catch (e) { /* cache unavailable */ }
+    if (!raw) {
+      const gz = await fetchArrayBuffer(PREBUILT);
+      raw = await gunzip(gz);
+      try { await idbSet(IDB_KEY, raw); } catch (e) { /* private mode / quota — fine */ }
+    }
     if (db) db.close();
     db = new SQL.Database(new Uint8Array(raw));
     const ti = db.exec("PRAGMA table_info(" + quoteId(CONFIG.table) + ");");
@@ -293,6 +327,20 @@
     /** Friendly title-case for a column/field name. */
     fieldTitle(name) {
       return String(name || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    },
+
+    /**
+     * Persist a small UI-state object for the current page, so a person's
+     * selections survive navigating away and back (within the session).
+     */
+    saveState(key, obj) {
+      try { sessionStorage.setItem("mopsos:" + location.pathname + ":" + key, JSON.stringify(obj)); } catch (e) { /* ignore */ }
+    },
+    loadState(key) {
+      try {
+        const s = sessionStorage.getItem("mopsos:" + location.pathname + ":" + key);
+        return s ? JSON.parse(s) : null;
+      } catch (e) { return null; }
     },
 
     /** Fill a <select> with options, optional human labels and a "(any)" head. */

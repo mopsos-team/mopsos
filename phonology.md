@@ -7,21 +7,21 @@ section: phonology
 <section class="hero card">
   <p class="kicker">MOPSOS</p>
   <h1>Phonology</h1>
-  <p class="tab-desc">Phonological structure of the corpus: phoneme inventory, syllable shapes, onset/coda clusters, diphthongs, vowel quantity, sonority and alliteration — computed over any set of tokens you select with SQL.</p>
+  <p class="tab-desc">Phonological structure of the corpus: phoneme inventory, syllable shapes, onset/coda clusters, diphthongs, vowel quantity, sonority and alliteration — across any set of tokens you choose.</p>
   <div class="tab-meta-row">
     <button class="info-btn" data-info="phonInfo">What is this?</button>
   </div>
   <div id="phonInfo" class="info-panel" hidden>
     <h4>Phonology tab</h4>
-    <p>Pick the tokens to analyse with a SQL query (table <code>morphology</code>), choose which column holds the word form, then select a single view from the drop-down. Each token is normalised (diacritics stripped, final ς→σ) and syllabified by the maximal-onset principle; every statistic is derived from those structured syllables and drawn with D3.</p>
+    <p>Choose which tokens to analyse and (optionally) how to limit them, then pick a single view from the drop-down. Each token is normalised (diacritics stripped, final ς→σ) and syllabified by the maximal-onset principle; every statistic is derived from those structured syllables.</p>
     <ul>
-      <li><strong>SQL-driven</strong> — analyse all forms, just verbs, only genitive nouns, lemmata, or any query you write.</li>
+      <li><strong>Flexible scope</strong> — analyse all forms, just verbs, only genitive nouns, lemmata, and more.</li>
       <li><strong>One view at a time</strong> — use “What to view” to switch between phoneme, syllable, cluster, quantity, sonority and alliteration analyses.</li>
     </ul>
   </div>
 </section>
 
-<div id="phonLoadingBar" class="load-progress"><span>Loading corpus into SQLite…</span></div>
+<div id="phonLoadingBar" class="load-progress"><span>Loading corpus…</span></div>
 
 <div class="card">
   <h2>1. What to analyze</h2>
