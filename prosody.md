@@ -67,10 +67,9 @@ section: prosody
     <div class="field" id="scanWordWrap" hidden>
       <label for="scanWord"><strong>Word form</strong></label>
       <div class="combo">
-        <input id="scanWord" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek (μῆνις) or English (ship, swift)…" />
+        <input id="scanWord" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek / English, or click to browse all forms…" />
         <div id="scanWordMenu" class="combo-menu" hidden></div>
       </div>
-      <select id="scanWordAll" class="combo-all" style="margin-top:.4rem;"><option value="">— or pick from all forms —</option></select>
     </div>
     <div class="field" id="scanFootWrap" style="max-width:150px;" hidden>
       <label for="scanFoot"><strong>Foot</strong></label>

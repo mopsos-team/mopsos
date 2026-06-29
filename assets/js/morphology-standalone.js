@@ -163,9 +163,9 @@
 
   function syncExplorerControls() {
     const type = $("exChartType").value;
-    const twoDim = (type === "heatmap" || type === "grouped" || type === "proportion" || type === "paradigm");
-    $("exDim1Wrap").hidden = (type === "network");
-    $("exDim2Wrap").hidden = !twoDim;
+    const cross = (type === "heatmap" || type === "grouped" || type === "proportion");
+    $("exDim1Wrap").hidden = (type === "network" || type === "paradigm");
+    $("exDim2Wrap").hidden = !cross;
     $("exLemmaWrap").hidden = (type !== "paradigm");
     $("exNodeUnitWrap").hidden = (type !== "network");
     $("exSemanticWrap").hidden = (type !== "network");
@@ -309,59 +309,100 @@
           Chart.stackedBars(chart, pct, rowLabels, colLabels, { valueLabel: "%", emptyMsg: "No tokens match." });
         }
       } else if (type === "paradigm") {
-        const lemma = ($("exLemma").value || "").trim();
+        const input = ($("exLemma").value || "").trim();
+        if (!input) {
+          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a lemma above (e.g. \u03bd\u03b1\u1fe6\u03c2, \u03b8\u03b5\u03cc\u03c2, \u03bb\u1f7b\u03c9) to lay out its full paradigm \u2014 every attested form, organised by the inflectional properties that actually vary for it.</div>';
+          title.textContent = ""; desc.textContent = ""; return;
+        }
+        const stripDiacritics = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        // resolve the lemma: exact match first, else accent-insensitive most-frequent
+        let lemma = SQL.scalar("SELECT lemma FROM " + q(TABLE) + " WHERE lemma = " + sqlStr(input) + " LIMIT 1;");
         if (!lemma) {
-          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a lemma above (e.g. \u03bc\u1fc6\u03bd\u03b9\u03c2, \u03b8\u03b5\u03cc\u03c2, \u1f00\u03b5\u03af\u03b4\u03c9) to lay out its attested forms.</div>';
+          const ni = stripDiacritics(input);
+          const cand = SQL.objects("SELECT lemma, COUNT(*) c FROM " + q(TABLE) + " WHERE lemma NOT IN ('','-') GROUP BY lemma;")
+            .filter((r) => stripDiacritics(r.lemma) === ni).sort((a, b) => b.c - a.c);
+          lemma = cand.length ? cand[0].lemma : null;
+        }
+        if (!lemma) {
+          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No lemma \u201c' + UI.esc(input) + '\u201d found in the corpus.</div>';
           title.textContent = ""; desc.textContent = ""; return;
         }
-        // pick sensible paradigm axes for this lemma's part of speech (user can override via the two selectors)
         const lw = q("lemma") + " = " + sqlStr(lemma) + (w ? " AND " + w : "");
-        const cand = ["case", "number", "gender", "tense", "mood", "voice", "person", "degree"];
-        const cols = SQL.nonEmptyColumns(cand, { lemma: lemma });
-        if (!cols.length) {
-          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No inflectional features attested for \u201c' + UI.esc(lemma) + '\u201d in this scope.</div>';
-          title.textContent = ""; desc.textContent = ""; return;
-        }
-        const verbal = cols.indexOf("tense") >= 0 || cols.indexOf("mood") >= 0 || cols.indexOf("person") >= 0;
-        const pref = verbal
-          ? ["tense", "mood", "voice", "person", "number", "case", "gender"]
-          : ["case", "number", "gender", "degree", "tense", "mood", "voice", "person"];
-        const ordered = pref.filter((c) => cols.indexOf(c) >= 0);
-        const f1 = (cols.indexOf($("exDim1").value) >= 0) ? $("exDim1").value : (ordered[0] || "case");
-        const f2 = (cols.indexOf(dim2) >= 0 && dim2 !== f1) ? dim2 : (ordered.find((c) => c !== f1) || f1);
-        const sql = "SELECT " + q(f1) + " AS r, " + q(f2) + " AS c2, form AS form, COUNT(*) AS c FROM " + q(TABLE) +
-          " WHERE " + lw + " AND " + naGuard(f1) + " AND " + naGuard(f2) + " GROUP BY r, c2, form;";
-        const data = SQL.objects(sql);
-        if (!data.length) {
+        const FEATS = ["case", "number", "gender", "tense", "mood", "voice", "person", "degree"];
+        const KEY = { "case": "c", number: "num", gender: "gen", tense: "tns", mood: "md", voice: "vc", person: "prs", degree: "deg" };
+        const rows = SQL.objects("SELECT form, pos, \"case\" c, number num, gender gen, tense tns, mood md, voice vc, person prs, degree deg, COUNT(*) n FROM " + q(TABLE) +
+          " WHERE " + lw + " GROUP BY form, pos, c, num, gen, tns, md, vc, prs, deg;");
+        if (!rows.length) {
           chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No attested forms for \u201c' + UI.esc(lemma) + '\u201d in this scope.</div>';
           title.textContent = ""; desc.textContent = ""; return;
         }
-        const rowTot = {}, colTot = {}, cellForms = {};
-        for (const o of data) {
-          rowTot[o.r] = (rowTot[o.r] || 0) + o.c;
-          colTot[o.c2] = (colTot[o.c2] || 0) + o.c;
-          const key = o.r + "\u0000" + o.c2;
-          (cellForms[key] = cellForms[key] || []).push([o.form, o.c]);
-        }
-        const rowVals = Object.keys(rowTot).sort((a, b) => rowTot[b] - rowTot[a]);
-        const colVals = Object.keys(colTot).sort((a, b) => colTot[b] - colTot[a]);
-        let html = '<table class="data-table paradigm-table"><thead><tr><th>' + UI.esc(UI.fieldTitle(f1)) + " \\ " + UI.esc(UI.fieldTitle(f2)) + "</th>";
-        colVals.forEach((cv) => { html += "<th>" + UI.esc(displayName(f2, cv)) + "</th>"; });
-        html += "</tr></thead><tbody>";
-        rowVals.forEach((rv) => {
-          html += "<tr><th>" + UI.esc(displayName(f1, rv)) + "</th>";
-          colVals.forEach((cv) => {
-            const forms = (cellForms[rv + "\u0000" + cv] || []).sort((a, b) => b[1] - a[1]);
-            html += "<td>" + (forms.length
-              ? forms.map((f) => '<span class="pdg-form">' + UI.esc(f[0]) + '</span><span class="pdg-c">' + f[1] + "</span>").join("<br>")
-              : '<span class="pdg-gap">\u2014</span>') + "</td>";
-          });
-          html += "</tr>";
+        // tally which features actually occur, and how many distinct values each has
+        const vals = {}; FEATS.forEach((f) => vals[f] = {});
+        const posCnt = {}; let total = 0;
+        rows.forEach((r) => {
+          total += r.n; posCnt[r.pos] = (posCnt[r.pos] || 0) + r.n;
+          FEATS.forEach((f) => { const v = r[KEY[f]]; if (v && v !== "-") vals[f][v] = (vals[f][v] || 0) + r.n; });
         });
-        html += "</tbody></table>";
-        const total = SQL.scalar("SELECT COUNT(*) FROM " + q(TABLE) + " WHERE " + lw + ";");
-        title.textContent = "Paradigm of " + lemma + " \u2014 " + UI.fieldTitle(f1) + " × " + UI.fieldTitle(f2);
-        desc.textContent = total + " attested tokens" + filterText + ". Each cell lists the attested form(s) and their counts; \u2014 marks an unattested cell.";
+        const pos = Object.keys(posCnt).sort((a, b) => posCnt[b] - posCnt[a])[0];
+        const varying = FEATS.filter((f) => Object.keys(vals[f]).length >= 2);   // distinguishing dimensions
+        const fixed = FEATS.filter((f) => Object.keys(vals[f]).length === 1);    // exist but constant
+        const FORDER = { "case": ["n", "g", "d", "a", "v"], number: ["s", "d", "p"], gender: ["m", "f", "n"], tense: ["p", "i", "f", "a", "r", "l", "t"], mood: ["i", "s", "o", "m", "n", "p"], voice: ["a", "m", "p", "e"], person: ["1", "2", "3"], degree: ["p", "c", "s"] };
+        const rank = (f, v) => { const i = (FORDER[f] || []).indexOf(v); return i < 0 ? 99 : i; };
+        const sortedVals = (f) => Object.keys(vals[f]).sort((a, b) => rank(f, a) - rank(f, b) || (vals[f][b] - vals[f][a]));
+        const formCell = (forms) => forms && forms.length
+          ? forms.slice().sort((a, b) => b[1] - a[1]).map((x) => '<span class="pdg-form">' + UI.esc(x[0]) + '</span><span class="pdg-c">' + x[1] + "</span>").join("<br>")
+          : '<span class="pdg-gap">\u2014</span>';
+
+        const fixedTxt = fixed.map((f) => displayName(f, sortedVals(f)[0])).join(" \u00b7 ");
+        title.textContent = "Paradigm of " + lemma;
+        desc.textContent = displayName("pos", pos) + (fixedTxt ? " \u00b7 " + fixedTxt : "") + " \u00b7 " +
+          total + " tokens, " + (new Set(rows.map((r) => r.form))).size + " distinct forms" + filterText + ".";
+
+        let html = "";
+        if (varying.length === 2) {
+          const f1 = varying[0], f2 = varying[1];
+          const cell = {}, other = [];
+          rows.forEach((r) => {
+            const a = r[KEY[f1]], b = r[KEY[f2]];
+            if (a && a !== "-" && b && b !== "-") { const k = a + "\u0000" + b; (cell[k] = cell[k] || []).push([r.form, r.n]); }
+            else other.push([r.form, r.n]);
+          });
+          html += '<table class="data-table paradigm-table"><thead><tr><th>' + UI.esc(UI.fieldTitle(f1)) + " \\ " + UI.esc(UI.fieldTitle(f2)) + "</th>";
+          sortedVals(f2).forEach((cv) => { html += "<th>" + UI.esc(displayName(f2, cv)) + "</th>"; });
+          html += "</tr></thead><tbody>";
+          sortedVals(f1).forEach((rv) => {
+            html += "<tr><th>" + UI.esc(displayName(f1, rv)) + "</th>";
+            sortedVals(f2).forEach((cv) => { html += "<td>" + formCell(cell[rv + "\u0000" + cv]) + "</td>"; });
+            html += "</tr>";
+          });
+          html += "</tbody></table>";
+          if (other.length) html += '<p class="small-muted" style="margin-top:.45rem;">Other forms: ' +
+            other.sort((a, b) => b[1] - a[1]).map((x) => '<span class="pdg-form">' + UI.esc(x[0]) + "</span>").join(", ") + "</p>";
+        } else if (varying.length === 1) {
+          const f1 = varying[0], cell = {};
+          sortedVals(f1).forEach((v) => cell[v] = []);
+          rows.forEach((r) => { const a = r[KEY[f1]]; if (a && a !== "-") cell[a].push([r.form, r.n]); });
+          html += '<table class="data-table paradigm-table"><thead><tr><th>' + UI.esc(UI.fieldTitle(f1)) + "</th><th>Form(s)</th></tr></thead><tbody>";
+          sortedVals(f1).forEach((v) => { html += "<tr><th>" + UI.esc(displayName(f1, v)) + "</th><td>" + formCell(cell[v]) + "</td></tr>"; });
+          html += "</tbody></table>";
+        } else if (varying.length === 0) {
+          html += '<table class="data-table paradigm-table"><thead><tr><th>Form</th><th>Tokens</th></tr></thead><tbody>' +
+            rows.slice().sort((a, b) => b.n - a.n).map((r) => '<tr><td><span class="pdg-form">' + UI.esc(r.form) + "</span></td><td>" + r.n + "</td></tr>").join("") + "</tbody></table>";
+        } else {
+          // three or more distinguishing dimensions (verbs, 3-termination adjectives): flat inventory
+          html += '<table class="data-table paradigm-table"><thead><tr>';
+          varying.forEach((f) => { html += "<th>" + UI.esc(UI.fieldTitle(f)) + "</th>"; });
+          html += "<th>Form</th><th>Tokens</th></tr></thead><tbody>";
+          rows.slice().sort((a, b) => {
+            for (const f of varying) { const d = rank(f, a[KEY[f]]) - rank(f, b[KEY[f]]); if (d) return d; }
+            return b.n - a.n;
+          }).forEach((r) => {
+            html += "<tr>";
+            varying.forEach((f) => { const v = r[KEY[f]]; html += "<td>" + (v && v !== "-" ? UI.esc(displayName(f, v)) : '<span class="pdg-gap">\u2014</span>') + "</td>"; });
+            html += '<td><span class="pdg-form">' + UI.esc(r.form) + '</span></td><td>' + r.n + "</td></tr>";
+          });
+          html += "</tbody></table>";
+        }
         chart.innerHTML = html;
       } else {
         const sql = "SELECT " + q(dim1) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +

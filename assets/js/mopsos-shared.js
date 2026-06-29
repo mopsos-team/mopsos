@@ -145,7 +145,7 @@
   }
 
   /* --- one-time cache of the decompressed database in IndexedDB --------- */
-  const IDB_NAME = "mopsos", IDB_STORE = "corpus", IDB_KEY = "corpus.sqlite.v2";
+  const IDB_NAME = "mopsos", IDB_STORE = "corpus", IDB_KEY = "corpus.sqlite.v3";
   function idbOpen() {
     return new Promise((resolve, reject) => {
       if (!window.indexedDB) return reject(new Error("no indexedDB"));

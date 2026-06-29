@@ -13,7 +13,7 @@
   function grab() {
     ["scanLoadStatus", "scanView", "scanWork", "scanBook", "scanTopN", "btnRunScan",
      "scanViewDesc", "scanSummary", "scanChart", "scanTable",
-     "scanLineWrap", "scanLineFrom", "scanWordWrap", "scanWord", "scanWordMenu", "scanWordAll", "scanFootWrap", "scanFoot",
+     "scanLineWrap", "scanLineFrom", "scanWordWrap", "scanWord", "scanWordMenu", "scanFootWrap", "scanFoot",
      "scanGrammar", "scanGPos", "scanGCase", "scanGNumber", "scanGGender", "scanGTense", "scanGMood", "scanGVoice", "scanGPerson"]
       .forEach(function (id) { el[id] = document.getElementById(id); });
   }
@@ -149,7 +149,8 @@
     });
   }
   function suggestFor(query) {
-    var q = (query || "").trim(); if (!q) return [];
+    var q = (query || "").trim();
+    if (!q) { buildForms(); return FORMLIST; }            // empty -> browse every form
     var hasLatin = /[a-z]/i.test(q.replace(/[\u0370-\u03ff\u1f00-\u1fff]/g, ""));
     if (hasLatin) {
       buildLemmaForms();
@@ -164,26 +165,41 @@
           out.push({ disp: disp, c: FORMS[nf].c, hint: lem });
         });
       });
-      return out.sort(function (a, b) { return b.c - a.c; }).slice(0, 12);
+      return out.sort(function (a, b) { return b.c - a.c; });
     }
     buildForms();
     var nq = normGr(q);
-    return FORMLIST.filter(function (e) { return e.wn.indexOf(nq) === 0; }).slice(0, 12);
+    return FORMLIST.filter(function (e) { return e.wn.indexOf(nq) === 0; });
   }
-  function renderMenu(items) {
-    if (!items || !items.length) { el.scanWordMenu.hidden = true; el.scanWordMenu.innerHTML = ""; return; }
-    el.scanWordMenu.innerHTML = items.map(function (it) {
+  // The menu renders in chunks and grows as the user scrolls, so even the full
+  // 30k-form list opens instantly instead of building one giant <select>.
+  var MENU_CHUNK = 80, menuItems = [], menuShown = 0;
+  function appendChunk() {
+    var slice = menuItems.slice(menuShown, menuShown + MENU_CHUNK);
+    if (!slice.length) return;
+    el.scanWordMenu.insertAdjacentHTML("beforeend", slice.map(function (it) {
       return '<div class="combo-item" data-form="' + UI.esc(it.disp) + '"><span class="combo-form">' + UI.esc(it.disp) +
         '</span><span class="combo-meta">' + (it.hint ? UI.esc(it.hint) + " \u00b7 " : "") + it.c + "</span></div>";
-    }).join("");
-    el.scanWordMenu.hidden = false;
+    }).join(""));
+    menuShown += slice.length;
+  }
+  function setMenu(items) {
+    menuItems = items || []; menuShown = 0; el.scanWordMenu.innerHTML = "";
+    if (!menuItems.length) { el.scanWordMenu.hidden = true; return; }
+    el.scanWordMenu.hidden = false; el.scanWordMenu.scrollTop = 0;
+    appendChunk();
   }
   function wireCombo() {
     if (!el.scanWord || !el.scanWordMenu) return;
-    el.scanWord.addEventListener("input", function () { renderMenu(suggestFor(el.scanWord.value)); });
+    var refresh = function () { setMenu(suggestFor(el.scanWord.value)); };
+    el.scanWord.addEventListener("input", refresh);
     el.scanWord.addEventListener("focus", function () {
       if (window.MopsosSemantics && window.MopsosSemantics.loadBridge) window.MopsosSemantics.loadBridge();
-      if (el.scanWord.value) renderMenu(suggestFor(el.scanWord.value));
+      if (SQL && SQL.isReady()) refresh();
+    });
+    el.scanWordMenu.addEventListener("scroll", function () {
+      if (menuShown < menuItems.length &&
+          el.scanWordMenu.scrollTop + el.scanWordMenu.clientHeight >= el.scanWordMenu.scrollHeight - 60) appendChunk();
     });
     el.scanWordMenu.addEventListener("mousedown", function (ev) {
       var it = ev.target.closest && ev.target.closest(".combo-item"); if (!it) return;
@@ -194,17 +210,6 @@
     });
     el.scanWord.addEventListener("blur", function () { setTimeout(function () { if (el.scanWordMenu) el.scanWordMenu.hidden = true; }, 160); });
     el.scanWord.addEventListener("keydown", function (e) { if (e.key === "Escape") el.scanWordMenu.hidden = true; });
-  }
-  var wordDropdownBuilt = false;
-  function ensureWordDropdown() {
-    if (wordDropdownBuilt || !el.scanWordAll || !SQL || !SQL.isReady()) return;
-    buildForms();
-    var opts = '<option value="">\u2014 or pick from all ' + FORMLIST.length.toLocaleString() + ' forms \u2014</option>';
-    opts += FORMLIST.map(function (e) {
-      return '<option value="' + UI.esc(e.disp) + '">' + UI.esc(e.disp) + " \u00b7 " + e.c + "</option>";
-    }).join("");
-    el.scanWordAll.innerHTML = opts;
-    wordDropdownBuilt = true;
   }
 
   // Render a foot pattern as metrical marks (— long, ‿ short) grouped into feet.
@@ -575,7 +580,6 @@
     el.scanWordWrap.hidden = (v !== "word_foot");
     el.scanFootWrap.hidden = (v !== "foot_words");
     el.scanGrammar.hidden = !(v === "word_foot" || v === "foot_words");
-    if (v === "word_foot") ensureWordDropdown();
   }
 
   function grammarState() { var s = {}; GFIELDS.forEach(function (k) { s[k] = el[GMAP[k]] ? el[GMAP[k]].value : ""; }); return s; }
@@ -626,9 +630,6 @@
     el.scanWord.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } });
     GFIELDS.forEach(function (k) { if (el[GMAP[k]]) el[GMAP[k]].addEventListener("change", run); });
     wireCombo();
-    if (el.scanWordAll) el.scanWordAll.addEventListener("change", function () {
-      if (this.value) { el.scanWord.value = this.value; if (el.scanWordMenu) el.scanWordMenu.hidden = true; run(); }
-    });
     el.scanChart.addEventListener("click", function (ev) {
       var b = ev.target.closest && ev.target.closest("[data-scan-act]");
       if (!b || el.scanView.value !== "line_scan" || !scanLineRows) return;
