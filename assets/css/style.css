@@ -517,7 +517,6 @@ textarea.big-textarea:focus {
   padding: .5rem .85rem;
   font-weight: 700;
   cursor: pointer;
-  margin-top: .3rem;
 }
 .adv-toggle:hover { background: rgba(138, 103, 48, 0.10); }
 .adv-panel {

@@ -2,9 +2,10 @@
  *  MORPHOLOGY TAB
  *  Runs against the shared in-browser SQLite database (window.MopsosSQL).
  *  Surfaces:
- *    1. Quick filter — part-of-speech-aware drop-downs (only applicable
- *       features shown, only occurring values offered) -> paginated table
- *       with irrelevant columns hidden. Custom read-only SQL is folded in.
+ *    1. Quick filter — part-of-speech-aware drop-downs build the SAME query
+ *       that the read-only SQL console edits. There is ONE query and ONE table
+ *       (#qfResults). Paging is done in SQL (LIMIT/OFFSET): each page is a
+ *       fresh query, so only ~13 rows are ever held in the DOM.
  *    2. Explore & visualize — general SQL-driven counts drawn with D3
  *       (bar chart, or heat-map when a second dimension is chosen).
  * ========================================================================== */
@@ -20,12 +21,9 @@
   // Feature columns, and which we show by default when no POS is chosen.
   const FEATURE_COLS = ["number", "case", "gender", "tense", "mood", "voice", "person", "degree"];
   const DEFAULT_FEATURES = ["number", "case", "gender", "tense", "mood"];
-  // Columns the Quick-filter table shows (when present) and never prunes.
+  // Columns the dropdown query selects (when present in the table).
   const PREVIEW_COLS = ["author", "work", "ref", "form", "lemma", "pos", "person",
     "number", "tense", "mood", "voice", "gender", "case", "degree"];
-  const ALWAYS_COLS = ["author", "work", "ref", "form", "lemma", "pos"];
-  const LABEL_MAP = { pos: "pos", person: "person", number: "number", tense: "tense",
-    mood: "mood", voice: "voice", gender: "gender", case: "case", degree: "degree" };
   // Dimensions offered in the explorer.
   const DIMENSIONS = [
     ["work", "Book / work"], ["author", "Author"], ["lemma", "Lemma"], ["form", "Word form"],
@@ -33,7 +31,6 @@
     ["tense", "Tense"], ["mood", "Mood"], ["voice", "Voice"], ["person", "Person"], ["degree", "Degree"]
   ];
 
-  const isNA = (v) => v === null || v === undefined || v === "" || v === "-";
   const whereOf = (filters) => {
     const p = [];
     for (const k in filters) if (filters[k]) p.push(q(k) + " = " + sqlStr(filters[k]));
@@ -42,106 +39,136 @@
   const naGuard = (c) => q(c) + " IS NOT NULL AND " + q(c) + " NOT IN ('','-')";
   const displayName = (field, code) => (UI.LABELS[field] ? UI.label(field, code) : String(code));
 
-  /* ----- column pruning (hide attributes irrelevant to the selection) ----- */
-
-  function prune(result) {
-    const { columns, values } = result;
-    const keep = columns.map((c, i) => ALWAYS_COLS.includes(c) || values.some((r) => !isNA(r[i])));
-    return {
-      columns: columns.filter((_, i) => keep[i]),
-      values: values.map((r) => r.filter((_, i) => keep[i]))
-    };
-  }
+  // Quote an identifier only when it needs it, for legible generated SQL.
+  const RESERVED = new Set(["case", "order", "group", "by", "select", "from", "where",
+    "table", "index", "default", "check", "references", "limit", "offset", "having",
+    "join", "on", "in", "is", "not", "null", "and", "or", "as", "distinct", "values",
+    "primary", "foreign", "unique", "collate", "union", "desc", "asc", "between", "like"]);
+  const niceId = (c) => (/^[a-z_][a-z0-9_]*$/i.test(c) && !RESERVED.has(String(c).toLowerCase())) ? c : q(c);
 
   /* ----- Quick filter ----------------------------------------------------- */
 
   let qf = null;
-  const RESULT_CAP = 5000;
+  let manualSql = false;            // true once the user hand-edits the SQL; dropdowns then disabled
+  const PAGE_SIZE = 13;
 
-  function saveMorphState() {
-    UI.saveState("morph", {
-      qf: qf ? qf.read() : {},
-      ex: ex ? ex.read() : {},
-      exChartType: $("exChartType").value, exNodeUnit: $("exNodeUnit").value,
-      exDim1: $("exDim1").value, exDim2: $("exDim2").value, exTopN: $("exTopN").value,
-      exSemantic: $("exSemantic").value, exLemma: $("exLemma").value,
-      exLimitWork: $("exLimitWork").value, exLimitAuthor: $("exLimitAuthor").value,
-      sql: $("qfSqlInput").value
-    });
+  // Disable/enable the dropdown query-builder when the SQL is taken over by hand.
+  // The quick-filter Reset button is deliberately left enabled — it is how the
+  // user gets back out of manual mode.
+  function setQuickControlsEnabled(on) {
+    const g = $("qfGroup");
+    if (g) g.querySelectorAll("select, input").forEach((c) => { c.disabled = !on; });
+    if ($("btnApplyFilter")) $("btnApplyFilter").disabled = !on;
   }
 
-  function applyQuickFilter() {
-    saveMorphState();
-    const filters = qf.read();
+  function enterManualMode() {
+    if (manualSql) return;
+    manualSql = true;
+    setQuickControlsEnabled(false);
+  }
+
+  // No persistence: nothing is written to localStorage / cookies. State lives
+  // only for the current page view and is gone on refresh, by design.
+
+  // Build the dropdown query — nicely formatted, and WITHOUT a row cap (paging
+  // adds LIMIT/OFFSET). This text is what lands in the editor and is executed.
+  function buildQuickSql(filters) {
     const cols = PREVIEW_COLS.filter((c) => SQL.columns().includes(c));
-    const where = whereOf(filters);
-    let sql = "SELECT " + cols.map(q).join(", ") + " FROM " + q(TABLE);
-    if (where) sql += " WHERE " + where;
-    sql += " ORDER BY " + q("work") + ", " + q("ref") + " LIMIT " + (RESULT_CAP + 1) + ";";
-    try {
-      const raw = SQL.query(sql);
-      const capped = raw.values.length > RESULT_CAP;
-      if (capped) raw.values = raw.values.slice(0, RESULT_CAP);
-      const res = prune(raw);
-      UI.renderTable($("qfResults"), res.columns, res.values, { paginate: true, pageSize: 50, labelMap: LABEL_MAP });
-      if (capped) {
-        const note = document.createElement("div");
-        note.className = "small-muted";
-        note.style.padding = ".4rem .2rem 0";
-        note.textContent = "Showing the first " + RESULT_CAP.toLocaleString() + " matching tokens. Narrow the filter or use custom SQL for the full set.";
-        $("qfResults").appendChild(note);
-      }
-    } catch (e) {
-      $("qfResults").innerHTML = '<div class="small-muted" style="padding:.7rem;">Query error: ' + UI.esc(e.message) + "</div>";
-    }
+    let sql = "SELECT " + cols.map(niceId).join(", ") + "\nFROM " + niceId(TABLE);
+    const conds = [];
+    for (const k in filters) if (filters[k]) conds.push(niceId(k) + " = " + sqlStr(filters[k]));
+    if (conds.length) sql += "\nWHERE " + conds.join("\n  AND ");
+    sql += "\nORDER BY " + niceId("work") + ", " + niceId("ref");
+    sql += "\nLIMIT " + PAGE_SIZE + " OFFSET 0;";
+    return sql;
   }
 
-  /* ----- Custom SQL (folded into Quick filter, Enter to run) -------------- */
+  // The dropdowns ARE the query: regenerate it, mirror into the editor, run it.
+  function applyQuickFilter() {
+    $("qfSqlInput").value = buildQuickSql(qf.read());
+    runCustomSql();
+  }
 
-  const SQL_DEFAULT = 'SELECT form, "case", work, ref\nFROM ' + TABLE +
-    "\nWHERE lemma = 'Μοῦσα'\nORDER BY work, ref\nLIMIT 200;";
-  const SQL_EXAMPLES = [
-    ["count by work", "SELECT work, COUNT(*) AS n FROM " + TABLE + " GROUP BY work ORDER BY n DESC;"],
-    ["all verbs", "SELECT form, lemma, tense, mood, voice FROM " + TABLE + " WHERE pos = 'v' LIMIT 500;"],
-    ["genitives", "SELECT form, lemma, gender FROM " + TABLE + " WHERE \"case\" = 'g' LIMIT 500;"],
-    ["distinct lemmata", "SELECT DISTINCT lemma FROM " + TABLE + " ORDER BY lemma LIMIT 500;"],
-    ["schema", "PRAGMA table_info(" + TABLE + ");"]
-  ];
+  /* ----- Result table + LIMIT/OFFSET paging on the single query ----------- */
 
+  // The trailing "LIMIT n [OFFSET m]" of the query, or null if it has none.
+  const LIMIT_RE = /\bLIMIT\s+(\d+)(?:\s+OFFSET\s+(\d+))?\s*;?\s*$/i;
+  function readLimitOffset(sql) {
+    const m = sql.match(LIMIT_RE);
+    return m ? { limit: parseInt(m[1], 10), offset: m[2] ? parseInt(m[2], 10) : 0 } : null;
+  }
+  // Same query with a new OFFSET (keeps the existing LIMIT).
+  function setOffset(sql, offset) {
+    const lo = readLimitOffset(sql);
+    return lo ? sql.replace(LIMIT_RE, "LIMIT " + lo.limit + " OFFSET " + offset + ";") : sql;
+  }
+
+  // Render the result: same columns and rows the query returns, with coded
+  // values shown as human-readable labels (e.g. 'g' -> 'Genitive').
+  function renderTable(columns, values) {
+    if (!columns.length || !values.length) {
+      return '<div class="small-muted" style="padding:.7rem;">No rows.</div>';
+    }
+    let html = '<div class="table-wrap"><table class="preview"><thead><tr>';
+    for (const c of columns) html += "<th>" + UI.esc(UI.fieldTitle(c)) + "</th>";
+    html += "</tr></thead><tbody>";
+    for (const row of values) {
+      html += "<tr>";
+      row.forEach((v, i) => { html += "<td>" + (v == null ? "" : UI.esc(displayName(columns[i], v))) + "</td>"; });
+      html += "</tr>";
+    }
+    html += "</tbody></table></div>";
+    return html;
+  }
+
+  // Runs whatever is in the editor, exactly as written, into #qfResults.
+  // If the query ends in LIMIT/OFFSET, Prev/Next rewrite the OFFSET in the
+  // editor and re-run — so the query shown is always the query that ran.
   function runCustomSql() {
-    const input = $("qfSqlInput");
+    const sql = $("qfSqlInput").value;
     const status = $("qfSqlStatus");
-    const out = $("qfSqlOut");
-    const sql = input.value;
     if (!SQL.isReadOnly(sql)) {
       status.textContent = "Read-only: only SELECT / WITH / EXPLAIN / PRAGMA are allowed.";
       return;
     }
+    let res;
     try {
-      const { columns, values } = SQL.query(sql);
-      UI.renderTable(out, columns, values, { paginate: false });
-      status.textContent = "OK — " + values.length + " row" + (values.length === 1 ? "" : "s") + ".";
-      saveMorphState();
+      res = SQL.query(sql);
     } catch (e) {
       status.textContent = "SQL error: " + e.message;
+      $("qfResults").innerHTML = '<div class="small-muted" style="padding:.7rem;">Query error: ' + UI.esc(e.message) + "</div>";
+      return;
     }
+    const columns = res.columns || [], values = res.values || [];
+    const lo = readLimitOffset(sql);
+
+    let html = "";
+    if (lo) {
+      const dis = (cond) => cond ? " disabled" : "";
+      html += '<div class="pager"><span class="pager-controls">';
+      html += '<button class="btn btn-sm" data-act="prev"' + dis(lo.offset === 0) + ">\u2039 Prev</button>";
+      html += '<button class="btn btn-sm" data-act="next"' + dis(values.length < lo.limit) + ">Next \u203a</button>";
+      html += "</span></div>";
+    }
+    html += renderTable(columns, values);
+    const container = $("qfResults");
+    container.innerHTML = html;
+
+    if (lo) container.querySelectorAll("[data-act]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const off = b.dataset.act === "next" ? lo.offset + lo.limit : Math.max(0, lo.offset - lo.limit);
+        $("qfSqlInput").value = setOffset(sql, off);
+        runCustomSql();
+      });
+    });
+
+    status.textContent = "OK — " + values.length + " row" + (values.length === 1 ? "" : "s") + ".";
   }
 
   function wireCustomSql() {
-    $("qfSqlInput").value = SQL_DEFAULT;
     $("qfSqlRun").addEventListener("click", runCustomSql);
-    $("qfSqlReset").addEventListener("click", () => { $("qfSqlInput").value = SQL_DEFAULT; runCustomSql(); });
-    $("qfSqlInput").addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); runCustomSql(); }
-    });
-    const host = $("qfSqlExamples");
-    for (const [label, sql] of SQL_EXAMPLES) {
-      const b = document.createElement("button");
-      b.className = "btn btn-sm";
-      b.textContent = label;
-      b.addEventListener("click", () => { $("qfSqlInput").value = sql; runCustomSql(); });
-      host.appendChild(b);
-    }
+    // A manual edit hands ownership of the query to the textarea; lock the dropdowns.
+    $("qfSqlInput").addEventListener("input", enterManualMode);
   }
 
   /* ----- Explore & visualize --------------------------------------------- */
@@ -255,7 +282,6 @@
   }
 
   function runExplorer() {
-    saveMorphState();
     const type = $("exChartType").value;
     if (type === "network") { drawNetwork(); return; }
 
@@ -438,7 +464,14 @@
 
     $("btnApplyFilter").disabled = false;
     $("btnApplyFilter").addEventListener("click", applyQuickFilter);
-    $("btnResetFilter").addEventListener("click", () => { qf.reset(); applyQuickFilter(); });
+    // The quick-filter Reset is the single reset: it clears manual mode, restores
+    // the dropdowns, and regenerates the SQL from them (erasing any custom query).
+    $("btnResetFilter").addEventListener("click", () => {
+      manualSql = false;
+      setQuickControlsEnabled(true);
+      qf.reset();
+      applyQuickFilter();
+    });
 
     UI.fillSelect($("exDim1"), DIMENSIONS.map((d) => d[0]), { head: null });
     UI.fillSelect($("exDim2"), DIMENSIONS.map((d) => d[0]), { head: "(none)" });
@@ -464,27 +497,11 @@
       ex.reset(); $("exSemantic").value = ""; $("exLimitWork").value = ""; $("exLimitAuthor").value = ""; runExplorer();
     });
 
-    // restore the person's previous selections, if any
-    const st = UI.loadState("morph");
-    if (st) {
-      if (st.qf) qf.setState(st.qf);
-      if (st.ex) ex.setState(st.ex);
-      if (st.exChartType) $("exChartType").value = st.exChartType;
-      if (st.exNodeUnit) $("exNodeUnit").value = st.exNodeUnit;
-      if (st.exDim1) $("exDim1").value = st.exDim1;
-      if (st.exDim2 != null) $("exDim2").value = st.exDim2;
-      if (st.exTopN) $("exTopN").value = st.exTopN;
-      if (st.exSemantic != null) $("exSemantic").value = st.exSemantic;
-      if (st.exLemma != null) $("exLemma").value = st.exLemma;
-      if (st.exLimitWork != null) $("exLimitWork").value = st.exLimitWork;
-      if (st.exLimitAuthor != null) $("exLimitAuthor").value = st.exLimitAuthor;
-      if (st.sql) $("qfSqlInput").value = st.sql;
-    }
+    // No saved state is read: every load starts fresh. The dropdowns build the
+    // default query, fill the editor, and render; the explorer draws its default.
     syncExplorerControls();
-
-    applyQuickFilter();   // initial browse (restored filter if any)
-    runExplorer();        // initial chart (restored dims if any)
-    runCustomSql();       // prime the folded console
+    applyQuickFilter();
+    runExplorer();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
