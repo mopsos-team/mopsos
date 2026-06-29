@@ -64,7 +64,7 @@
       ex: ex ? ex.read() : {},
       exChartType: $("exChartType").value, exNodeUnit: $("exNodeUnit").value,
       exDim1: $("exDim1").value, exDim2: $("exDim2").value, exTopN: $("exTopN").value,
-      exSemantic: $("exSemantic").value,
+      exSemantic: $("exSemantic").value, exLemma: $("exLemma").value,
       exLimitWork: $("exLimitWork").value, exLimitAuthor: $("exLimitAuthor").value,
       sql: $("qfSqlInput").value
     });
@@ -163,8 +163,10 @@
 
   function syncExplorerControls() {
     const type = $("exChartType").value;
+    const twoDim = (type === "heatmap" || type === "grouped" || type === "proportion" || type === "paradigm");
     $("exDim1Wrap").hidden = (type === "network");
-    $("exDim2Wrap").hidden = (type !== "heatmap");
+    $("exDim2Wrap").hidden = !twoDim;
+    $("exLemmaWrap").hidden = (type !== "paradigm");
     $("exNodeUnitWrap").hidden = (type !== "network");
     $("exSemanticWrap").hidden = (type !== "network");
   }
@@ -268,7 +270,7 @@
     const filterText = filterTextOf(filters);
 
     try {
-      if (type === "heatmap") {
+      if (type === "heatmap" || type === "grouped" || type === "proportion") {
         const d2 = dim2 || dim1;
         const sql = "SELECT " + q(dim1) + " AS r, " + q(d2) + " AS c2, COUNT(*) AS c FROM " + q(TABLE) +
           " WHERE " + naGuard(dim1) + " AND " + naGuard(d2) + (w ? " AND " + w : "") +
@@ -280,15 +282,87 @@
           colTot[o.c2] = (colTot[o.c2] || 0) + o.c;
           cell[o.r + "\u0000" + o.c2] = o.c;
         }
-        const rowVals = Object.keys(rowTot).sort((a, b) => rowTot[b] - rowTot[a]).slice(0, Math.min(topN, 30));
-        const colVals = Object.keys(colTot).sort((a, b) => colTot[b] - colTot[a]).slice(0, 30);
+        const colCap = type === "heatmap" ? 30 : (type === "grouped" ? 6 : 8);
+        const rowCap = type === "heatmap" ? 30 : 12;
+        const rowVals = Object.keys(rowTot).sort((a, b) => rowTot[b] - rowTot[a]).slice(0, Math.min(topN, rowCap));
+        const colVals = Object.keys(colTot).sort((a, b) => colTot[b] - colTot[a]).slice(0, colCap);
         const matrix = rowVals.map((rv) => colVals.map((cv) => cell[rv + "\u0000" + cv] || 0));
-        title.textContent = UI.fieldTitle(dim1) + " × " + UI.fieldTitle(d2);
-        desc.textContent = "Token counts for each combination" + filterText + ". Darker = more frequent.";
-        Chart.heatmap(chart, matrix,
-          rowVals.map((v) => displayName(dim1, v)),
-          colVals.map((v) => displayName(d2, v)),
-          { valueLabel: "tokens", showValues: rowVals.length <= 15 && colVals.length <= 15 });
+        const rowLabels = rowVals.map((v) => displayName(dim1, v));
+        const colLabels = colVals.map((v) => displayName(d2, v));
+
+        if (type === "heatmap") {
+          title.textContent = UI.fieldTitle(dim1) + " × " + UI.fieldTitle(d2);
+          desc.textContent = "Token counts for each combination" + filterText + ". Darker = more frequent.";
+          Chart.heatmap(chart, matrix, rowLabels, colLabels,
+            { valueLabel: "tokens", showValues: rowVals.length <= 15 && colVals.length <= 15 });
+        } else if (type === "grouped") {
+          title.textContent = UI.fieldTitle(dim1) + " by " + UI.fieldTitle(d2);
+          desc.textContent = "Token counts, grouped to compare " + UI.fieldTitle(d2) + " across each " + UI.fieldTitle(dim1) + filterText + ".";
+          Chart.groupedBars(chart, matrix, rowLabels, colLabels, { valueLabel: "tokens", emptyMsg: "No tokens match." });
+        } else {
+          const pct = matrix.map((row) => {
+            const s = row.reduce((a, b) => a + b, 0) || 1;
+            return row.map((v) => +(100 * v / s).toFixed(1));
+          });
+          title.textContent = "Composition of " + UI.fieldTitle(dim1) + " by " + UI.fieldTitle(d2);
+          desc.textContent = "Each bar is one " + UI.fieldTitle(dim1) + " value, split into the % share of each " + UI.fieldTitle(d2) + filterText + ".";
+          Chart.stackedBars(chart, pct, rowLabels, colLabels, { valueLabel: "%", emptyMsg: "No tokens match." });
+        }
+      } else if (type === "paradigm") {
+        const lemma = ($("exLemma").value || "").trim();
+        if (!lemma) {
+          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a lemma above (e.g. \u03bc\u1fc6\u03bd\u03b9\u03c2, \u03b8\u03b5\u03cc\u03c2, \u1f00\u03b5\u03af\u03b4\u03c9) to lay out its attested forms.</div>';
+          title.textContent = ""; desc.textContent = ""; return;
+        }
+        // pick sensible paradigm axes for this lemma's part of speech (user can override via the two selectors)
+        const lw = q("lemma") + " = " + sqlStr(lemma) + (w ? " AND " + w : "");
+        const cand = ["case", "number", "gender", "tense", "mood", "voice", "person", "degree"];
+        const cols = SQL.nonEmptyColumns(cand, { lemma: lemma });
+        if (!cols.length) {
+          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No inflectional features attested for \u201c' + UI.esc(lemma) + '\u201d in this scope.</div>';
+          title.textContent = ""; desc.textContent = ""; return;
+        }
+        const verbal = cols.indexOf("tense") >= 0 || cols.indexOf("mood") >= 0 || cols.indexOf("person") >= 0;
+        const pref = verbal
+          ? ["tense", "mood", "voice", "person", "number", "case", "gender"]
+          : ["case", "number", "gender", "degree", "tense", "mood", "voice", "person"];
+        const ordered = pref.filter((c) => cols.indexOf(c) >= 0);
+        const f1 = (cols.indexOf($("exDim1").value) >= 0) ? $("exDim1").value : (ordered[0] || "case");
+        const f2 = (cols.indexOf(dim2) >= 0 && dim2 !== f1) ? dim2 : (ordered.find((c) => c !== f1) || f1);
+        const sql = "SELECT " + q(f1) + " AS r, " + q(f2) + " AS c2, form AS form, COUNT(*) AS c FROM " + q(TABLE) +
+          " WHERE " + lw + " AND " + naGuard(f1) + " AND " + naGuard(f2) + " GROUP BY r, c2, form;";
+        const data = SQL.objects(sql);
+        if (!data.length) {
+          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No attested forms for \u201c' + UI.esc(lemma) + '\u201d in this scope.</div>';
+          title.textContent = ""; desc.textContent = ""; return;
+        }
+        const rowTot = {}, colTot = {}, cellForms = {};
+        for (const o of data) {
+          rowTot[o.r] = (rowTot[o.r] || 0) + o.c;
+          colTot[o.c2] = (colTot[o.c2] || 0) + o.c;
+          const key = o.r + "\u0000" + o.c2;
+          (cellForms[key] = cellForms[key] || []).push([o.form, o.c]);
+        }
+        const rowVals = Object.keys(rowTot).sort((a, b) => rowTot[b] - rowTot[a]);
+        const colVals = Object.keys(colTot).sort((a, b) => colTot[b] - colTot[a]);
+        let html = '<table class="data-table paradigm-table"><thead><tr><th>' + UI.esc(UI.fieldTitle(f1)) + " \\ " + UI.esc(UI.fieldTitle(f2)) + "</th>";
+        colVals.forEach((cv) => { html += "<th>" + UI.esc(displayName(f2, cv)) + "</th>"; });
+        html += "</tr></thead><tbody>";
+        rowVals.forEach((rv) => {
+          html += "<tr><th>" + UI.esc(displayName(f1, rv)) + "</th>";
+          colVals.forEach((cv) => {
+            const forms = (cellForms[rv + "\u0000" + cv] || []).sort((a, b) => b[1] - a[1]);
+            html += "<td>" + (forms.length
+              ? forms.map((f) => '<span class="pdg-form">' + UI.esc(f[0]) + '</span><span class="pdg-c">' + f[1] + "</span>").join("<br>")
+              : '<span class="pdg-gap">\u2014</span>') + "</td>";
+          });
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+        const total = SQL.scalar("SELECT COUNT(*) FROM " + q(TABLE) + " WHERE " + lw + ";");
+        title.textContent = "Paradigm of " + lemma + " \u2014 " + UI.fieldTitle(f1) + " × " + UI.fieldTitle(f2);
+        desc.textContent = total + " attested tokens" + filterText + ". Each cell lists the attested form(s) and their counts; \u2014 marks an unattested cell.";
+        chart.innerHTML = html;
       } else {
         const sql = "SELECT " + q(dim1) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +
           " WHERE " + naGuard(dim1) + (w ? " AND " + w : "") +
@@ -343,6 +417,7 @@
     $("exLimitWork").addEventListener("change", runExplorer);
     $("exLimitAuthor").addEventListener("change", runExplorer);
     $("exSemantic").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runExplorer(); } });
+    $("exLemma").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runExplorer(); } });
     $("btnExRun").addEventListener("click", runExplorer);
     $("btnExReset").addEventListener("click", () => {
       ex.reset(); $("exSemantic").value = ""; $("exLimitWork").value = ""; $("exLimitAuthor").value = ""; runExplorer();
@@ -359,6 +434,7 @@
       if (st.exDim2 != null) $("exDim2").value = st.exDim2;
       if (st.exTopN) $("exTopN").value = st.exTopN;
       if (st.exSemantic != null) $("exSemantic").value = st.exSemantic;
+      if (st.exLemma != null) $("exLemma").value = st.exLemma;
       if (st.exLimitWork != null) $("exLimitWork").value = st.exLimitWork;
       if (st.exLimitAuthor != null) $("exLimitAuthor").value = st.exLimitAuthor;
       if (st.sql) $("qfSqlInput").value = st.sql;

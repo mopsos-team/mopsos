@@ -1056,17 +1056,22 @@
       if (!nodes || !nodes.length) return empty(el, opts.emptyMsg);
 
       const d3 = window.d3;
-      const width = 760, height = 460;
+      const n = nodes.length;
+      const width = 900, height = 620;
       const root = svg(el, width, height);
-      const N = nodes.map((n) => Object.assign({}, n));
+      const svgEl = root.node();
+      const N = nodes.map((nd) => Object.assign({}, nd));
       const L = (links || []).map((l) => Object.assign({}, l));
       const tip = tooltip();
 
+      // spread larger graphs more so labels don't overlap
+      const charge = opts.charge || -(170 + n * 6);
+      const dist = (opts.linkDistance || 70) + Math.min(60, n);
       const sim = d3.forceSimulation(N)
-        .force("link", d3.forceLink(L).id((d) => d.id).distance(opts.linkDistance || 70).strength((l) => Math.min(1, (l.weight || 0.5))))
-        .force("charge", d3.forceManyBody().strength(opts.charge || -180))
+        .force("link", d3.forceLink(L).id((d) => d.id).distance(dist).strength((l) => Math.min(1, (l.weight || 0.5))))
+        .force("charge", d3.forceManyBody().strength(charge))
         .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collide", d3.forceCollide(14));
+        .force("collide", d3.forceCollide(16));
 
       const link = root.append("g").attr("stroke", "#cbd5e1").selectAll("line").data(L).join("line")
         .attr("stroke-width", (d) => 1 + (d.weight || 0) * 3).attr("stroke-opacity", (d) => Math.max(0.2, d.weight || 0.4));
@@ -1080,19 +1085,39 @@
             .style("left", (ev.pageX + 12) + "px").style("top", (ev.pageY - 12) + "px");
         })
         .on("mouseleave", () => tip.style("opacity", 0));
-      node.append("text").attr("x", 12).attr("y", 4).attr("font-size", 10).attr("fill", "#334155")
+      node.append("text").attr("x", 12).attr("y", 4).attr("font-size", 11).attr("fill", "#334155")
         .text((d) => d.label || d.id);
+
+      // Reframe the viewBox around all nodes (+ their labels) so the whole graph is visible at once.
+      function fit() {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        N.forEach((d) => {
+          const r = d.r || opts.radius || 9;
+          const lw = String(d.label || d.id || "").length * 6.6 + 16;
+          if (d.x - r < minX) minX = d.x - r;
+          if (d.y - r - 8 < minY) minY = d.y - r - 8;
+          if (d.x + r + lw > maxX) maxX = d.x + r + lw;
+          if (d.y + r + 8 > maxY) maxY = d.y + r + 8;
+        });
+        if (!isFinite(minX)) return;
+        const pad = 18;
+        minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+        svgEl.setAttribute("viewBox", minX + " " + minY + " " + Math.max(1, maxX - minX) + " " + Math.max(1, maxY - minY));
+      }
 
       node.call(d3.drag()
         .on("start", (ev, d) => { if (!ev.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
         .on("drag", (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
-        .on("end", (ev, d) => { if (!ev.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }));
+        .on("end", (ev, d) => { if (!ev.active) sim.alphaTarget(0); d.fx = null; d.fy = null; fit(); }));
 
       sim.on("tick", () => {
         link.attr("x1", (d) => d.source.x).attr("y1", (d) => d.source.y)
           .attr("x2", (d) => d.target.x).attr("y2", (d) => d.target.y);
         node.attr("transform", (d) => "translate(" + d.x + "," + d.y + ")");
       });
+      sim.on("end", fit);
+      // fallback in case the simulation runs long: fit once it has cooled
+      setTimeout(fit, 1500);
     }
   };
 

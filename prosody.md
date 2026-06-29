@@ -15,7 +15,7 @@ section: prosody
     <h4>Scansion tab</h4>
     <p>Scansion is the analysis of a line's metrical structure — marking which syllables are long and which are short, and grouping them into feet. Every Homeric line in the corpus has been scanned into its six hexameter feet, where each foot is either a dactyl (— ‿ ‿) or a spondee (— —).</p>
     <ul>
-      <li><strong>Pick one view at a time</strong> from the drop-down — scan individual lines into feet, see the commonest foot patterns, the dactyl/spondee balance by position, where a chosen word falls in the verse, the commonest words at each foot, and the long/short, length and speech profiles.</li>
+      <li><strong>Pick one view at a time</strong> from the drop-down — scan individual lines syllable by syllable, see the commonest foot patterns, the dactyl/spondee balance by position, where a chosen word (or a whole grammatical category) falls in the verse, the commonest words at each foot, and the long/short, length and speech profiles. The word box accepts Greek or English and suggests matching forms as you type.</li>
       <li><strong>Limit the scope</strong> to the Iliad, the Odyssey, or a single book before running.</li>
     </ul>
     <p>Quantity reflects syllable weight (a syllable closed by a consonant or containing a long vowel/diphthong is heavy/long); feet are the recurring rhythmic units of the verse. Word-to-foot placement is computed by aligning each word's syllables to the foot pattern, on the ~90% of lines whose orthographic syllable count matches the scansion exactly.</p>
@@ -66,7 +66,10 @@ section: prosody
     </div>
     <div class="field" id="scanWordWrap" hidden>
       <label for="scanWord"><strong>Word form</strong></label>
-      <input id="scanWord" type="text" autocomplete="off" placeholder="e.g. μῆνιν, θεά, Ἀχιλῆος" />
+      <div class="combo">
+        <input id="scanWord" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek (μῆνις) or English (ship, swift)…" />
+        <div id="scanWordMenu" class="combo-menu" hidden></div>
+      </div>
     </div>
     <div class="field" id="scanFootWrap" style="max-width:150px;" hidden>
       <label for="scanFoot"><strong>Foot</strong></label>
@@ -77,6 +80,28 @@ section: prosody
     </div>
   </div>
   <div class="btn-row"><button id="btnRunScan" class="btn btn-primary" disabled>Show view</button></div>
+  <details id="scanGrammar" class="adv" hidden style="margin-top:.4rem;">
+    <summary><strong>Grammatical category</strong> (optional) — restrict to words of a chosen part of speech and inflection</summary>
+    <div class="feature-grid" style="margin-top:.5rem;">
+      <div class="field"><label for="scanGPos">Part of speech</label>
+        <select id="scanGPos"><option value="">(any)</option><option value="n">noun</option><option value="v">verb</option><option value="a">adjective</option><option value="p">pronoun</option><option value="d">adverb</option><option value="l">article</option><option value="r">preposition</option><option value="c">conjunction</option><option value="g">particle</option><option value="m">numeral</option><option value="i">interjection</option></select></div>
+      <div class="field"><label for="scanGCase">Case</label>
+        <select id="scanGCase"><option value="">(any)</option><option value="n">nominative</option><option value="g">genitive</option><option value="d">dative</option><option value="a">accusative</option><option value="v">vocative</option></select></div>
+      <div class="field"><label for="scanGNumber">Number</label>
+        <select id="scanGNumber"><option value="">(any)</option><option value="s">singular</option><option value="d">dual</option><option value="p">plural</option></select></div>
+      <div class="field"><label for="scanGGender">Gender</label>
+        <select id="scanGGender"><option value="">(any)</option><option value="m">masculine</option><option value="f">feminine</option><option value="n">neuter</option></select></div>
+      <div class="field"><label for="scanGTense">Tense</label>
+        <select id="scanGTense"><option value="">(any)</option><option value="p">present</option><option value="i">imperfect</option><option value="a">aorist</option><option value="r">perfect</option><option value="l">pluperfect</option><option value="f">future</option></select></div>
+      <div class="field"><label for="scanGMood">Mood</label>
+        <select id="scanGMood"><option value="">(any)</option><option value="i">indicative</option><option value="s">subjunctive</option><option value="o">optative</option><option value="m">imperative</option><option value="n">infinitive</option><option value="p">participle</option></select></div>
+      <div class="field"><label for="scanGVoice">Voice</label>
+        <select id="scanGVoice"><option value="">(any)</option><option value="a">active</option><option value="m">middle</option><option value="p">passive</option><option value="e">mediopassive</option></select></div>
+      <div class="field"><label for="scanGPerson">Person</label>
+        <select id="scanGPerson"><option value="">(any)</option><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option></select></div>
+    </div>
+    <p class="help" style="margin:.35rem 0 0;">In <em>Where a word falls</em>, leave the word box empty and set a category to see the metrical position of that whole category. Grammar is read off each form's commonest analysis in the corpus.</p>
+  </details>
   <p id="scanViewDesc" class="help" style="margin-top:.2rem;"></p>
   <div id="scanSummary" class="analysis-wrap" style="margin-top:.4rem;"></div>
   <div class="viz-wrap" style="margin-top:.7rem;"><div id="scanChart"></div></div>

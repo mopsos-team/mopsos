@@ -13,7 +13,8 @@
   function grab() {
     ["scanLoadStatus", "scanView", "scanWork", "scanBook", "scanTopN", "btnRunScan",
      "scanViewDesc", "scanSummary", "scanChart", "scanTable",
-     "scanLineWrap", "scanLineFrom", "scanWordWrap", "scanWord", "scanFootWrap", "scanFoot"]
+     "scanLineWrap", "scanLineFrom", "scanWordWrap", "scanWord", "scanWordMenu", "scanFootWrap", "scanFoot",
+     "scanGrammar", "scanGPos", "scanGCase", "scanGNumber", "scanGGender", "scanGTense", "scanGMood", "scanGVoice", "scanGPerson"]
       .forEach(function (id) { el[id] = document.getElementById(id); });
   }
 
@@ -88,6 +89,113 @@
     return true;
   }
 
+  /* ----- grammatical category (form -> commonest analysis in the corpus) --- */
+  var GFIELDS = ["pos", "case", "number", "gender", "tense", "mood", "voice", "person"];
+  var GLABEL = {
+    pos: { n: "noun", v: "verb", a: "adjective", p: "pronoun", d: "adverb", l: "article", r: "preposition", c: "conjunction", g: "particle", m: "numeral", i: "interjection" },
+    "case": { n: "nominative", g: "genitive", d: "dative", a: "accusative", v: "vocative" },
+    number: { s: "singular", d: "dual", p: "plural" },
+    gender: { m: "masculine", f: "feminine", n: "neuter" },
+    tense: { p: "present", i: "imperfect", a: "aorist", r: "perfect", l: "pluperfect", f: "future", t: "future-perfect" },
+    mood: { i: "indicative", s: "subjunctive", o: "optative", m: "imperative", n: "infinitive", p: "participle" },
+    voice: { a: "active", m: "middle", p: "passive", e: "mediopassive" },
+    person: { "1": "1st-person", "2": "2nd-person", "3": "3rd-person" }
+  };
+  var FORMFEAT = null;
+  function buildFormFeat() {
+    if (FORMFEAT) return;
+    var rows = SQL.objects('SELECT form, pos, "case" c, number num, gender gen, tense tns, mood md, voice vc, person prs, COUNT(*) n FROM morphology WHERE form NOT IN (\'\',\'-\') GROUP BY form, pos, c, num, gen, tns, md, vc, prs;');
+    var best = {};
+    rows.forEach(function (r) {
+      var k = normGr(r.form);
+      if (!best[k] || r.n > best[k]._n) best[k] = { pos: r.pos, "case": r.c, number: r.num, gender: r.gen, tense: r.tns, mood: r.md, voice: r.vc, person: r.prs, _n: r.n };
+    });
+    FORMFEAT = best;
+  }
+  var GMAP = { pos: "scanGPos", "case": "scanGCase", number: "scanGNumber", gender: "scanGGender", tense: "scanGTense", mood: "scanGMood", voice: "scanGVoice", person: "scanGPerson" };
+  function readGrammar() {
+    var f = {};
+    GFIELDS.forEach(function (k) { var c = el[GMAP[k]]; if (c && c.value) f[k] = c.value; });
+    return f;
+  }
+  function grammarActive(f) { return Object.keys(f).length > 0; }
+  function featMatch(wn, f) { var a = FORMFEAT[wn]; if (!a) return false; for (var k in f) if (a[k] !== f[k]) return false; return true; }
+  function grammarLabel(f) {
+    var parts = GFIELDS.filter(function (k) { return f[k]; }).map(function (k) { return GLABEL[k][f[k]] || f[k]; });
+    return parts.length ? parts.join(" ") : "words";
+  }
+
+  /* ----- word autocomplete: Greek prefix, or English via the LSJ bridge ---- */
+  var FORMS = null, FORMLIST = null, LEMMAFORMS = null;
+  function buildForms() {
+    if (FORMS) return;
+    buildAlign();
+    FORMS = {};
+    ALIGN.forEach(function (L) { if (!L.al) return; L.al.forEach(function (w) {
+      var e = FORMS[w.wn]; if (!e) e = FORMS[w.wn] = { forms: {}, c: 0 }; e.c++; e.forms[w.w] = (e.forms[w.w] || 0) + 1;
+    }); });
+    FORMLIST = Object.keys(FORMS).map(function (wn) {
+      var fm = FORMS[wn].forms, disp = Object.keys(fm).sort(function (a, b) { return fm[b] - fm[a]; })[0];
+      return { wn: wn, disp: disp, c: FORMS[wn].c };
+    }).sort(function (a, b) { return b.c - a.c; });
+  }
+  function buildLemmaForms() {
+    if (LEMMAFORMS) return;
+    buildForms();
+    LEMMAFORMS = {};
+    SQL.objects("SELECT DISTINCT lemma, form FROM morphology WHERE form NOT IN ('','-');").forEach(function (r) {
+      var nf = normGr(r.form); if (!FORMS[nf]) return;
+      var nl = normGr(r.lemma); (LEMMAFORMS[nl] = LEMMAFORMS[nl] || {})[nf] = 1;
+    });
+  }
+  function suggestFor(query) {
+    var q = (query || "").trim(); if (!q) return [];
+    var hasLatin = /[a-z]/i.test(q.replace(/[\u0370-\u03ff\u1f00-\u1fff]/g, ""));
+    if (hasLatin) {
+      buildLemmaForms();
+      var sem = window.MopsosSemantics, seeds = [];
+      if (sem && sem.resolve) { var res = sem.resolve(q); seeds = (res && res.seeds) || []; }
+      var out = [], seen = {};
+      seeds.forEach(function (lem) {
+        var forms = LEMMAFORMS[normGr(lem)]; if (!forms) return;
+        Object.keys(forms).forEach(function (nf) {
+          if (seen[nf] || !FORMS[nf]) return; seen[nf] = 1;
+          var fm = FORMS[nf].forms, disp = Object.keys(fm).sort(function (a, b) { return fm[b] - fm[a]; })[0];
+          out.push({ disp: disp, c: FORMS[nf].c, hint: lem });
+        });
+      });
+      return out.sort(function (a, b) { return b.c - a.c; }).slice(0, 12);
+    }
+    buildForms();
+    var nq = normGr(q);
+    return FORMLIST.filter(function (e) { return e.wn.indexOf(nq) === 0; }).slice(0, 12);
+  }
+  function renderMenu(items) {
+    if (!items || !items.length) { el.scanWordMenu.hidden = true; el.scanWordMenu.innerHTML = ""; return; }
+    el.scanWordMenu.innerHTML = items.map(function (it) {
+      return '<div class="combo-item" data-form="' + UI.esc(it.disp) + '"><span class="combo-form">' + UI.esc(it.disp) +
+        '</span><span class="combo-meta">' + (it.hint ? UI.esc(it.hint) + " \u00b7 " : "") + it.c + "</span></div>";
+    }).join("");
+    el.scanWordMenu.hidden = false;
+  }
+  function wireCombo() {
+    if (!el.scanWord || !el.scanWordMenu) return;
+    el.scanWord.addEventListener("input", function () { renderMenu(suggestFor(el.scanWord.value)); });
+    el.scanWord.addEventListener("focus", function () {
+      if (window.MopsosSemantics && window.MopsosSemantics.loadBridge) window.MopsosSemantics.loadBridge();
+      if (el.scanWord.value) renderMenu(suggestFor(el.scanWord.value));
+    });
+    el.scanWordMenu.addEventListener("mousedown", function (ev) {
+      var it = ev.target.closest && ev.target.closest(".combo-item"); if (!it) return;
+      ev.preventDefault();
+      el.scanWord.value = it.getAttribute("data-form");
+      el.scanWordMenu.hidden = true;
+      run();
+    });
+    el.scanWord.addEventListener("blur", function () { setTimeout(function () { if (el.scanWordMenu) el.scanWordMenu.hidden = true; }, 160); });
+    el.scanWord.addEventListener("keydown", function (e) { if (e.key === "Escape") el.scanWordMenu.hidden = true; });
+  }
+
   // Render a foot pattern as metrical marks (— long, ‿ short) grouped into feet.
   function renderFeet(pattern, al) {
     var feet = String(pattern).split("|");
@@ -103,6 +211,119 @@
       }).join(" ") + "</div>";
     }
     return '<div class="scan-feet">' + cells + "</div>" + words;
+  }
+
+  /* ----- per-syllable scansion (syllabify + align weights to syllables) ---- */
+
+  var VOWS = "αεηιουω";
+  var DIPHSET = { "αι": 1, "αυ": 1, "ει": 1, "ευ": 1, "ηυ": 1, "οι": 1, "ου": 1, "υι": 1, "ωυ": 1 };
+  var ONSET2 = { "βρ":1,"βλ":1,"γρ":1,"γλ":1,"γν":1,"δρ":1,"θρ":1,"θλ":1,"θν":1,"κρ":1,"κλ":1,"κν":1,"κτ":1,"πρ":1,"πλ":1,"πν":1,"πτ":1,"τρ":1,"τλ":1,"φρ":1,"φλ":1,"φθ":1,"χρ":1,"χλ":1,"χθ":1,"στ":1,"σπ":1,"σκ":1,"σφ":1,"σθ":1,"σχ":1,"σμ":1,"σβ":1,"μν":1,"δμ":1,"τμ":1 };
+
+  function unitize(word) {
+    var out = [], chars = Array.from(word.normalize("NFC"));
+    for (var i = 0; i < chars.length; i++) {
+      var ch = chars[i], d = ch.normalize("NFD"), base = d[0].toLowerCase();
+      out.push({
+        ch: ch, base: base,
+        circ: d.indexOf("\u0342") >= 0, iotasub: d.indexOf("\u0345") >= 0, dia: d.indexOf("\u0308") >= 0,
+        apo: /[\u2019'\u02bc]/.test(ch), isV: VOWS.indexOf(base) >= 0
+      });
+    }
+    return out;
+  }
+  // Syllabify one word into syllables carrying weight class + diaeresis split text.
+  function syllabify(word) {
+    var u = unitize(word), n = u.length, nuc = [], i = 0;
+    while (i < n) {
+      if (u[i].isV) {
+        var len = 1;
+        if (i + 1 < n && u[i + 1].isV && !u[i + 1].dia && !u[i].dia && DIPHSET[u[i].base + u[i + 1].base]) len = 2;
+        nuc.push({ s: i, e: i + len - 1 }); i += len;
+      } else i++;
+    }
+    if (!nuc.length) return [{ text: word, startsVowel: false, endsVowel: false, diph: false, wc: "L" }];
+    var segs = nuc.map(function (nk) { return { nuc: nk, uStart: 0, uEnd: n - 1 }; }), k;
+    for (k = 0; k < nuc.length; k++) {
+      if (k === 0) { segs[k].uStart = 0; continue; }
+      var run = [], j;
+      for (j = nuc[k - 1].e + 1; j < nuc[k].s; j++) run.push(j);
+      var split;
+      if (run.length <= 1) split = 0;
+      else { var last2 = u[run[run.length - 2]].base + u[run[run.length - 1]].base; split = ONSET2[last2] ? run.length - 2 : run.length - 1; }
+      segs[k].uStart = run.length ? (split < run.length ? run[split] : nuc[k].s) : nuc[k].s;
+    }
+    for (k = 0; k < segs.length; k++) segs[k].uEnd = (k + 1 < segs.length ? segs[k + 1].uStart - 1 : n - 1);
+    return segs.map(function (s) {
+      var text = u.slice(s.uStart, s.uEnd + 1).map(function (x) { return x.ch; }).join("");
+      var startsVowel = s.uStart === s.nuc.s, lastU = u[s.uEnd];
+      var endsVowel = lastU.isV && !lastU.apo, diph = s.nuc.e > s.nuc.s;
+      var closed = false, j;
+      for (j = s.nuc.e + 1; j <= s.uEnd; j++) if (!u[j].isV && !u[j].apo) closed = true;
+      var nb = u[s.nuc.s], circ = nb.circ || (diph && u[s.nuc.e].circ), wc;
+      if (closed || diph || circ || nb.iotasub || nb.base === "η" || nb.base === "ω") wc = "L";
+      else if (nb.base === "ε" || nb.base === "ο") wc = "S";
+      else wc = "?";
+      var diaSplit = null;
+      if (diph) {
+        diaSplit = [u.slice(s.uStart, s.nuc.e).map(function (x) { return x.ch; }).join(""),
+                    u.slice(s.nuc.e, s.uEnd + 1).map(function (x) { return x.ch; }).join("")];
+      }
+      return { text: text, startsVowel: startsVowel, endsVowel: endsVowel, diph: diph, wc: wc, diaSplit: diaSplit };
+    });
+  }
+  function lineSyllables(line) {
+    var ws = tokenize(line), out = [];
+    ws.forEach(function (w, wi) { syllabify(w).forEach(function (s) { s.wi = wi; out.push(s); }); });
+    return out;
+  }
+  // Align orthographic syllables to the metrical weight sequence, using each
+  // syllable's natural weight to place synizesis (merge) and diaeresis (split)
+  // where the metre actually requires them. Returns metrical-position cells.
+  function alignSyllables(line, pattern, nSyl) {
+    var S = lineSyllables(line), W = String(pattern).split("|").join("").split("");
+    var m = S.length, k = W.length;
+    if (k !== nSyl) return null;
+    var INF = 1e9, i, j;
+    var dp = [], bk = [];
+    for (i = 0; i <= m; i++) { dp.push(new Array(k + 1).fill(INF)); bk.push(new Array(k + 1).fill(null)); }
+    dp[0][0] = 0;
+    function mcost(wc, w) { return wc === "?" ? 0 : (wc === w ? 0 : 3); }
+    for (i = 0; i <= m; i++) for (j = 0; j <= k; j++) {
+      var cur = dp[i][j]; if (cur >= INF) continue;
+      if (i < m && j < k) { var c1 = cur + mcost(S[i].wc, W[j]); if (c1 < dp[i + 1][j + 1]) { dp[i + 1][j + 1] = c1; bk[i + 1][j + 1] = [i, j, "m"]; } }
+      if (i + 1 < m && j < k && S[i].endsVowel && S[i + 1].startsVowel) { var c2 = cur + 0.6 + (W[j] === "L" ? 0 : 1.5); if (c2 < dp[i + 2][j + 1]) { dp[i + 2][j + 1] = c2; bk[i + 2][j + 1] = [i, j, "syn"]; } }
+      if (i < m && j + 1 < k && S[i].diph) { var c3 = cur + 1.0; if (c3 < dp[i + 1][j + 2]) { dp[i + 1][j + 2] = c3; bk[i + 1][j + 2] = [i, j, "dia"]; } }
+    }
+    if (dp[m][k] >= INF) return null;
+    var cells = []; i = m; j = k;
+    while (i > 0 || j > 0) {
+      var b = bk[i][j]; if (!b) return null;
+      var pi = b[0], pj = b[1], op = b[2];
+      if (op === "m") cells.unshift({ text: S[pi].text, weight: W[pj] });
+      else if (op === "syn") cells.unshift({ text: S[pi].text + S[pi + 1].text, weight: W[pj], syn: true });
+      else { var sp = S[pi].diaSplit || [S[pi].text, ""];
+        cells.unshift({ text: sp[1], weight: W[pj + 1], dia: true });
+        cells.unshift({ text: sp[0], weight: W[pj], dia: true }); }
+      i = pi; j = pj;
+    }
+    return cells;
+  }
+  // Render the per-syllable scansion: marks above each syllable, grouped by foot.
+  function renderSylScan(pattern, cells) {
+    var lens = String(pattern).split("|").map(function (f) { return f.length; });
+    var idx = 0;
+    var feet = lens.map(function (len) {
+      var cols = "";
+      for (var p = 0; p < len; p++) {
+        var c = cells[idx++]; if (!c) continue;
+        var mark = c.weight === "L" ? "\u00af" : "\u02d8";
+        var cls = "syl-col" + (c.syn ? " syn" : "") + (c.dia ? " dia" : "");
+        cols += '<span class="' + cls + '"' + (c.syn ? ' title="synizesis"' : (c.dia ? ' title="diaeresis"' : "")) +
+          '><span class="syl-mark">' + mark + '</span><span class="syl-txt">' + UI.esc(c.text) + "</span></span>";
+      }
+      return '<span class="syl-foot">' + cols + '<span class="syl-flab">' + (len === 3 ? "D" : len === 2 ? "S" : "?") + "</span></span>";
+    }).join('<span class="syl-div">|</span>');
+    return '<div class="syl-scan">' + feet + "</div>";
   }
 
   function statCards(pairs) {
@@ -125,7 +346,7 @@
 
   var VIEWS = {
     line_scan: {
-      desc: "Each line scanned into its six feet \u2014 \u2014 long, \u203f short; D dactyl, S spondee. Words are tagged with the foot they begin in.",
+      desc: "Each line scanned syllable by syllable \u2014 \u2014 marks a long position, \u203f a short; D dactyl, S spondee. Synizesis (two written vowels scanned as one) and diaeresis are aligned to the metre.",
       run: function () {
         var from = parseInt(el.scanLineFrom.value, 10); if (!isFinite(from) || from < 1) from = 1;
         var sc = scopeWhere();
@@ -134,56 +355,76 @@
           clause + " ORDER BY work, CAST(book AS INTEGER), line_num LIMIT " + topN() + ";");
         if (!rows.length) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No lines in this range.</div>'; return; }
         el.scanChart.innerHTML = '<div class="scan-passage">' + rows.map(function (r) {
-          var al = alignLine(r.line_text, r.feet_pattern, r.n_syllables);
+          var cells = alignSyllables(r.line_text, r.feet_pattern, r.n_syllables);
+          var body = cells ? renderSylScan(r.feet_pattern, cells)
+            : renderFeet(r.feet_pattern, alignLine(r.line_text, r.feet_pattern, r.n_syllables));
           return '<div class="scan-line">' +
             '<div class="scan-ref">' + UI.esc(r.work) + " " + UI.esc(r.book) + "." + r.line_num +
-              ' <span class="scan-ds">' + footLabel(r.feet_pattern) + (al ? "" : " \u00b7 unaligned") + "</span></div>" +
-            '<div class="scan-greek">' + UI.esc(r.line_text) + "</div>" +
-            renderFeet(r.feet_pattern, al) + "</div>";
+              ' <span class="scan-ds">' + footLabel(r.feet_pattern) + (cells ? "" : " \u00b7 syllabified loosely") + "</span></div>" +
+            '<div class="scan-greek">' + UI.esc(r.line_text) + "</div>" + body + "</div>";
         }).join("") + "</div>";
         statCards([["Lines shown", rows.length], ["First", rows[0].work + " " + rows[0].book + "." + rows[0].line_num]]);
       }
     },
     word_foot: {
-      desc: "Where a given word form begins in the verse \u2014 its distribution over the six feet (accent-insensitive, on alignable lines).",
+      desc: "Where a given word begins in the verse \u2014 its distribution over the six feet (accent-insensitive, on alignable lines). Leave the box empty and set a grammatical category to chart that whole category instead.",
       run: function () {
+        var f = readGrammar();
         var qn = normGr((el.scanWord.value || "").trim());
-        if (!qn) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a Greek word form above (e.g. \u03bc\u1fc6\u03bd\u03b9\u03bd, \u03b8\u03b5\u03ac).</div>'; el.scanSummary.innerHTML = ""; return; }
+        if (!qn && grammarActive(f)) {
+          buildAlign(); buildFormFeat();
+          var cc = [0, 0, 0, 0, 0, 0], pr = 0, tot = 0;
+          ALIGN.forEach(function (L) {
+            if (!L.al || !inScope(L)) return;
+            L.al.forEach(function (w) { if (featMatch(w.wn, f)) { cc[w.foot]++; tot++; if (w.princeps) pr++; } });
+          });
+          if (!tot) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No ' + UI.esc(grammarLabel(f)) + ' found in this scope.</div>'; el.scanSummary.innerHTML = ""; el.scanTable.innerHTML = ""; return; }
+          el.scanViewDesc.textContent = "Metrical position of all " + grammarLabel(f) + " (by the foot they begin in).";
+          Chart.bars(el.scanChart, cc.map(function (v, i) { return { label: "Foot " + (i + 1), value: v }; }),
+            { preserveOrder: true, valueLabel: "occurrences", labelWidth: 90 });
+          statCards([["Category", grammarLabel(f)], ["Occurrences", tot.toLocaleString()], ["On the princeps", pr + " (" + (100 * pr / tot).toFixed(0) + "%)"]]);
+          el.scanTable.innerHTML = "";
+          return;
+        }
+        if (!qn) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a Greek or English word above, or leave it empty and pick a grammatical category below.</div>'; el.scanSummary.innerHTML = ""; return; }
         buildAlign();
-        var counts = [0, 0, 0, 0, 0, 0], princeps = 0, tot = 0, ex = [];
+        var counts = [0, 0, 0, 0, 0, 0], princeps = 0, total = 0, ex = [];
         ALIGN.forEach(function (L) {
           if (!L.al || !inScope(L)) return;
           L.al.forEach(function (w) {
-            if (w.wn === qn) { counts[w.foot]++; tot++; if (w.princeps) princeps++; if (ex.length < 8) ex.push(L.work + " " + L.book + "." + L.line_num + ": " + L.line_text); }
+            if (w.wn === qn) { counts[w.foot]++; total++; if (w.princeps) princeps++; if (ex.length < 8) ex.push(L.work + " " + L.book + "." + L.line_num + ": " + L.line_text); }
           });
         });
-        if (!tot) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No alignable occurrences of \u201c' + UI.esc(el.scanWord.value) + '\u201d in this scope.</div>'; el.scanSummary.innerHTML = ""; el.scanTable.innerHTML = ""; return; }
+        if (!total) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No alignable occurrences of \u201c' + UI.esc(el.scanWord.value) + '\u201d in this scope.</div>'; el.scanSummary.innerHTML = ""; el.scanTable.innerHTML = ""; return; }
         Chart.bars(el.scanChart, counts.map(function (c, i) { return { label: "Foot " + (i + 1), value: c }; }),
           { preserveOrder: true, valueLabel: "occurrences", labelWidth: 90 });
-        statCards([["Occurrences", tot.toLocaleString()], ["On the princeps", princeps + " (" + (100 * princeps / tot).toFixed(0) + "%)"]]);
+        statCards([["Occurrences", total.toLocaleString()], ["On the princeps", princeps + " (" + (100 * princeps / total).toFixed(0) + "%)"]]);
         el.scanTable.innerHTML = '<div class="small-muted" style="margin:.2rem 0 .3rem;">Example lines</div>' +
           ex.map(function (e) { return '<div class="scan-ex">' + UI.esc(e) + "</div>"; }).join("");
       }
     },
     foot_words: {
-      desc: "The commonest word forms that begin in a chosen foot, on alignable lines.",
+      desc: "The commonest word forms that begin in a chosen foot, on alignable lines. A grammatical category restricts the words counted.",
       run: function () {
         buildAlign();
+        var f = readGrammar(), useG = grammarActive(f); if (useG) buildFormFeat();
         var fi = (parseInt(el.scanFoot.value, 10) || 1) - 1;
         var map = new Map();
         ALIGN.forEach(function (L) {
           if (!L.al || !inScope(L)) return;
           L.al.forEach(function (w) {
-            if (w.foot === fi) { var e = map.get(w.wn); if (!e) { e = { c: 0, forms: {} }; map.set(w.wn, e); } e.c++; e.forms[w.w] = (e.forms[w.w] || 0) + 1; }
+            if (w.foot !== fi) return;
+            if (useG && !featMatch(w.wn, f)) return;
+            var e = map.get(w.wn); if (!e) { e = { c: 0, forms: {} }; map.set(w.wn, e); } e.c++; e.forms[w.w] = (e.forms[w.w] || 0) + 1;
           });
         });
         var arr = Array.from(map.entries()).sort(function (a, b) { return b[1].c - a[1].c; }).slice(0, topN());
-        if (!arr.length) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No alignable words for this foot in scope.</div>'; return; }
+        if (!arr.length) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No matching words for this foot in scope.</div>'; return; }
         Chart.bars(el.scanChart, arr.map(function (e) {
           var disp = Object.keys(e[1].forms).sort(function (a, b) { return e[1].forms[b] - e[1].forms[a]; })[0];
           return { label: disp, value: e[1].c };
         }), { valueLabel: "words starting here", labelWidth: 120 });
-        statCards([["Foot", fi + 1], ["Distinct forms", map.size.toLocaleString()]]);
+        statCards([["Foot", fi + 1], ["Filter", useG ? grammarLabel(f) : "all words"], ["Distinct forms", map.size.toLocaleString()]]);
       }
     },
     lines_by_book: {
@@ -298,15 +539,19 @@
     el.scanLineWrap.hidden = (v !== "line_scan");
     el.scanWordWrap.hidden = (v !== "word_foot");
     el.scanFootWrap.hidden = (v !== "foot_words");
+    el.scanGrammar.hidden = !(v === "word_foot" || v === "foot_words");
   }
+
+  function grammarState() { var s = {}; GFIELDS.forEach(function (k) { s[k] = el[GMAP[k]] ? el[GMAP[k]].value : ""; }); return s; }
 
   function run() {
     if (!SQL || !SQL.isReady()) return;
     syncScanControls();
     UI.saveState("scan", {
       view: el.scanView.value, work: el.scanWork.value, book: el.scanBook.value, topN: el.scanTopN.value,
-      lineFrom: el.scanLineFrom.value, word: el.scanWord.value, foot: el.scanFoot.value
+      lineFrom: el.scanLineFrom.value, word: el.scanWord.value, foot: el.scanFoot.value, grammar: grammarState()
     });
+    if (el.scanWordMenu) el.scanWordMenu.hidden = true;
     var view = VIEWS[el.scanView.value] || VIEWS.line_scan;
     el.scanViewDesc.textContent = view.desc;
     clearOut();
@@ -342,6 +587,8 @@
     el.scanLineFrom.addEventListener("change", run);
     el.scanLineFrom.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } });
     el.scanWord.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } });
+    GFIELDS.forEach(function (k) { if (el[GMAP[k]]) el[GMAP[k]].addEventListener("change", run); });
+    wireCombo();
     el.btnRunScan.addEventListener("click", run);
 
     SQL.ready().then(function () {
@@ -359,6 +606,7 @@
         if (st.lineFrom != null) el.scanLineFrom.value = st.lineFrom;
         if (st.word != null) el.scanWord.value = st.word;
         if (st.foot != null) el.scanFoot.value = st.foot;
+        if (st.grammar) GFIELDS.forEach(function (k) { if (el[GMAP[k]] && st.grammar[k] != null) el[GMAP[k]].value = st.grammar[k]; });
       }
       syncScanControls();
       run();

@@ -667,6 +667,7 @@ kbd {
   --aegean-2: #1c7d96;
   --gold: #c2a14e;
   --bronze: #93763d;
+  --greek: "Cardo", "Gentium Plus", "New Athena Unicode", "GFS Didot", Georgia, "Times New Roman", serif;
   /* remap legacy tokens to the new palette */
   --blue: #155b6e;
   --blue-2: #1c7d96;
@@ -780,7 +781,7 @@ table.preview th { background: #f3f7f8; }
 }
 .scan-ref { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .15rem; }
 .scan-ds { color: var(--clay); font-weight: 600; letter-spacing: .12em; }
-.scan-greek { font-family: "Fraunces", Georgia, serif; font-size: 1.16rem; line-height: 1.5; color: var(--text); margin-bottom: .35rem; }
+.scan-greek { font-family: var(--greek); font-size: 1.16rem; line-height: 1.5; color: var(--text); margin-bottom: .35rem; }
 .scan-feet { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .1rem .25rem; font-family: "IBM Plex Mono", ui-monospace, monospace; }
 .scan-foot { display: inline-flex; flex-direction: column; align-items: center; padding: 0 .15rem; }
 .scan-marks { font-size: 1.05rem; line-height: 1.1; color: var(--aegean); letter-spacing: .04em; }
@@ -789,3 +790,36 @@ table.preview th { background: #f3f7f8; }
 .scan-words { margin-top: .35rem; font-size: .98rem; color: var(--text); line-height: 1.7; }
 .scan-words sub { color: var(--clay); font-size: .62em; font-weight: 600; }
 .scan-ex { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .82rem; color: var(--muted); padding: .12rem 0; border-bottom: 1px dotted var(--line); }
+
+/* ===== Morphology: paradigm table ======================================== */
+.paradigm-table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+.paradigm-table th, .paradigm-table td { border: 1px solid var(--line); padding: .35rem .55rem; text-align: left; vertical-align: top; }
+.paradigm-table thead th { background: rgba(21,91,110,0.07); color: var(--aegean); font-weight: 600; }
+.paradigm-table tbody th { background: rgba(194,161,78,0.08); color: var(--bronze); white-space: nowrap; }
+.paradigm-table .pdg-form { font-family: var(--greek); color: var(--text); }
+.paradigm-table .pdg-c { color: var(--muted); font-size: .78rem; margin-left: .3rem; }
+.paradigm-table .pdg-gap { color: var(--line); }
+
+/* ===== Scansion: per-syllable alignment ================================== */
+.syl-scan { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .15rem .35rem; margin-top: .15rem; }
+.syl-foot { display: inline-flex; align-items: flex-end; gap: .12rem; padding-bottom: .9rem; position: relative; }
+.syl-col { display: inline-flex; flex-direction: column; align-items: center; min-width: 1.1rem; }
+.syl-mark { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 1.2rem; height: 1.1rem; line-height: 1.1rem; display: flex; align-items: center; justify-content: center; color: var(--aegean); }
+.syl-txt { font-family: var(--greek); font-size: 1.08rem; line-height: 1.3; color: var(--text); }
+.syl-col.syn { background: rgba(192,81,44,0.10); border-radius: 5px; padding: 0 .12rem; }
+.syl-col.syn .syl-txt { color: var(--clay); border-bottom: 2px solid var(--clay); }
+.syl-col.dia .syl-txt { color: var(--aegean-2); border-bottom: 1px dotted var(--aegean-2); }
+.syl-flab { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-size: .66rem; color: var(--bronze); }
+.syl-div { align-self: stretch; color: var(--line); padding-bottom: .9rem; }
+
+/* ===== Scansion: word autocomplete combobox ============================== */
+.combo { position: relative; }
+.combo-menu { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px);
+  background: var(--card-strong); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: var(--shadow); max-height: 280px; overflow-y: auto; }
+.combo-item { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem;
+  padding: .32rem .6rem; cursor: pointer; }
+.combo-item:hover { background: rgba(21,91,110,0.08); }
+.combo-form { font-family: var(--greek); font-size: 1.02rem; color: var(--text); }
+.combo-meta { font-size: .76rem; color: var(--muted); white-space: nowrap; }
+.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .5rem .7rem; }
