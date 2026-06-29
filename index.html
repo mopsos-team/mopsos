@@ -124,9 +124,25 @@
           </select>
         </div>
       </div>
+      <div class="field" id="exSemanticWrap" hidden>
+        <label for="exSemantic"><strong>Semantic search</strong> <span class="help">— optional</span></label>
+        <input type="text" id="exSemantic" autocomplete="off" placeholder="any English word — e.g. blue, spear, swift, grief — or a Greek lemma. Blank = most frequent.">
+        <p class="help" id="exSemanticNote" style="margin:.25rem 0 0;">English words are mapped to Greek via the LSJ (Liddell–Scott–Jones) lexicon, then expanded with the words the corpus uses in similar contexts.</p>
+      </div>
       <details style="margin:.2rem 0 .5rem;">
-        <summary class="help" style="cursor:pointer;">Filters (optional)</summary>
-        <div id="exGroup" class="filter-group" style="margin-top:.5rem;"></div>
+        <summary class="help" style="cursor:pointer;">Limit by (optional)</summary>
+        <div class="grid-2" style="margin-top:.5rem;">
+          <div class="field">
+            <label for="exLimitWork"><strong>Limit to work</strong></label>
+            <select id="exLimitWork"><option value="">(all works)</option></select>
+          </div>
+          <div class="field">
+            <label for="exLimitAuthor"><strong>Limit to author</strong></label>
+            <select id="exLimitAuthor"><option value="">(all authors)</option></select>
+          </div>
+        </div>
+        <label style="display:block;margin:.2rem 0 .3rem;"><strong>Limit to grammar</strong></label>
+        <div id="exGroup" class="filter-group"></div>
       </details>
       <div class="btn-row">
         <button id="btnExRun" class="btn btn-primary" disabled>Draw chart</button>
@@ -143,6 +159,7 @@
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="assets/js/papa-fallback.js"></script>
   <script src="assets/js/mopsos-shared.js"></script>
+  <script src="assets/js/mopsos-semantics.js"></script>
   <script src="assets/js/morphology-standalone.js"></script>
 </body>
 </html>

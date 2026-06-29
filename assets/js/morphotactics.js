@@ -195,7 +195,7 @@
     }
     UI.renderTable(el.table, [featLabel(feat), "Top endings (last " + k + " letters)"], detail, { paginate: false });
 
-    el.outTitle.textContent = "Exponence — form endings";
+    el.outTitle.textContent = "Surface-final sequences by feature value";
     el.outDesc.textContent = "For " + UI.label("pos", pos) + "s, the most frequent word-final " + k +
       "-letter sequences that realise each value of " + featLabel(feat) + " (diacritics stripped, final ς→σ).";
   }

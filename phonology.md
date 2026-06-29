@@ -13,7 +13,7 @@ section: phonology
   </div>
   <div id="phonInfo" class="info-panel" hidden>
     <h4>Phonology tab</h4>
-    <p>Choose which tokens to analyse and (optionally) how to limit them, then pick a single view from the drop-down. Each token is normalised (diacritics stripped, final ς→σ) and syllabified by the maximal-onset principle; every statistic is derived from those structured syllables.</p>
+    <p>Choose which tokens to analyse and (optionally) how to limit them, then pick a single view from the drop-down. Each token is normalised (diacritics stripped, final ς→σ) and given a rule-based orthographic syllabification by the maximal-onset principle; every statistic is derived from those structured syllables.</p>
     <ul>
       <li><strong>Flexible scope</strong> — analyse all forms, just verbs, only genitive nouns, lemmata, and more.</li>
       <li><strong>One view at a time</strong> — use “What to view” to switch between phoneme, syllable, cluster, quantity, sonority and alliteration analyses.</li>
@@ -69,7 +69,7 @@ section: phonology
     <div class="field">
       <label for="phonView"><strong>What to view</strong></label>
       <select id="phonView">
-        <option value="phonemes" selected>Phoneme distribution</option>
+        <option value="phonemes" selected>Normalized letter / phoneme-proxy distribution</option>
         <option value="shapes">Syllable shape profile (CV / CVC …)</option>
         <option value="onsets">Onset clusters</option>
         <option value="codas">Coda clusters</option>
@@ -89,6 +89,9 @@ section: phonology
       <input id="phonTopN" type="text" value="24" />
     </div>
   </div>
+  <p class="help" style="margin:.5rem 0 0; padding:.55rem .7rem; border:1px solid var(--gold); border-radius:9px; background:rgba(194,161,78,.1);">
+    <strong>Note:</strong> these are heuristic analyses derived from normalized orthography — not a full reconstruction of Ancient Greek phonology. Letters stand in as proxies for phonemes, and syllabification follows orthographic rules rather than reconstructed pronunciation.
+  </p>
   <p id="phonViewDesc" class="help" style="margin-top:.2rem;"></p>
   <div id="phonSummary" class="analysis-wrap" style="margin-top:.4rem;"></div>
   <div class="viz-wrap" style="margin-top:.7rem;"><div id="phonChart"></div></div>

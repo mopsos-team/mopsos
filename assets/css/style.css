@@ -771,3 +771,21 @@ table.preview th { background: #f3f7f8; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
+
+/* ===== Scansion: line scansion rendering ================================= */
+.scan-passage { display: flex; flex-direction: column; gap: .55rem; }
+.scan-line {
+  padding: .55rem .7rem; border: 1px solid var(--line); border-radius: 10px;
+  background: linear-gradient(180deg, rgba(21,91,110,0.03), rgba(194,161,78,0.04));
+}
+.scan-ref { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .15rem; }
+.scan-ds { color: var(--clay); font-weight: 600; letter-spacing: .12em; }
+.scan-greek { font-family: "Fraunces", Georgia, serif; font-size: 1.16rem; line-height: 1.5; color: var(--text); margin-bottom: .35rem; }
+.scan-feet { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .1rem .25rem; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.scan-foot { display: inline-flex; flex-direction: column; align-items: center; padding: 0 .15rem; }
+.scan-marks { font-size: 1.05rem; line-height: 1.1; color: var(--aegean); letter-spacing: .04em; }
+.scan-flab { font-size: .66rem; color: var(--bronze); }
+.scan-div { color: var(--line); padding: 0 .1rem; align-self: stretch; }
+.scan-words { margin-top: .35rem; font-size: .98rem; color: var(--text); line-height: 1.7; }
+.scan-words sub { color: var(--clay); font-size: .62em; font-weight: 600; }
+.scan-ex { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .82rem; color: var(--muted); padding: .12rem 0; border-bottom: 1px dotted var(--line); }

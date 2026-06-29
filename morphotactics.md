@@ -17,7 +17,7 @@ section: morphotactics
     <ul>
       <li><strong>Word-class sequencing</strong> — a transition matrix of part of speech → next part of speech for adjacent tokens within a sentence.</li>
       <li><strong>Feature co-occurrence</strong> — how two features (e.g. case × number) combine inside the same word, optionally restricted to one part of speech.</li>
-      <li><strong>Exponence (form endings)</strong> — the most frequent word-final letter sequences that realise a chosen feature bundle.</li>
+      <li><strong>Surface-final sequences</strong> — the most frequent word-final letter sequences associated with a chosen feature value. This approximates exponence by final orthographic strings; it does not segment morphemes.</li>
       <li><strong>Paradigm slots</strong> — how often each value of a feature is filled for a chosen part of speech.</li>
     </ul>
   </div>
@@ -33,7 +33,7 @@ section: morphotactics
       <select id="mtView">
         <option value="sequence" selected>Word-class sequencing (POS → next POS)</option>
         <option value="cooccur">Feature co-occurrence (e.g. case × number)</option>
-        <option value="exponence">Exponence — form endings by feature bundle</option>
+        <option value="exponence">Surface-final sequences by feature value</option>
         <option value="slots">Paradigm slots — feature value frequencies</option>
       </select>
     </div>

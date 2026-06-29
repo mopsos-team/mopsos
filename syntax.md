@@ -25,7 +25,7 @@ section: syntax
 <div id="syntaxLoadStatus" class="load-progress"><span>Loading</span></div>
 
 <div class="card">
-  <h2>2. Optional TSV input (manual)</h2>
+  <h2>1. Optional TSV input (manual)</h2>
   <p class="help">Use one token per line: <code>id[TAB]form[TAB]lemma[TAB]pos[TAB]head[TAB]deprel[TAB]distance(optional)</code>. Separate sentences with a blank line.</p>
   <div class="field">
     <label for="syntaxInput"><strong>Token rows</strong></label>
@@ -38,7 +38,7 @@ section: syntax
 </div>
 
 <div class="card">
-  <h2>3. Syntactic outputs</h2>
+  <h2>2. Syntactic outputs</h2>
   <div id="syntaxSummary" class="analysis-wrap"></div>
   <div class="grid-2">
     <div class="viz-wrap">

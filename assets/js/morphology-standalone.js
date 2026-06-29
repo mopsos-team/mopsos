@@ -64,6 +64,8 @@
       ex: ex ? ex.read() : {},
       exChartType: $("exChartType").value, exNodeUnit: $("exNodeUnit").value,
       exDim1: $("exDim1").value, exDim2: $("exDim2").value, exTopN: $("exTopN").value,
+      exSemantic: $("exSemantic").value,
+      exLimitWork: $("exLimitWork").value, exLimitAuthor: $("exLimitAuthor").value,
       sql: $("qfSqlInput").value
     });
   }
@@ -146,56 +148,127 @@
 
   let ex = null;
 
+  function explorerFilters() {
+    const all = Object.assign({}, ex.read());
+    const wk = $("exLimitWork").value; if (wk) all.work = wk;
+    const au = $("exLimitAuthor").value; if (au) all.author = au;
+    return all;
+  }
+  function filterTextOf(filters) {
+    const keys = Object.keys(filters);
+    return keys.length
+      ? " (filtered: " + keys.map((k) => UI.fieldTitle(k) + "=" + displayName(k, filters[k])).join(", ") + ")"
+      : "";
+  }
+
   function syncExplorerControls() {
     const type = $("exChartType").value;
     $("exDim1Wrap").hidden = (type === "network");
     $("exDim2Wrap").hidden = (type !== "heatmap");
     $("exNodeUnitWrap").hidden = (type !== "network");
+    $("exSemanticWrap").hidden = (type !== "network");
+  }
+
+  function buildNetworkFrom(ids, freqMap, w, unit, titleMain, descPrefix) {
+    const chart = $("exChart"), title = $("exTitle"), desc = $("exDesc");
+    if (!ids || ids.length < 2) {
+      chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Not enough words match to build a network.</div>';
+      title.textContent = ""; desc.textContent = ""; return;
+    }
+    const inList = ids.map(sqlStr).join(", ");
+    const coSql = "WITH f AS (SELECT sentence_id, " + q(unit) + " AS u FROM " + q(TABLE) +
+      " WHERE " + naGuard(unit) + (w ? " AND " + w : "") + " AND " + q(unit) + " IN (" + inList + ")) " +
+      "SELECT a.u AS s, b.u AS t, COUNT(*) AS w FROM f a JOIN f b " +
+      "ON a.sentence_id = b.sentence_id AND a.u < b.u " +
+      "GROUP BY s, t HAVING w >= 2 ORDER BY w DESC LIMIT 250;";
+    const edges = SQL.objects(coSql);
+    const maxC = Math.max.apply(null, ids.map((id) => freqMap[id] || 1));
+    const maxW = edges.length ? Math.max.apply(null, edges.map((e) => e.w)) : 1;
+    const nodes = ids.map((id) => ({ id: id, label: id, r: 6 + 14 * Math.sqrt((freqMap[id] || 1) / maxC) }));
+    const links = edges.map((e) => ({ source: e.s, target: e.t, weight: e.w / maxW }));
+    title.textContent = titleMain;
+    desc.textContent = descPrefix + nodes.length + " words, " + links.length + " links (sharing a sentence ≥ 2×). Drag nodes to explore.";
+    Chart.network(chart, nodes, links, { linkDistance: 80, charge: -230, emptyMsg: "No co-occurrences found." });
+  }
+
+  function drawNetwork() {
+    const filters = explorerFilters();
+    const w = whereOf(filters);
+    const topN = parseInt($("exTopN").value, 10) || 20;
+    const semQuery = ($("exSemantic").value || "").trim();
+    const chart = $("exChart"), title = $("exTitle"), desc = $("exDesc");
+    const filterText = filterTextOf(filters);
+
+    try {
+      if (semQuery && window.MopsosSemantics) {
+        const unit = "lemma"; // the semantic model is lemma-based
+        const proceed = () => {
+          try {
+            const res = window.MopsosSemantics.resolve(semQuery);
+            if (!res.seeds.length) {
+              chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No semantic match for \u201C' + UI.esc(semQuery) +
+                '\u201D. Try a concept like blue, war, sea, fear, wine \u2014 or a Greek lemma.</div>';
+              title.textContent = ""; desc.textContent = ""; return;
+            }
+            const assoc = window.MopsosSemantics.expand(res.seeds, Math.min(topN, 40));
+            const ids = assoc.map((a) => a.lemma);
+            const freqMap = {};
+            const inList = ids.map(sqlStr).join(", ");
+            SQL.objects("SELECT " + q(unit) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +
+              " WHERE " + q(unit) + " IN (" + inList + ")" + (w ? " AND " + w : "") + " GROUP BY k;")
+              .forEach((r) => { freqMap[r.k] = r.c; });
+            const srcLabel = res.source === "english" ? "\u201C" + semQuery + "\u201D"
+              : "\u201C" + res.seeds[0] + "\u201D" + (res.source === "fuzzy" ? " (closest match)" : "");
+            buildNetworkFrom(ids, freqMap, w, unit,
+              "Words semantically associated with " + srcLabel,
+              "Semantic neighbourhood" + filterText + ". ");
+          } catch (e) {
+            chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Semantic search error: ' + UI.esc(e.message) + "</div>";
+          }
+        };
+        if (!window.MopsosSemantics.isBuilt()) {
+          title.textContent = "Words semantically associated with \u201C" + UI.esc(semQuery) + "\u201D";
+          desc.textContent = "Learning semantic associations from the corpus (one-time)\u2026";
+          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Loading the lexicon and building the semantic model\u2026</div>';
+          window.MopsosSemantics.build().then(proceed).catch(proceed);
+        } else {
+          proceed();
+        }
+        return;
+      }
+
+      // frequency-based network (no semantic query)
+      const unit = $("exNodeUnit").value;
+      const nodeRows = SQL.objects("SELECT " + q(unit) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +
+        " WHERE " + naGuard(unit) + (w ? " AND " + w : "") +
+        " GROUP BY k ORDER BY c DESC LIMIT " + Math.min(topN, 40) + ";");
+      const ids = nodeRows.map((r) => r.k);
+      const freqMap = {}; nodeRows.forEach((r) => { freqMap[r.k] = r.c; });
+      buildNetworkFrom(ids, freqMap, w, unit,
+        "Co-occurrence network of " + (unit === "lemma" ? "lemmata" : "word forms"),
+        filterText ? "Filtered" + filterText + ". " : "");
+    } catch (e) {
+      chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Chart error: ' + UI.esc(e.message) + "</div>";
+    }
   }
 
   function runExplorer() {
     saveMorphState();
-    const filters = ex.read();
-    const w = whereOf(filters);
     const type = $("exChartType").value;
+    if (type === "network") { drawNetwork(); return; }
+
+    const filters = explorerFilters();
+    const w = whereOf(filters);
     const dim1 = $("exDim1").value;
     const dim2 = $("exDim2").value;
     const topN = parseInt($("exTopN").value, 10) || 20;
     const title = $("exTitle");
     const desc = $("exDesc");
     const chart = $("exChart");
-
-    const filterText = Object.keys(filters).length
-      ? " (filtered: " + Object.keys(filters).map((k) => UI.fieldTitle(k) + "=" + displayName(k, filters[k])).join(", ") + ")"
-      : "";
+    const filterText = filterTextOf(filters);
 
     try {
-      if (type === "network") {
-        const unit = $("exNodeUnit").value;
-        const nodeRows = SQL.objects("SELECT " + q(unit) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +
-          " WHERE " + naGuard(unit) + (w ? " AND " + w : "") +
-          " GROUP BY k ORDER BY c DESC LIMIT " + Math.min(topN, 40) + ";");
-        if (nodeRows.length < 2) {
-          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Not enough words match to build a network.</div>';
-          title.textContent = ""; desc.textContent = ""; return;
-        }
-        const ids = nodeRows.map((r) => r.k);
-        const freq = {}; nodeRows.forEach((r) => { freq[r.k] = r.c; });
-        const inList = ids.map(sqlStr).join(", ");
-        const coSql = "WITH f AS (SELECT sentence_id, " + q(unit) + " AS u FROM " + q(TABLE) +
-          " WHERE " + naGuard(unit) + (w ? " AND " + w : "") + " AND " + q(unit) + " IN (" + inList + ")) " +
-          "SELECT a.u AS s, b.u AS t, COUNT(*) AS w FROM f a JOIN f b " +
-          "ON a.sentence_id = b.sentence_id AND a.u < b.u " +
-          "GROUP BY s, t HAVING w >= 2 ORDER BY w DESC LIMIT 250;";
-        const edges = SQL.objects(coSql);
-        const maxC = Math.max.apply(null, nodeRows.map((r) => r.c));
-        const maxW = edges.length ? Math.max.apply(null, edges.map((e) => e.w)) : 1;
-        const nodes = ids.map((id) => ({ id: id, label: id, r: 6 + 14 * Math.sqrt((freq[id] || 1) / maxC) }));
-        const links = edges.map((e) => ({ source: e.s, target: e.t, weight: e.w / maxW }));
-        title.textContent = "Co-occurrence network of " + (unit === "lemma" ? "lemmata" : "word forms");
-        desc.textContent = nodes.length + " words, " + links.length + " links (sharing a sentence ≥ 2×)" + filterText + ". Drag nodes to explore.";
-        Chart.network(chart, nodes, links, { linkDistance: 80, charge: -230, emptyMsg: "No co-occurrences found." });
-      } else if (type === "heatmap") {
+      if (type === "heatmap") {
         const d2 = dim2 || dim1;
         const sql = "SELECT " + q(dim1) + " AS r, " + q(d2) + " AS c2, COUNT(*) AS c FROM " + q(TABLE) +
           " WHERE " + naGuard(dim1) + " AND " + naGuard(d2) + (w ? " AND " + w : "") +
@@ -262,10 +335,18 @@
     $("exDim1").disabled = false;
     $("exDim2").disabled = false;
     $("btnExRun").disabled = false;
+    // populate the work / author limiters
+    UI.fillSelect($("exLimitWork"), SQL.distinct("work"), { head: "(all works)" });
+    UI.fillSelect($("exLimitAuthor"), SQL.distinct("author"), { head: "(all authors)" });
     $("exChartType").addEventListener("change", () => { syncExplorerControls(); runExplorer(); });
     $("exNodeUnit").addEventListener("change", runExplorer);
+    $("exLimitWork").addEventListener("change", runExplorer);
+    $("exLimitAuthor").addEventListener("change", runExplorer);
+    $("exSemantic").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runExplorer(); } });
     $("btnExRun").addEventListener("click", runExplorer);
-    $("btnExReset").addEventListener("click", () => { ex.reset(); runExplorer(); });
+    $("btnExReset").addEventListener("click", () => {
+      ex.reset(); $("exSemantic").value = ""; $("exLimitWork").value = ""; $("exLimitAuthor").value = ""; runExplorer();
+    });
 
     // restore the person's previous selections, if any
     const st = UI.loadState("morph");
@@ -277,6 +358,9 @@
       if (st.exDim1) $("exDim1").value = st.exDim1;
       if (st.exDim2 != null) $("exDim2").value = st.exDim2;
       if (st.exTopN) $("exTopN").value = st.exTopN;
+      if (st.exSemantic != null) $("exSemantic").value = st.exSemantic;
+      if (st.exLimitWork != null) $("exLimitWork").value = st.exLimitWork;
+      if (st.exLimitAuthor != null) $("exLimitAuthor").value = st.exLimitAuthor;
       if (st.sql) $("qfSqlInput").value = st.sql;
     }
     syncExplorerControls();
