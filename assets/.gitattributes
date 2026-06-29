@@ -1,0 +1,2 @@
+assets/data/scansion/homer_syllables.csv filter=lfs diff=lfs merge=lfs -text
+assets/data/scansion/iliad_syllables.csv filter=lfs diff=lfs merge=lfs -text

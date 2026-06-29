@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% if page.title %}{{ page.title }} · {% endif %}{{ site.title }}</title>
+  <meta name="description" content="{{ site.description | escape }}" />
+  <link rel="icon" type="image/svg+xml" href="{{ '/assets/favicon.svg' | relative_url }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Cardo:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+</head>
+<body>
+  <div class="bg-glow bg-glow-left" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow-right" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="container header-shell">
+      <div class="header-inner">
+        <a class="site-brand" href="{{ '/index.html' | relative_url }}">
+          <span class="brand-mark" aria-hidden="true">Μ</span>
+          <span class="brand-copy">
+            <strong>MOPSOS</strong>
+            <small>Database of Ancient Greek Morphology, Prosody, Syntax, and Scansion</small>
+          </span>
+        </a>
+
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="{{ '/morphotactics.html' | relative_url }}" class="nav-link{% if page.section == 'morphotactics' %} is-active{% endif %}">Morphotactics</a>
+          <a href="{{ '/index.html' | relative_url }}" class="nav-link{% if page.section == 'morphology' %} is-active{% endif %}">Morphology</a>
+          <div class="nav-dropdown">
+            {% assign in_analyses = false %}
+            {% if page.section == 'phonology' or page.section == 'syntax' or page.section == 'prosody' or page.section == 'clustering' %}{% assign in_analyses = true %}{% endif %}
+            <button class="nav-link nav-dropdown-toggle{% if in_analyses %} is-active{% endif %}" aria-expanded="false" aria-haspopup="true">Other <span class="caret">▾</span></button>
+            <div class="nav-dropdown-menu" hidden>
+              <a href="{{ '/phonology.html' | relative_url }}" class="nav-link{% if page.section == 'phonology' %} is-active{% endif %}">Phonology</a>
+              <a href="{{ '/syntax.html' | relative_url }}" class="nav-link{% if page.section == 'syntax' %} is-active{% endif %}">Syntax</a>
+              <a href="{{ '/prosody.html' | relative_url }}" class="nav-link{% if page.section == 'prosody' %} is-active{% endif %}">Scansion</a>
+              <a href="{{ '/clustering.html' | relative_url }}" class="nav-link{% if page.section == 'clustering' %} is-active{% endif %}">Stylometry</a>
+            </div>
+          </div>
+          <a href="{{ '/cite.html' | relative_url }}" class="nav-link{% if page.section == 'cite' %} is-active{% endif %}">How to Cite</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+
+  <main class="container site-main">
+    {{ content }}
+  </main>
+
+  {% if page.section == 'morphology' or page.section == 'morphotactics' or page.section == 'clustering' or page.section == 'syntax' or page.section == 'prosody' or page.section == 'phonology' %}
+  <!-- Lightweight CSV parser -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="{{ '/assets/js/papa-fallback.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/analytics-playbook.js' | relative_url }}"></script>
+
+  {% if page.section == 'morphotactics' or page.section == 'phonology' or page.section == 'clustering' or page.section == 'prosody' %}
+  <!-- data + charting libraries for the data-driven tabs -->
+  <script src="https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  {% endif %}
+  <!-- shared foundation: info buttons, UI helpers, SQL + chart APIs (SQL/charts init lazily) -->
+  <script src="{{ '/assets/js/mopsos-shared.js' | relative_url }}"></script>
+
+  {% if page.section == "morphotactics" %}<script src="{{ '/assets/js/morphotactics.js' | relative_url }}"></script>{% endif %}
+  {% if page.section == "clustering" %}<script src="{{ '/assets/js/clustering.js' | relative_url }}"></script>{% endif %}
+  {% if page.section == "syntax" %}<script src="{{ '/assets/js/syntax.js' | relative_url }}"></script>{% endif %}
+  {% if page.section == "prosody" %}<script src="{{ '/assets/js/mopsos-semantics.js' | relative_url }}"></script><script src="{{ '/assets/js/prosody.js' | relative_url }}"></script>{% endif %}
+  {% if page.section == "phonology" %}<script src="{{ '/assets/js/phonology.js' | relative_url }}"></script>{% endif %}
+  {% endif %}
+  {% if page.section == "cite" %}<script src="{{ '/assets/js/mopsos-shared.js' | relative_url }}"></script>{% endif %}
+  <script>
+    (function(){
+      var jump = document.getElementById("sideToolJump");
+      if (!jump) return;
+      var now = window.location.pathname.replace(/\/$/, "");
+      for (var i = 0; i < jump.options.length; i++) {
+        var opt = jump.options[i];
+        if (!opt.value) continue;
+        try {
+          var path = new URL(opt.value, window.location.origin).pathname.replace(/\/$/, "");
+          if (path === now) { jump.value = opt.value; break; }
+        } catch (e) {}
+      }
+      jump.addEventListener("change", function(){ if (this.value) window.location.href = this.value; });
+    })();
+  </script>
+</body>
+</html>

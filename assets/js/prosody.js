@@ -13,7 +13,7 @@
   function grab() {
     ["scanLoadStatus", "scanView", "scanWork", "scanBook", "scanTopN", "btnRunScan",
      "scanViewDesc", "scanSummary", "scanChart", "scanTable",
-     "scanLineWrap", "scanLineFrom", "scanWordWrap", "scanWord", "scanWordMenu", "scanFootWrap", "scanFoot",
+     "scanLineWrap", "scanLineFrom", "scanWordWrap", "scanWord", "scanWordMenu", "scanWordAll", "scanFootWrap", "scanFoot",
      "scanGrammar", "scanGPos", "scanGCase", "scanGNumber", "scanGGender", "scanGTense", "scanGMood", "scanGVoice", "scanGPerson"]
       .forEach(function (id) { el[id] = document.getElementById(id); });
   }
@@ -195,6 +195,17 @@
     el.scanWord.addEventListener("blur", function () { setTimeout(function () { if (el.scanWordMenu) el.scanWordMenu.hidden = true; }, 160); });
     el.scanWord.addEventListener("keydown", function (e) { if (e.key === "Escape") el.scanWordMenu.hidden = true; });
   }
+  var wordDropdownBuilt = false;
+  function ensureWordDropdown() {
+    if (wordDropdownBuilt || !el.scanWordAll || !SQL || !SQL.isReady()) return;
+    buildForms();
+    var opts = '<option value="">\u2014 or pick from all ' + FORMLIST.length.toLocaleString() + ' forms \u2014</option>';
+    opts += FORMLIST.map(function (e) {
+      return '<option value="' + UI.esc(e.disp) + '">' + UI.esc(e.disp) + " \u00b7 " + e.c + "</option>";
+    }).join("");
+    el.scanWordAll.innerHTML = opts;
+    wordDropdownBuilt = true;
+  }
 
   // Render a foot pattern as metrical marks (— long, ‿ short) grouped into feet.
   function renderFeet(pattern, al) {
@@ -326,6 +337,38 @@
     return '<div class="syl-scan">' + feet + "</div>";
   }
 
+  /* ----- paginated passage for the line-by-line scansion (50 lines/page) --- */
+  var SCAN_PAGE_SIZE = 50;
+  var scanLineState = { page: 0 };
+  var scanLineRows = null;
+  function drawLineScan(rows) {
+    scanLineRows = rows;
+    var total = rows.length, pages = Math.max(1, Math.ceil(total / SCAN_PAGE_SIZE));
+    if (scanLineState.page >= pages) scanLineState.page = pages - 1;
+    if (scanLineState.page < 0) scanLineState.page = 0;
+    var start = scanLineState.page * SCAN_PAGE_SIZE, end = Math.min(total, start + SCAN_PAGE_SIZE);
+    var body = rows.slice(start, end).map(function (r) {
+      var cells = alignSyllables(r.line_text, r.feet_pattern, r.n_syllables);
+      var inner = cells ? renderSylScan(r.feet_pattern, cells)
+        : renderFeet(r.feet_pattern, alignLine(r.line_text, r.feet_pattern, r.n_syllables));
+      return '<div class="scan-line">' +
+        '<div class="scan-ref">' + UI.esc(r.work) + " " + UI.esc(r.book) + "." + r.line_num +
+          ' <span class="scan-ds">' + footLabel(r.feet_pattern) + (cells ? "" : " \u00b7 syllabified loosely") + "</span></div>" +
+        '<div class="scan-greek">' + UI.esc(r.line_text) + "</div>" + inner + "</div>";
+    }).join("");
+    var pager = "";
+    if (total > SCAN_PAGE_SIZE) {
+      pager = '<div class="pager"><span class="pager-info">Lines ' + (start + 1) + "\u2013" + end + " of " + total +
+        " \u00b7 page " + (scanLineState.page + 1) + " / " + pages + '</span><span class="pager-controls">' +
+        '<button class="btn btn-sm" data-scan-act="first"' + (scanLineState.page === 0 ? " disabled" : "") + ">\u00ab First</button>" +
+        '<button class="btn btn-sm" data-scan-act="prev"' + (scanLineState.page === 0 ? " disabled" : "") + ">\u2039 Prev</button>" +
+        '<button class="btn btn-sm" data-scan-act="next"' + (scanLineState.page >= pages - 1 ? " disabled" : "") + ">Next \u203a</button>" +
+        '<button class="btn btn-sm" data-scan-act="last"' + (scanLineState.page >= pages - 1 ? " disabled" : "") + ">Last \u00bb</button>" +
+        "</span></div>";
+    }
+    el.scanChart.innerHTML = pager + '<div class="scan-passage">' + body + "</div>" + (total > SCAN_PAGE_SIZE ? pager : "");
+  }
+
   function statCards(pairs) {
     el.scanSummary.innerHTML = '<div class="analysis-grid">' + pairs.map(function (c) {
       return '<div class="analysis-card"><div class="metric">' + c[1] +
@@ -346,24 +389,16 @@
 
   var VIEWS = {
     line_scan: {
-      desc: "Each line scanned syllable by syllable \u2014 \u2014 marks a long position, \u203f a short; D dactyl, S spondee. Synizesis (two written vowels scanned as one) and diaeresis are aligned to the metre.",
+      desc: "Each line scanned syllable by syllable \u2014 \u00af marks a long position, \u02d8 a short; D dactyl, S spondee. Synizesis (two written vowels scanned as one) and diaeresis are aligned to the metre.",
       run: function () {
         var from = parseInt(el.scanLineFrom.value, 10); if (!isFinite(from) || from < 1) from = 1;
         var sc = scopeWhere();
         var clause = sc ? sc + " AND line_num >= " + from : " WHERE line_num >= " + from;
         var rows = SQL.objects("SELECT work, book, line_num, n_syllables, feet_pattern, line_text FROM scansion_lines" +
-          clause + " ORDER BY work, CAST(book AS INTEGER), line_num LIMIT " + topN() + ";");
-        if (!rows.length) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No lines in this range.</div>'; return; }
-        el.scanChart.innerHTML = '<div class="scan-passage">' + rows.map(function (r) {
-          var cells = alignSyllables(r.line_text, r.feet_pattern, r.n_syllables);
-          var body = cells ? renderSylScan(r.feet_pattern, cells)
-            : renderFeet(r.feet_pattern, alignLine(r.line_text, r.feet_pattern, r.n_syllables));
-          return '<div class="scan-line">' +
-            '<div class="scan-ref">' + UI.esc(r.work) + " " + UI.esc(r.book) + "." + r.line_num +
-              ' <span class="scan-ds">' + footLabel(r.feet_pattern) + (cells ? "" : " \u00b7 syllabified loosely") + "</span></div>" +
-            '<div class="scan-greek">' + UI.esc(r.line_text) + "</div>" + body + "</div>";
-        }).join("") + "</div>";
-        statCards([["Lines shown", rows.length], ["First", rows[0].work + " " + rows[0].book + "." + rows[0].line_num]]);
+          clause + " ORDER BY work, CAST(book AS INTEGER), line_num;");
+        if (!rows.length) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No lines in this range.</div>'; el.scanSummary.innerHTML = ""; return; }
+        drawLineScan(rows);
+        statCards([["Lines matched", rows.length.toLocaleString()], ["First", rows[0].work + " " + rows[0].book + "." + rows[0].line_num]]);
       }
     },
     word_foot: {
@@ -540,6 +575,7 @@
     el.scanWordWrap.hidden = (v !== "word_foot");
     el.scanFootWrap.hidden = (v !== "foot_words");
     el.scanGrammar.hidden = !(v === "word_foot" || v === "foot_words");
+    if (v === "word_foot") ensureWordDropdown();
   }
 
   function grammarState() { var s = {}; GFIELDS.forEach(function (k) { s[k] = el[GMAP[k]] ? el[GMAP[k]].value : ""; }); return s; }
@@ -547,6 +583,7 @@
   function run() {
     if (!SQL || !SQL.isReady()) return;
     syncScanControls();
+    scanLineState.page = 0;
     UI.saveState("scan", {
       view: el.scanView.value, work: el.scanWork.value, book: el.scanBook.value, topN: el.scanTopN.value,
       lineFrom: el.scanLineFrom.value, word: el.scanWord.value, foot: el.scanFoot.value, grammar: grammarState()
@@ -589,6 +626,20 @@
     el.scanWord.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } });
     GFIELDS.forEach(function (k) { if (el[GMAP[k]]) el[GMAP[k]].addEventListener("change", run); });
     wireCombo();
+    if (el.scanWordAll) el.scanWordAll.addEventListener("change", function () {
+      if (this.value) { el.scanWord.value = this.value; if (el.scanWordMenu) el.scanWordMenu.hidden = true; run(); }
+    });
+    el.scanChart.addEventListener("click", function (ev) {
+      var b = ev.target.closest && ev.target.closest("[data-scan-act]");
+      if (!b || el.scanView.value !== "line_scan" || !scanLineRows) return;
+      var pages = Math.max(1, Math.ceil(scanLineRows.length / SCAN_PAGE_SIZE));
+      var act = b.getAttribute("data-scan-act");
+      if (act === "first") scanLineState.page = 0;
+      else if (act === "prev") scanLineState.page = Math.max(0, scanLineState.page - 1);
+      else if (act === "next") scanLineState.page = Math.min(pages - 1, scanLineState.page + 1);
+      else if (act === "last") scanLineState.page = pages - 1;
+      drawLineScan(scanLineRows);
+    });
     el.btnRunScan.addEventListener("click", run);
 
     SQL.ready().then(function () {

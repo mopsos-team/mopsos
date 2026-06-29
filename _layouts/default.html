@@ -40,6 +40,7 @@
               <a href="{{ '/clustering.html' | relative_url }}" class="nav-link{% if page.section == 'clustering' %} is-active{% endif %}">Stylometry</a>
             </div>
           </div>
+          <a href="{{ '/cite.html' | relative_url }}" class="nav-link{% if page.section == 'cite' %} is-active{% endif %}">How to Cite</a>
         </nav>
       </div>
     </div>
@@ -70,6 +71,7 @@
   {% if page.section == "prosody" %}<script src="{{ '/assets/js/mopsos-semantics.js' | relative_url }}"></script><script src="{{ '/assets/js/prosody.js' | relative_url }}"></script>{% endif %}
   {% if page.section == "phonology" %}<script src="{{ '/assets/js/phonology.js' | relative_url }}"></script>{% endif %}
   {% endif %}
+  {% if page.section == "cite" %}<script src="{{ '/assets/js/mopsos-shared.js' | relative_url }}"></script>{% endif %}
   <script>
     (function(){
       var jump = document.getElementById("sideToolJump");

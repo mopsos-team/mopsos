@@ -1,0 +1,25 @@
+work,book,prefix,file_name,relative_path,title,booknum_html,delay_html,n_speeds,n_lines_found
+iliad,1,il,il_1.html,iliad/il_1.html,,1,,0,611
+iliad,2,il,il_2.html,iliad/il_2.html,Iliad Book 2,2,150.0,877,877
+iliad,3,il,il_3.html,iliad/il_3.html,Iliad Book 3,3,150.0,461,461
+iliad,4,il,il_4.html,iliad/il_4.html,Iliad Book 4,4,150.0,544,544
+iliad,5,il,il_5.html,iliad/il_5.html,Iliad Book 5,5,150.0,909,909
+iliad,6,il,il_6.html,iliad/il_6.html,Iliad Book 6,6,200.0,0,529
+iliad,7,il,il_7.html,iliad/il_7.html,Iliad Book 7,7,150.0,482,482
+iliad,8,il,il_8.html,iliad/il_8.html,Iliad Book 8,8,150.0,909,561
+iliad,9,il,il_9.html,iliad/il_9.html,Iliad Book 9,9,150.0,709,709
+iliad,10,il,il_10.html,iliad/il_10.html,Iliad Book 10,10,150.0,709,579
+iliad,11,il,il_11.html,iliad/il_11.html,Iliad Book 11,11,150.0,709,847
+iliad,12,il,il_12.html,iliad/il_12.html,Iliad Book 12,12,150.0,709,471
+iliad,13,il,il_13.html,iliad/il_13.html,Iliad Book 13,13,150.0,709,837
+iliad,14,il,il_14.html,iliad/il_14.html,Iliad Book 14,14,150.0,709,521
+iliad,15,il,il_15.html,iliad/il_15.html,Iliad Book 15,15,150.0,709,746
+iliad,16,il,il_16.html,iliad/il_16.html,Iliad Book 16,16,150.0,709,867
+iliad,17,il,il_17.html,iliad/il_17.html,Iliad Book 17,17,150.0,709,761
+iliad,18,il,il_18.html,iliad/il_18.html,Iliad Book 18,18,150.0,709,616
+iliad,19,il,il_19.html,iliad/il_19.html,Iliad Book 19,19,150.0,709,424
+iliad,20,il,il_20.html,iliad/il_20.html,Iliad Book 20,20,150.0,709,503
+iliad,21,il,il_21.html,iliad/il_21.html,Iliad Book 21,21,150.0,709,611
+iliad,22,il,il_22.html,iliad/il_22.html,Iliad Book 22,22,150.0,709,515
+iliad,23,il,il_23.html,iliad/il_23.html,Iliad Book 23,23,150.0,709,897
+iliad,24,il,il_24.html,iliad/il_24.html,Iliad Book 24,24,150.0,709,804
