@@ -17,7 +17,6 @@
 (function () {
   const CONFIG = {
     table: "morphology",
-    csvUrl: "assets/data/default.csv",
     wasmBase: "https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/",
     columnTypes: {
       total_distance: "REAL",
@@ -51,37 +50,6 @@
   let columns = [];     // column names of the loaded table
   let rowCount = 0;
   let readyPromise = null;
-
-  function parseCsv(text) {
-    return new Promise((resolve, reject) => {
-      if (!window.Papa || !window.Papa.parse) return reject(new Error("papaparse unavailable"));
-      window.Papa.parse(text, {
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: false,
-        complete: (out) => resolve(out.data || []),
-        error: reject
-      });
-    });
-  }
-
-  async function fetchCsv(path) {
-    const variants = [
-      path,
-      new URL(path, document.baseURI).toString(),
-      path.startsWith("/") ? path : "/" + path,
-      path.startsWith("./") ? path.slice(2) : "./" + path
-    ];
-    let lastErr = null;
-    for (const candidate of [...new Set(variants)]) {
-      try {
-        const res = await fetch(candidate, { cache: "no-store" });
-        if (res.ok) return await res.text();
-        lastErr = new Error("HTTP " + res.status + " @ " + candidate);
-      } catch (err) { lastErr = err; }
-    }
-    throw lastErr || new Error("Could not load CSV at " + path);
-  }
 
   async function ensureSqlModule() {
     if (SQL) return SQL;
@@ -176,12 +144,14 @@
   /** Open the pre-built SQLite database, fetching + decompressing only once. */
   async function loadPrebuilt() {
     let raw = null;
-    try { raw = await idbGet(IDB_KEY); } catch (e) { /* cache unavailable */ }
-    if (!raw) {
+    // TODO -- while under development, do not cache database
+    // try { raw = await idbGet(IDB_KEY); } catch (e) { /* cache unavailable */ }
+    // if (!raw) {
       const gz = await fetchArrayBuffer(PREBUILT);
       raw = await gunzip(gz);
-      try { await idbSet(IDB_KEY, raw); } catch (e) { /* private mode / quota — fine */ }
-    }
+    //   try { await idbSet(IDB_KEY, raw); } catch (e) { /* private mode / quota — fine */ }
+    // }
+    // TODO
     if (db) db.close();
     db = new SQL.Database(new Uint8Array(raw));
     const ti = db.exec("PRAGMA table_info(" + quoteId(CONFIG.table) + ");");
@@ -196,11 +166,7 @@
     try {
       await loadPrebuilt();
     } catch (err) {
-      // Fallback: parse the CSV and build the database in-browser.
-      if (window.console) console.warn("[mopsos] prebuilt DB unavailable; parsing CSV instead:", err && err.message);
-      const text = await fetchCsv(CONFIG.csvUrl);
-      const rows = await parseCsv(text);
-      buildDatabase(rows);
+      alert("Unable to build database");
     }
     return { columns, rowCount };
   }

@@ -63,7 +63,7 @@ TABLES = [
         columns=["work", "book", "line_num", "n_syllables", "n_words",
                  "feet_pattern", "is_speech", "is_newpara", "line_text"],
         column_mapping={},
-        sql_types=dict(line_num="REAL", n_syllables="INTEGER", n_words="INTEGER",
+        sql_types=dict(line_num="INTEGER", n_syllables="INTEGER", n_words="INTEGER",
                        is_speech="INTEGER", is_newpara="INTEGER"),
         data_coercion={},
         indexes=["work", "feet_pattern"],
@@ -71,16 +71,23 @@ TABLES = [
     # --- new tables go here, one dict per CSV. Auto-skipped until the CSV
     #     exists, so this is safe to leave in place.
     dict(
-        file_path=os.path.join(DATA, "ncompounds.csv"),
-        table_name="nominal_compounds",
-        columns=None, column_mapping={}, sql_types={}, data_coercion={},
-        indexes=["lemma", "form"],
+        file_path=os.path.join(DATA, "ncompounds", "ncompounds_analysis.csv"),
+        table_name="ncompounds_analysis",
+        columns=["compound", "member1", "member1_category", "member2",
+                 "member2_category"],
+        column_mapping={},
+        sql_types={},
+        data_coercion={},
+        indexes=["compound"],
     ),
     dict(
-        file_path=os.path.join(DATA, "ncompounds_attestations.csv"),
-        table_name="nominal_compound_attestations",
-        columns=None, column_mapping={}, sql_types={}, data_coercion={},
-        indexes=["lemma", "form"],
+        file_path=os.path.join(DATA, "ncompounds", "ncompounds_attestations.csv"),
+        table_name="ncompounds_attestations",
+        columns=["compound", "work", "book", "line_num"],
+        column_mapping={},
+        sql_types=dict(line_num="INTEGER"),
+        data_coercion={},
+        indexes=["compound", "work", "book", "line_num"],
     ),
 ]
 
