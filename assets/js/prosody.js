@@ -1,7 +1,7 @@
 /* ============================================================================
  *  SCANSION (PROSODY) TAB
  *  One view at a time, chosen from a drop-down, computed live with SQL over
- *  the shared in-browser database (tables scansion_lines, scansion_books)
+ *  the shared in-browser database (table scansion_lines; scansion_books is a view)
  *  and drawn with D3. Each Homeric line is scanned into six hexameter feet,
  *  each a dactyl (LSS) or spondee (LL); feet_pattern stores them as
  *  "LSS|LSS|LL|LSS|LSS|LL".
