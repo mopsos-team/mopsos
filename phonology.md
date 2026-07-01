@@ -52,7 +52,7 @@ section: phonology
   <button class="adv-toggle btn btn-sm" data-adv="phonAdvPanel" style="margin-top:.5rem;">Advanced: custom SQL ▾</button>
   <div id="phonAdvPanel" class="adv-panel" hidden>
     <p class="help" style="margin-top:-.1rem;">A read-only query selecting the tokens to analyse; it must return at least one text column of word forms. <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs.</p>
-    <textarea id="phonSql" spellcheck="false">SELECT form, lemma FROM morphology;</textarea>
+    <textarea id="phonSql" spellcheck="false" data-nl2sql data-nl2sql-run="btnRunPhonSql">SELECT form, lemma FROM morphology;</textarea>
     <div id="phonSqlExamples" class="btn-row" style="margin-top:.45rem;flex-wrap:wrap;"></div>
     <div class="grid-3" style="margin-top:.5rem;">
       <div class="field"><label for="phonTokenCol"><strong>Token / form column</strong></label><select id="phonTokenCol" disabled></select></div>

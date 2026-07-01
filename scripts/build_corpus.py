@@ -4,13 +4,21 @@
 A config-driven CSV -> SQLite importer. The per-file config shape follows Zach's
 convert_csv_to_sqlite pattern -- a list of dicts with `column_mapping` and
 `data_coercion` (callables), reading with utf-8-sig so any BOM is stripped. It
-adds the four things this site needs that a plain importer doesn't:
+adds the five things this site needs that a plain importer doesn't:
 
-  * `columns`  - keep/reorder a subset of CSV columns (scansion_lines keeps 9 of
-                 homer_lines.csv's 19 columns; importing all 19 would change the
-                 table schema the app queries).
-  * `indexes`  - the slim index set the queries rely on (no indexes => the slow
-                 full-scan behaviour we removed earlier comes back).
+  * `columns`         - keep/reorder a subset of CSV columns (scansion_lines
+                 keeps 9 of homer_lines.csv's 19 columns; importing all 19
+                 would change the table schema the app queries).
+  * `indexes`         - the slim index set the queries rely on (no indexes =>
+                 the slow full-scan behaviour we removed earlier comes back).
+  * `derived_columns` - columns computed from another column already in this
+                 table rather than read from the CSV, e.g.
+                 {"lemma_search": ("lemma", greek_text.strip_diacritics)}.
+                 Used for the accent-insensitive search key and Beta Code
+                 transliteration columns (see greek_text.py) -- SQLite has no
+                 built-in Unicode-accent-insensitive collation, so those live
+                 as precomputed columns instead. One dict entry per derived
+                 column; safe to add more the same way.
   * VIEWS      - summaries are SQL views over one base table, not a second copy
                  of the data (e.g. scansion_books is a GROUP BY over
                  scansion_lines, so the data lives in exactly one place).
@@ -18,7 +26,8 @@ adds the four things this site needs that a plain importer doesn't:
                  compacted, gzipped database, not a raw .sqlite.
 
 Adding a table is one new dict in TABLES; adding a summary is one new entry in
-VIEWS. Run:  python3 scripts/build_corpus.py   (stdlib only: csv, sqlite3, gzip)
+VIEWS. Run:  python3 scripts/build_corpus.py   (stdlib only: csv, sqlite3, gzip
+-- greek_text.py, imported below, is also stdlib-only)
 """
 
 import csv
@@ -27,6 +36,8 @@ import os
 import shutil
 import sqlite3
 import sys
+
+import greek_text
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "assets", "data")
@@ -43,6 +54,8 @@ NUMERIC_PARSERS = {"INTEGER": int, "REAL": float}
 #   data_coercion  : {column: callable}  custom value cleaner (Zach's pattern);
 #                    overrides sql_types coercion when both are given
 #   indexes        : columns to index (skipped if not kept)
+#   derived_columns: {new_column: (source_column, callable)}  computed after
+#                    the source column is coerced; appended as TEXT columns
 TABLES = [
     dict(
         file_path=os.path.join(DATA, "default.csv"),
@@ -55,7 +68,15 @@ TABLES = [
         # to match the app's own conversion (buildDatabase in mopsos-shared.js).
         data_coercion={"is_valid": lambda v: 1 if v.strip().lower() == "true"
                        else (0 if v.strip().lower() == "false" else v)},
-        indexes=["lemma", "form", "work", "author", "sentence_id"],
+        indexes=["lemma", "form", "work", "author", "sentence_id", "lemma_search"],
+        # lemma_search: accent/breathing-insensitive key for "ignore accents"
+        # search (e.g. WHERE lemma_search LIKE 'luo%' matches every accented
+        # spelling of a lemma). lemma_beta: Beta Code transliteration, kept
+        # fully accented -- see greek_text.py for what each does and why.
+        derived_columns={
+            "lemma_search": ("lemma", greek_text.strip_diacritics),
+            "lemma_beta": ("lemma", greek_text.to_beta_code),
+        },
     ),
     dict(
         file_path=os.path.join(DATA, "scansion", "homer_lines.csv"),
@@ -78,7 +99,17 @@ TABLES = [
         column_mapping={},
         sql_types={},
         data_coercion={},
-        indexes=["compound"],
+        indexes=["compound", "compound_search"],
+        # Same idea as morphology.lemma_search / lemma_beta above, for the
+        # compound headword. Powers the compound panel's adaptive search
+        # (accent-insensitive and Beta-Code-typeable) and lets it join against
+        # ncompounds_attestations by normalized spelling, not just exact
+        # string match (attestations record inflected/capitalized forms that
+        # don't always match the analysis headword byte-for-byte).
+        derived_columns={
+            "compound_search": ("compound", greek_text.strip_diacritics),
+            "compound_beta": ("compound", greek_text.to_beta_code),
+        },
     ),
     dict(
         file_path=os.path.join(DATA, "ncompounds", "ncompounds_attestations.csv"),
@@ -148,6 +179,7 @@ def load_table(con, cfg):
 
     sql_types = cfg.get("sql_types", {})
     mapping = cfg.get("column_mapping", {})
+    derived = cfg.get("derived_columns", {})  # {new_col: (source_col, fn)}
     with open(path, newline="", encoding="utf-8-sig") as fh:
         reader = csv.DictReader(fh)
         headers = reader.fieldnames or []
@@ -158,25 +190,38 @@ def load_table(con, cfg):
         out_cols = [mapping.get(c, c) for c in src_cols]
         coercers = [make_coercer(o, sql_types, cfg.get("data_coercion", {})) for o in out_cols]
 
-        coldefs = ", ".join(f'"{o}" {sql_types.get(o, "TEXT")}' for o in out_cols)
+        derived_names = list(derived.keys())
+        for new_col, (source_col, _fn) in derived.items():
+            if source_col not in out_cols:
+                sys.exit(f"ERROR: {cfg['table_name']}: derived column {new_col!r} "
+                          f"needs source column {source_col!r}, which isn't in `columns`")
+        all_cols = out_cols + derived_names
+        src_index = {c: i for i, c in enumerate(out_cols)}
+
+        coldefs = ", ".join(f'"{o}" {sql_types.get(o, "TEXT")}' for o in all_cols)
         con.execute(f'DROP TABLE IF EXISTS "{cfg["table_name"]}"')
         con.execute(f'CREATE TABLE "{cfg["table_name"]}" ({coldefs})')
-        ins = f'INSERT INTO "{cfg["table_name"]}" VALUES ({", ".join("?" for _ in out_cols)})'
+        ins = f'INSERT INTO "{cfg["table_name"]}" VALUES ({", ".join("?" for _ in all_cols)})'
 
         n, batch = 0, []
         con.execute("BEGIN")
         for row in reader:
-            batch.append([coercers[i](row.get(src_cols[i], "") or "") for i in range(len(src_cols))])
+            values = [coercers[i](row.get(src_cols[i], "") or "") for i in range(len(src_cols))]
+            for new_col in derived_names:
+                source_col, fn = derived[new_col]
+                values.append(fn(values[src_index[source_col]] or ""))
+            batch.append(values)
             if len(batch) >= 5000:
                 con.executemany(ins, batch); n += len(batch); batch = []
         if batch:
             con.executemany(ins, batch); n += len(batch)
         con.execute("COMMIT")
 
-    idx = [c for c in cfg.get("indexes", []) if c in out_cols]
+    idx = [c for c in cfg.get("indexes", []) if c in all_cols]
     for c in idx:
         con.execute(f'CREATE INDEX "ix_{cfg["table_name"]}_{c}" ON "{cfg["table_name"]}" ("{c}")')
-    print(f"  - {cfg['table_name']}: {n:,} rows, {len(out_cols)} cols, indexes={idx or 'none'}")
+    print(f"  - {cfg['table_name']}: {n:,} rows, {len(all_cols)} cols "
+          f"({len(derived_names)} derived), indexes={idx or 'none'}")
     return n
 
 

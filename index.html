@@ -77,7 +77,7 @@
 
       <div id="qfSqlPanel" class="adv-panel" hidden>
         <p class="help">Read-only SQL over table <code>morphology</code>. Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. <kbd>Enter</kbd> runs · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line · results are not paginated.</p>
-        <textarea id="qfSqlInput" spellcheck="false"></textarea>
+        <textarea id="qfSqlInput" spellcheck="false" data-nl2sql data-nl2sql-run="qfSqlRun"></textarea>
         <div class="btn-row" style="margin-top:.5rem;">
           <button id="qfSqlRun" class="btn btn-primary">Run</button>
         </div>
@@ -168,6 +168,7 @@
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="assets/js/papa-fallback.js"></script>
   <script src="assets/js/mopsos-shared.js"></script>
+  <script src="assets/js/mopsos-nl2sql.js"></script>
   <script src="assets/js/mopsos-semantics.js"></script>
   <script src="assets/js/morphology-standalone.js"></script>
 </body>

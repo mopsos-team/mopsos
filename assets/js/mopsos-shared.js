@@ -113,7 +113,7 @@
   }
 
   /* --- one-time cache of the decompressed database in IndexedDB --------- */
-  const IDB_NAME = "mopsos", IDB_STORE = "corpus", IDB_KEY = "corpus.sqlite.v3";
+  const IDB_NAME = "mopsos", IDB_STORE = "corpus", IDB_KEY = "corpus.sqlite.v4";
   function idbOpen() {
     return new Promise((resolve, reject) => {
       if (!window.indexedDB) return reject(new Error("no indexedDB"));
@@ -576,6 +576,88 @@
         window.addEventListener("resize", () => { if (!menu.hasAttribute("hidden")) place(); });
         window.addEventListener("scroll", () => { if (!menu.hasAttribute("hidden")) place(); }, true);
       });
+    },
+
+    /**
+     * Wire a generic "adaptive search" combobox — a text <input> paired with
+     * a sibling <div class="combo-menu"> (see prosody.md's #scanWord for the
+     * markup convention this mirrors) that live-filters a candidate list on
+     * every keystroke, accent-insensitively for Greek input and tolerant of
+     * plain ASCII / Beta Code input when window.MopsosText is loaded.
+     *   <div class="combo">
+     *     <input id="..." type="text" autocomplete="off" spellcheck="false">
+     *     <div id="...Menu" class="combo-menu" hidden></div>
+     *   </div>
+     * opts.items()     — () => [{ key, display, meta?, beta? }, ...], called
+     *                     fresh on every keystroke so callers can swap data
+     *                     in at any time; `key` should already be run through
+     *                     MopsosText.stripDiacritics (this does not re-derive
+     *                     it, since callers usually already have it as a
+     *                     precomputed *_search column value).
+     * opts.onSelect(item) — called when a candidate is clicked.
+     * opts.limit        — max menu rows rendered at once (default 200).
+     * opts.emptyHint     — placeholder text shown for an empty query.
+     * Matching is prefix-based (fast, predictable for a word list): Greek
+     * input is matched against `key`; plain ASCII input is matched against
+     * `beta` via MopsosText.looseBetaKey (both sides diacritic-symbol-
+     * stripped), so typing "mh" or "mhnis" finds "μῆνις" without a Greek
+     * keyboard. Returns { refresh() } — call refresh() if the underlying
+     * data changes without the person typing (e.g. once corpus data loads).
+     */
+    greekCombo(inputEl, menuEl, opts) {
+      opts = opts || {};
+      const self = this;
+      const limit = opts.limit || 200;
+      const T = window.MopsosText;
+
+      function candidates(query) {
+        const items = (opts.items && opts.items()) || [];
+        const q = String(query || "").trim();
+        if (!q) return items.slice(0, limit);
+        const hasGreek = T && T.hasGreek ? T.hasGreek(q) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(q);
+        if (hasGreek && T) {
+          const needle = T.stripDiacritics(q);
+          if (!needle) return items.slice(0, limit);
+          return items.filter((it) => it.key && it.key.indexOf(needle) === 0).slice(0, limit);
+        }
+        if (T) {
+          const needle = T.looseBetaKey(q);
+          if (needle) {
+            return items.filter((it) => it.beta && T.looseBetaKey(it.beta).indexOf(needle) === 0).slice(0, limit);
+          }
+        }
+        // no MopsosText / nothing to match on: plain case-insensitive substring on display text
+        const lq = q.toLowerCase();
+        return items.filter((it) => String(it.display || "").toLowerCase().indexOf(lq) >= 0).slice(0, limit);
+      }
+
+      function render(items) {
+        menuEl.innerHTML = "";
+        if (!items.length) { menuEl.hidden = true; return; }
+        menuEl.hidden = false;
+        menuEl.innerHTML = items.map((it, i) =>
+          '<div class="combo-item" data-idx="' + i + '"><span class="combo-form">' + self.esc(it.display) +
+          '</span><span class="combo-meta">' + (it.meta ? self.esc(it.meta) : "") + "</span></div>"
+        ).join("");
+        menuEl._items = items;
+      }
+
+      function refresh() { render(candidates(inputEl.value)); }
+
+      inputEl.addEventListener("input", refresh);
+      inputEl.addEventListener("focus", refresh);
+      inputEl.addEventListener("blur", () => { setTimeout(() => { menuEl.hidden = true; }, 160); });
+      inputEl.addEventListener("keydown", (e) => { if (e.key === "Escape") menuEl.hidden = true; });
+      menuEl.addEventListener("mousedown", (e) => {
+        const row = e.target.closest && e.target.closest(".combo-item");
+        if (!row) return;
+        e.preventDefault();
+        const it = menuEl._items && menuEl._items[Number(row.dataset.idx)];
+        menuEl.hidden = true;
+        if (it && opts.onSelect) opts.onSelect(it);
+      });
+
+      return { refresh };
     }
   };
 

@@ -19,6 +19,8 @@ section: morphotactics
       <li><strong>Feature co-occurrence</strong> — how two features (e.g. case × number) combine inside the same word, optionally restricted to one part of speech.</li>
       <li><strong>Surface-final sequences</strong> — the most frequent word-final letter sequences associated with a chosen feature value. This approximates exponence by final orthographic strings; it does not segment morphemes.</li>
       <li><strong>Paradigm slots</strong> — how often each value of a feature is filled for a chosen part of speech.</li>
+      <li><strong>Nominal compounds</strong> — how often each pairing of first-member and second-member category (e.g. preposition + noun) occurs among the analyzed compounds, optionally restricted to compounds attested in a given work; includes a lookup for an individual compound's members, category, and attestations.</li>
+      <li><strong>Infinitive forms</strong> — tense/voice combinations attested among infinitives, optionally restricted to a work; includes a lookup for an individual verb's attested infinitive forms.</li>
     </ul>
   </div>
 </section>
@@ -35,6 +37,8 @@ section: morphotactics
         <option value="cooccur">Feature co-occurrence (e.g. case × number)</option>
         <option value="exponence">Surface-final sequences by feature value</option>
         <option value="slots">Paradigm slots — feature value frequencies</option>
+        <option value="compound">Nominal compounds — member category pairing</option>
+        <option value="infinitive">Infinitive forms — tense × voice</option>
       </select>
     </div>
   </div>
@@ -70,6 +74,36 @@ section: morphotactics
     <div class="grid-3">
       <div class="field"><label for="mtSlotPos"><strong>Part of speech</strong></label><select id="mtSlotPos"></select></div>
       <div class="field"><label for="mtSlotFeat"><strong>Feature</strong></label><select id="mtSlotFeat"></select></div>
+    </div>
+  </div>
+
+  <!-- Compound controls -->
+  <div class="mt-controls" data-for="compound" hidden>
+    <div class="grid-3">
+      <div class="field"><label for="mtCmpWork"><strong>Restrict to work</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
+    </div>
+    <div class="field">
+      <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">— optional</span></label>
+      <div class="combo">
+        <input id="mtCmpSearch" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek (accents optional) or Beta Code — e.g. ῥοδοδάκτυλος, rododaktulos, or click to browse…">
+        <div id="mtCmpSearchMenu" class="combo-menu" hidden></div>
+      </div>
+      <div id="mtCmpDetail" style="margin-top:.5rem;"></div>
+    </div>
+  </div>
+
+  <!-- Infinitive controls -->
+  <div class="mt-controls" data-for="infinitive" hidden>
+    <div class="grid-3">
+      <div class="field"><label for="mtInfWork"><strong>Restrict to work</strong></label><select id="mtInfWork"><option value="">(all works)</option></select></div>
+    </div>
+    <div class="field">
+      <label for="mtInfSearch"><strong>Look up a verb's infinitives</strong> <span class="help">— optional, by lemma</span></label>
+      <div class="combo">
+        <input id="mtInfSearch" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek (accents optional) or Beta Code — e.g. λύω, luw, or click to browse…">
+        <div id="mtInfSearchMenu" class="combo-menu" hidden></div>
+      </div>
+      <div id="mtInfDetail" style="margin-top:.5rem;"></div>
     </div>
   </div>
 
