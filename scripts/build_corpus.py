@@ -74,7 +74,7 @@ TABLES = [
         # spelling of a lemma). lemma_beta: Beta Code transliteration, kept
         # fully accented -- see greek_text.py for what each does and why.
         derived_columns={
-            "lemma_search": ("lemma", greek_text.strip_diacritics),
+            "lemma_search": ("lemma", lambda t: greek_text.strip_diacritics(t).lower()),
             "lemma_beta": ("lemma", greek_text.to_beta_code),
         },
     ),
@@ -167,7 +167,7 @@ def make_coercer(column, sql_types, data_coercion):
                 return value  # leave unexpected values rather than crash
         return coerce_numeric
 
-    return lambda value: None if value == "" else value
+    return lambda value: None if value == "" else value.strip()
 
 
 def load_table(con, cfg):
