@@ -244,13 +244,13 @@
   function viewCompound() {
     const work = el.cmpWork.value;
     const sql =
-      "SELECT compound, compound_search, member1_category AS a, member2_category AS b\n" +
+      "SELECT lemma, lemma_search, member1_category AS a, member2_category AS b\n" +
       "FROM " + q("ncompounds_analysis") + "\n" +
       "WHERE member1_category IS NOT NULL AND member1_category <> ''\n" +
       "  AND member2_category IS NOT NULL AND member2_category <> '';";
     el.sql.textContent = sql + (work
       ? "\n-- restricted in-browser to compounds attested in " + work +
-        " (accent-insensitive match against ncompounds_attestations.compound)"
+        " (accent-insensitive match against ncompounds_attestations.lemma)"
       : "");
 
     let rows = SQL.objects(sql);
@@ -328,10 +328,10 @@
   function buildCompoundData() {
     if (compoundItems) return;
     const rows = SQL.objects(
-      "SELECT compound, compound_search, compound_beta, member1, member1_category, member2, member2_category\n" +
-      "FROM " + q("ncompounds_analysis") + " ORDER BY compound;");
+      "SELECT lemma, lemma_search, lemma_beta, member1, member1_category, member2, member2_category\n" +
+      "FROM " + q("ncompounds_analysis") + " ORDER BY lemma;");
     compoundItems = rows.map((r) => ({
-      key: r.compound_search, display: r.compound, beta: r.compound_beta,
+      key: r.lemma_search, display: r.lemma, beta: r.lemma_beta,
       meta: (r.member1 || "?") + " + " + (r.member2 || "?"), row: r
     }));
     compoundAttestations = SQL.objects("SELECT compound, work, book, line_num FROM " + q("ncompounds_attestations") + ";");
@@ -340,11 +340,11 @@
   function renderCompoundDetail(item) {
     const r = item.row;
     const attested = compoundAttestations
-      .filter((a) => normalizeGreek(a.compound) === item.key)
+      .filter((a) => normalizeGreek(a.lemma) === item.key)
       .sort((a, b) => a.work.localeCompare(b.work) || Number(a.book) - Number(b.book) || Number(a.line_num) - Number(b.line_num));
     let html = '<table class="paradigm-table"><tbody>';
-    html += "<tr><th>Compound</th><td>" + UI.esc(r.compound) + "</td></tr>";
-    html += "<tr><th>Beta Code</th><td><code>" + UI.esc(r.compound_beta) + "</code></td></tr>";
+    html += "<tr><th>Compound</th><td>" + UI.esc(r.lemma) + "</td></tr>";
+    html += "<tr><th>Beta Code</th><td><code>" + UI.esc(r.lemma_beta) + "</code></td></tr>";
     html += "<tr><th>First member</th><td>" + UI.esc(r.member1 || "\u2014") + " (" + UI.esc(UI.label("pos", r.member1_category)) + ")</td></tr>";
     html += "<tr><th>Second member</th><td>" + UI.esc(r.member2 || "\u2014") + " (" + UI.esc(UI.label("pos", r.member2_category)) + ")</td></tr>";
     html += "</tbody></table>";

@@ -94,12 +94,14 @@ TABLES = [
     dict(
         file_path=os.path.join(DATA, "ncompounds", "ncompounds_analysis.csv"),
         table_name="ncompounds_analysis",
-        columns=["compound", "member1", "member1_category", "member2",
-                 "member2_category"],
+        columns=["lemma", "inferred", "segmentation", "member1",
+                 "member1_category", "member1_subcategory", "member2",
+                 "member2_category", "member2_subcategory",
+                 "analysis_count", "member_count"],
         column_mapping={},
         sql_types={},
         data_coercion={},
-        indexes=["compound", "compound_search"],
+        indexes=["lemma", "lemma_search"],
         # Same idea as morphology.lemma_search / lemma_beta above, for the
         # compound headword. Powers the compound panel's adaptive search
         # (accent-insensitive and Beta-Code-typeable) and lets it join against
@@ -107,8 +109,8 @@ TABLES = [
         # string match (attestations record inflected/capitalized forms that
         # don't always match the analysis headword byte-for-byte).
         derived_columns={
-            "compound_search": ("compound", greek_text.strip_diacritics),
-            "compound_beta": ("compound", greek_text.to_beta_code),
+            "lemma_search": ("lemma", greek_text.strip_diacritics),
+            "lemma_beta": ("lemma", greek_text.to_beta_code),
         },
     ),
     dict(
