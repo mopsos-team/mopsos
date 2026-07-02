@@ -22,8 +22,8 @@
   const FEATURE_COLS = ["number", "case", "gender", "tense", "mood", "voice", "person", "degree"];
   const DEFAULT_FEATURES = ["number", "case", "gender", "tense", "mood"];
   // Columns the dropdown query selects (when present in the table).
-  const PREVIEW_COLS = ["author", "work", "ref", "form", "lemma", "pos", "person",
-    "number", "tense", "mood", "voice", "gender", "case", "degree"];
+  const PREVIEW_COLS = ["author", "work", "book", "verse", "form", "lemma", "pos", "person",
+    "number", "tense", "mood", "voice", "gender", "case", "degree", "metrical_shape"];
   // Dimensions offered in the explorer.
   const DIMENSIONS = [
     ["work", "Book / work"], ["author", "Author"], ["lemma", "Lemma"], ["form", "Word form"],
@@ -75,10 +75,10 @@
   function buildQuickSql(filters) {
     const cols = PREVIEW_COLS.filter((c) => SQL.columns().includes(c));
     let sql = "SELECT " + cols.map(niceId).join(", ") + "\nFROM " + niceId(TABLE);
-    const conds = [];
+    const conds = ["match_status <> \"CONFLICT_NO_MATCH\""];
     for (const k in filters) if (filters[k]) conds.push(niceId(k) + " = " + sqlStr(filters[k]));
     if (conds.length) sql += "\nWHERE " + conds.join("\n  AND ");
-    sql += "\nORDER BY " + niceId("work") + ", " + niceId("ref");
+    sql += "\nORDER BY " + niceId("work") + ", " + "book, verse";
     sql += "\nLIMIT " + PAGE_SIZE + " OFFSET 0;";
     return sql;
   }
