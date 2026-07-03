@@ -1,10 +1,16 @@
 /* ============================================================================
  *  SCANSION (PROSODY) TAB
  *  One view at a time, chosen from a drop-down, computed live with SQL over
- *  the shared in-browser database (table scansion_lines; scansion_books is a view)
- *  and drawn with D3. Each Homeric line is scanned into six hexameter feet,
- *  each a dactyl (LSS) or spondee (LL); feet_pattern stores them as
- *  "LSS|LSS|LL|LSS|LSS|LL".
+ *  the shared in-browser database and drawn with D3.
+ *  Line-level views run on scansion_lines (scansion_books is a view); each
+ *  Homeric line is scanned into six hexameter feet, each a dactyl (LSS) or
+ *  spondee (LL), with feet_pattern stored as "LSS|LSS|LL|LSS|LSS|LL".
+ *  Word-level views (where a word falls, commonest words per foot, the word
+ *  autocomplete) run on the merged morphology table, whose per-token
+ *  foot_start / foot_start_pos / match_status columns come from the corpus
+ *  build (scripts/build_corpus.py aligning each word to the scansion), so
+ *  word placement is read from the database instead of being re-derived
+ *  orthographically in the browser.
  * ========================================================================== */
 (function () {
   var SQL = window.MopsosSQL, UI = window.MopsosUI, Chart = window.MopsosChart;
@@ -40,9 +46,14 @@
     }).join("");
   }
 
-  /* ----- word-to-foot alignment ------------------------------------------- */
+  /* ----- word-level scansion via the merged morphology table --------------
+   * The corpus build merges the scansion into the morphology table, so every
+   * token carries the foot it begins in (foot_start, 1-6), its position
+   * within that foot (foot_start_pos, 1 = the princeps), its metrical shape,
+   * and a match_status recording how the word aligned to the scanned line.
+   * Word-level views read that alignment directly instead of re-deriving it
+   * from orthographic syllable counts in the browser. ---------------------- */
 
-  var DIPH = { "αι": 1, "αυ": 1, "ει": 1, "ευ": 1, "ηυ": 1, "οι": 1, "ου": 1, "υι": 1, "ωυ": 1 };
   function stripDia(s) { return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
   function normGr(w) { return stripDia(w).replace(/[\u2019'\u02bc]/g, ""); }
   function tokenize(line) {
@@ -50,46 +61,31 @@
       .map(function (t) { return t.replace(/[^\u0370-\u03ff\u1f00-\u1fff\u2019'\u02bc]/g, ""); })
       .filter(Boolean);
   }
-  function sylCount(w) {
-    var r = stripDia(w), n = 0, i = 0;
-    while (i < r.length) {
-      var c = r[i];
-      if ("αεηιουω".indexOf(c) >= 0) {
-        if (DIPH[r.substr(i, 2)]) { n++; i += 2; } else { n++; i++; }
-      } else i++;
-    }
-    return n;
+
+  // scansion_lines uses lower-case work names; morphology uses capitalised ones.
+  var WORKNAME = { iliad: "Iliad", odyssey: "Odyssey" };
+  // Tokens whose alignment to the scansion is trustworthy.
+  var MATCH_OK = "match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND foot_start IS NOT NULL";
+  // WHERE conditions restricting morphology to the tab's current scope.
+  // An optional column prefix (e.g. "m.") qualifies columns in joined queries.
+  function morphScope(px) {
+    px = px || "";
+    var conds = [px + "match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND " + px + "foot_start IS NOT NULL"];
+    if (el.scanWork.value) conds.push(px + "work = " + sqlStr(WORKNAME[el.scanWork.value] || el.scanWork.value));
+    else conds.push(px + "work IN ('Iliad','Odyssey')");
+    if (el.scanBook.value && !el.scanBook.disabled) conds.push(px + "book = " + sqlStr(el.scanBook.value));
+    return conds;
   }
-  // Align each word of a line to its starting foot; null if syllables don't match.
-  function alignLine(text, pattern, nSyl) {
-    var ws = tokenize(text), counts = ws.map(sylCount);
-    var tot = counts.reduce(function (a, b) { return a + b; }, 0);
-    if (tot !== nSyl) return null;
-    var feet = String(pattern).split("|"), footStart = [], acc = 0, i;
-    for (i = 0; i < feet.length; i++) { footStart.push(acc); acc += feet[i].length; }
-    function footOf(si) { var fi = 0; for (var k = 0; k < feet.length; k++) { if (si >= footStart[k]) fi = k; else break; } return fi; }
-    var out = [], si = 0;
-    for (i = 0; i < ws.length; i++) {
-      var sf = footOf(si);
-      out.push({ w: ws[i], wn: normGr(ws[i]), foot: sf, princeps: si === footStart[sf], syl: counts[i] });
-      si += counts[i];
-    }
-    return out;
+  // Word placement for one scanned line, read from the merged table.
+  function wordFeetForLine(L) {
+    var rows = SQL.objects("SELECT form, foot_start FROM morphology WHERE work = " +
+      sqlStr(WORKNAME[L.work] || L.work) + " AND book = " + sqlStr(String(L.book)) +
+      " AND verse = " + sqlStr(String(L.line_num)) + " AND " + MATCH_OK + " ORDER BY id;");
+    if (!rows.length) return null;
+    return rows.map(function (r) { return { w: r.form, foot: (parseInt(r.foot_start, 10) || 1) - 1 }; });
   }
 
-  var ALIGN = null;
-  function buildAlign() {
-    if (ALIGN) return;
-    var rows = SQL.objects("SELECT work, book, line_num, n_syllables, feet_pattern, line_text FROM scansion_lines;");
-    ALIGN = rows.map(function (r) { r.al = alignLine(r.line_text, r.feet_pattern, r.n_syllables); return r; });
-  }
-  function inScope(L) {
-    if (el.scanWork.value && L.work !== el.scanWork.value) return false;
-    if (el.scanBook.value && !el.scanBook.disabled && String(L.book) !== el.scanBook.value) return false;
-    return true;
-  }
-
-  /* ----- grammatical category (form -> commonest analysis in the corpus) --- */
+  /* ----- grammatical category (each token carries its own analysis) -------- */
   var GFIELDS = ["pos", "case", "number", "gender", "tense", "mood", "voice", "person"];
   var GLABEL = {
     pos: { n: "noun", v: "verb", a: "adjective", p: "pronoun", d: "adverb", l: "article", r: "preposition", c: "conjunction", g: "particle", m: "numeral", i: "interjection" },
@@ -101,16 +97,14 @@
     voice: { a: "active", m: "middle", p: "passive", e: "mediopassive" },
     person: { "1": "1st-person", "2": "2nd-person", "3": "3rd-person" }
   };
-  var FORMFEAT = null;
-  function buildFormFeat() {
-    if (FORMFEAT) return;
-    var rows = SQL.objects('SELECT form, pos, "case" c, number num, gender gen, tense tns, mood md, voice vc, person prs, COUNT(*) n FROM morphology WHERE form NOT IN (\'\',\'-\') GROUP BY form, pos, c, num, gen, tns, md, vc, prs;');
-    var best = {};
-    rows.forEach(function (r) {
-      var k = normGr(r.form);
-      if (!best[k] || r.n > best[k]._n) best[k] = { pos: r.pos, "case": r.c, number: r.num, gender: r.gen, tense: r.tns, mood: r.md, voice: r.vc, person: r.prs, _n: r.n };
+  // Each token in the merged table carries its own analysis, so grammatical
+  // restrictions are plain SQL conditions rather than a per-form heuristic.
+  function grammarWhere(f) {
+    var conds = [];
+    GFIELDS.forEach(function (k) {
+      if (f[k]) conds.push('"' + k + '" = ' + sqlStr(f[k]));
     });
-    FORMFEAT = best;
+    return conds;
   }
   var GMAP = { pos: "scanGPos", "case": "scanGCase", number: "scanGNumber", gender: "scanGGender", tense: "scanGTense", mood: "scanGMood", voice: "scanGVoice", person: "scanGPerson" };
   function readGrammar() {
@@ -119,7 +113,6 @@
     return f;
   }
   function grammarActive(f) { return Object.keys(f).length > 0; }
-  function featMatch(wn, f) { var a = FORMFEAT[wn]; if (!a) return false; for (var k in f) if (a[k] !== f[k]) return false; return true; }
   function grammarLabel(f) {
     var parts = GFIELDS.filter(function (k) { return f[k]; }).map(function (k) { return GLABEL[k][f[k]] || f[k]; });
     return parts.length ? parts.join(" ") : "words";
@@ -129,11 +122,13 @@
   var FORMS = null, FORMLIST = null, LEMMAFORMS = null;
   function buildForms() {
     if (FORMS) return;
-    buildAlign();
     FORMS = {};
-    ALIGN.forEach(function (L) { if (!L.al) return; L.al.forEach(function (w) {
-      var e = FORMS[w.wn]; if (!e) e = FORMS[w.wn] = { forms: {}, c: 0 }; e.c++; e.forms[w.w] = (e.forms[w.w] || 0) + 1;
-    }); });
+    SQL.objects("SELECT form, COUNT(*) n FROM morphology WHERE " + MATCH_OK +
+      " AND work IN ('Iliad','Odyssey') GROUP BY form;").forEach(function (r) {
+      var wn = normGr(r.form); if (!wn) return;
+      var e = FORMS[wn]; if (!e) e = FORMS[wn] = { forms: {}, c: 0 };
+      e.c += r.n; e.forms[r.form] = (e.forms[r.form] || 0) + r.n;
+    });
     FORMLIST = Object.keys(FORMS).map(function (wn) {
       var fm = FORMS[wn].forms, disp = Object.keys(fm).sort(function (a, b) { return fm[b] - fm[a]; })[0];
       return { wn: wn, disp: disp, c: FORMS[wn].c };
@@ -355,10 +350,10 @@
     var body = rows.slice(start, end).map(function (r) {
       var cells = alignSyllables(r.line_text, r.feet_pattern, r.n_syllables);
       var inner = cells ? renderSylScan(r.feet_pattern, cells)
-        : renderFeet(r.feet_pattern, alignLine(r.line_text, r.feet_pattern, r.n_syllables));
+        : renderFeet(r.feet_pattern, wordFeetForLine(r));
       return '<div class="scan-line">' +
         '<div class="scan-ref">' + UI.esc(r.work) + " " + UI.esc(r.book) + "." + r.line_num +
-          ' <span class="scan-ds">' + footLabel(r.feet_pattern) + (cells ? "" : " \u00b7 syllabified loosely") + "</span></div>" +
+          ' <span class="scan-ds">' + footLabel(r.feet_pattern) + (cells ? "" : " \u00b7 word-level placement") + "</span></div>" +
         '<div class="scan-greek">' + UI.esc(r.line_text) + "</div>" + inner + "</div>";
     }).join("");
     var pager = "";
@@ -394,7 +389,7 @@
 
   var VIEWS = {
     line_scan: {
-      desc: "Each line scanned syllable by syllable \u2014 \u00af marks a long position, \u02d8 a short; D dactyl, S spondee. Synizesis (two written vowels scanned as one) and diaeresis are aligned to the metre.",
+      desc: "Each line scanned syllable by syllable: \u00af marks a long position, \u02d8 a short; D dactyl, S spondee. Synizesis (two written vowels scanned as one) and diaeresis are aligned to the metre.",
       run: function () {
         var from = parseInt(el.scanLineFrom.value, 10); if (!isFinite(from) || from < 1) from = 1;
         var sc = scopeWhere();
@@ -407,16 +402,18 @@
       }
     },
     word_foot: {
-      desc: "Where a given word begins in the verse \u2014 its distribution over the six feet (accent-insensitive, on alignable lines). Leave the box empty and set a grammatical category to chart that whole category instead.",
+      desc: "Where a given word begins in the verse: its distribution over the six feet (accent-insensitive), read from the word-to-foot alignment stored in the corpus. Leave the box empty and set a grammatical category to chart that whole category instead.",
       run: function () {
         var f = readGrammar();
         var qn = normGr((el.scanWord.value || "").trim());
         if (!qn && grammarActive(f)) {
-          buildAlign(); buildFormFeat();
+          var conds = morphScope().concat(grammarWhere(f));
+          var grows = SQL.objects("SELECT foot_start ft, foot_start_pos fp, COUNT(*) n FROM morphology WHERE " +
+            conds.join(" AND ") + " GROUP BY ft, fp;");
           var cc = [0, 0, 0, 0, 0, 0], pr = 0, tot = 0;
-          ALIGN.forEach(function (L) {
-            if (!L.al || !inScope(L)) return;
-            L.al.forEach(function (w) { if (featMatch(w.wn, f)) { cc[w.foot]++; tot++; if (w.princeps) pr++; } });
+          grows.forEach(function (r) {
+            var fi = (parseInt(r.ft, 10) || 0) - 1; if (fi < 0 || fi > 5) return;
+            cc[fi] += r.n; tot += r.n; if (String(r.fp) === "1") pr += r.n;
           });
           if (!tot) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No ' + UI.esc(grammarLabel(f)) + ' found in this scope.</div>'; el.scanSummary.innerHTML = ""; el.scanTable.innerHTML = ""; return; }
           el.scanViewDesc.textContent = "Metrical position of all " + grammarLabel(f) + " (by the foot they begin in).";
@@ -427,36 +424,45 @@
           return;
         }
         if (!qn) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a Greek or English word above, or leave it empty and pick a grammatical category below.</div>'; el.scanSummary.innerHTML = ""; return; }
-        buildAlign();
+        buildForms();
+        var entry = FORMS[qn];
         var counts = [0, 0, 0, 0, 0, 0], princeps = 0, total = 0, ex = [];
-        ALIGN.forEach(function (L) {
-          if (!L.al || !inScope(L)) return;
-          L.al.forEach(function (w) {
-            if (w.wn === qn) { counts[w.foot]++; total++; if (w.princeps) princeps++; if (ex.length < 8) ex.push(L.work + " " + L.book + "." + L.line_num + ": " + L.line_text); }
+        if (entry) {
+          var variants = Object.keys(entry.forms).map(sqlStr).join(", ");
+          var conds2 = morphScope().concat(["form IN (" + variants + ")"]);
+          SQL.objects("SELECT foot_start ft, foot_start_pos fp, COUNT(*) n FROM morphology WHERE " +
+            conds2.join(" AND ") + " GROUP BY ft, fp;").forEach(function (r) {
+            var fi = (parseInt(r.ft, 10) || 0) - 1; if (fi < 0 || fi > 5) return;
+            counts[fi] += r.n; total += r.n; if (String(r.fp) === "1") princeps += r.n;
           });
-        });
-        if (!total) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No alignable occurrences of \u201c' + UI.esc(el.scanWord.value) + '\u201d in this scope.</div>'; el.scanSummary.innerHTML = ""; el.scanTable.innerHTML = ""; return; }
+          var exConds = morphScope("m.").concat(["m.form IN (" + variants + ")"]);
+          ex = SQL.objects("SELECT m.work w, m.book b, m.verse v, s.line_text t FROM morphology m " +
+            "JOIN scansion_lines s ON s.work = lower(m.work) AND s.book = m.book AND s.line_num = CAST(m.verse AS INTEGER) " +
+            "WHERE " + exConds.join(" AND ") +
+            " ORDER BY m.work, CAST(m.book AS INTEGER), CAST(m.verse AS INTEGER) LIMIT 8;")
+            .map(function (r) { return r.w + " " + r.b + "." + r.v + ": " + r.t; });
+        }
+        if (!total) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No aligned occurrences of \u201c' + UI.esc(el.scanWord.value) + '\u201d in this scope.</div>'; el.scanSummary.innerHTML = ""; el.scanTable.innerHTML = ""; return; }
         Chart.bars(el.scanChart, counts.map(function (c, i) { return { label: "Foot " + (i + 1), value: c }; }),
           { preserveOrder: true, valueLabel: "occurrences", labelWidth: 90 });
         statCards([["Occurrences", total.toLocaleString()], ["On the princeps", princeps + " (" + (100 * princeps / total).toFixed(0) + "%)"]]);
-        el.scanTable.innerHTML = '<div class="small-muted" style="margin:.2rem 0 .3rem;">Example lines</div>' +
-          ex.map(function (e) { return '<div class="scan-ex">' + UI.esc(e) + "</div>"; }).join("");
+        el.scanTable.innerHTML = ex.length ? '<div class="small-muted" style="margin:.2rem 0 .3rem;">Example lines</div>' +
+          ex.map(function (e) { return '<div class="scan-ex">' + UI.esc(e) + "</div>"; }).join("") : "";
       }
     },
     foot_words: {
-      desc: "The commonest word forms that begin in a chosen foot, on alignable lines. A grammatical category restricts the words counted.",
+      desc: "The commonest word forms that begin in a chosen foot, read from the word-to-foot alignment stored in the corpus. A grammatical category restricts the words counted.",
       run: function () {
-        buildAlign();
-        var f = readGrammar(), useG = grammarActive(f); if (useG) buildFormFeat();
+        var f = readGrammar(), useG = grammarActive(f);
         var fi = (parseInt(el.scanFoot.value, 10) || 1) - 1;
+        var conds = morphScope().concat(["foot_start = " + sqlStr(String(fi + 1))]);
+        if (useG) conds = conds.concat(grammarWhere(f));
         var map = new Map();
-        ALIGN.forEach(function (L) {
-          if (!L.al || !inScope(L)) return;
-          L.al.forEach(function (w) {
-            if (w.foot !== fi) return;
-            if (useG && !featMatch(w.wn, f)) return;
-            var e = map.get(w.wn); if (!e) { e = { c: 0, forms: {} }; map.set(w.wn, e); } e.c++; e.forms[w.w] = (e.forms[w.w] || 0) + 1;
-          });
+        SQL.objects("SELECT form, COUNT(*) n FROM morphology WHERE " + conds.join(" AND ") +
+          " GROUP BY form;").forEach(function (r) {
+          var wn = normGr(r.form); if (!wn) return;
+          var e = map.get(wn); if (!e) { e = { c: 0, forms: {} }; map.set(wn, e); }
+          e.c += r.n; e.forms[r.form] = (e.forms[r.form] || 0) + r.n;
         });
         var arr = Array.from(map.entries()).sort(function (a, b) { return b[1].c - a[1].c; }).slice(0, topN());
         if (!arr.length) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No matching words for this foot in scope.</div>'; return; }
@@ -519,7 +525,7 @@
         Chart.bars(el.scanChart, [{ label: "Long (—)", value: L }, { label: "Short (‿)", value: S }],
           { preserveOrder: true, valueLabel: "syllables", labelWidth: 120 });
         var tot = L + S;
-        statCards([["Long", L.toLocaleString()], ["Short", S.toLocaleString()], ["% long", tot ? (100 * L / tot).toFixed(1) + "%" : "—"]]);
+        statCards([["Long", L.toLocaleString()], ["Short", S.toLocaleString()], ["% long", tot ? (100 * L / tot).toFixed(1) + "%" : "–"]]);
       }
     },
     syllables: {
@@ -548,7 +554,7 @@
         var nar = map[0] || 0, spe = map[1] || 0, tot = nar + spe;
         Chart.bars(el.scanChart, [{ label: "Narrative", value: nar }, { label: "Speech", value: spe }],
           { preserveOrder: true, valueLabel: "lines", labelWidth: 120 });
-        statCards([["Narrative", nar.toLocaleString()], ["Speech", spe.toLocaleString()], ["% speech", tot ? (100 * spe / tot).toFixed(1) + "%" : "—"]]);
+        statCards([["Narrative", nar.toLocaleString()], ["Speech", spe.toLocaleString()], ["% speech", tot ? (100 * spe / tot).toFixed(1) + "%" : "–"]]);
       }
     },
     book_summary: {

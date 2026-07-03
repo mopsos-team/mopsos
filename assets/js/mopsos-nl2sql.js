@@ -164,7 +164,7 @@
     sql += ";";
 
     if (!conds.length) {
-      notes.push("no recognised filters — showing an unfiltered preview");
+      notes.push("no recognised filters, so showing an unfiltered preview");
     }
     return { sql: sql, notes: notes };
   }
@@ -206,7 +206,7 @@
     wrap.style.margin = "0 0 .5rem";
     wrap.innerHTML =
       '<label style="display:block;margin-bottom:.3rem;"><strong>Ask in plain English</strong> ' +
-      '<span class="help">— translated to the SQL below, read-only, nothing is run automatically beyond what the query itself selects</span></label>' +
+      '<span class="help">(translated to the SQL below, read-only; nothing is run automatically beyond what the query itself selects)</span></label>' +
       '<div class="inline-group">' +
       '<input type="text" class="nl2sql-input" autocomplete="off" spellcheck="false" ' +
       'placeholder="e.g. show me every noun whose gender is feminine in the Iliad" style="flex:1;min-width:240px;">' +
@@ -225,7 +225,7 @@
       status.textContent = "Translating…";
       Promise.resolve(translate(q)).then(function (result) {
         if (!result || !result.sql) {
-          status.textContent = "Couldn't turn that into a query — try naming a part of speech, a grammatical feature, or a work (e.g. Iliad).";
+          status.textContent = "Couldn't turn that into a query. Try naming a part of speech, a grammatical feature, or a work (e.g. Iliad).";
           return;
         }
         textarea.value = result.sql;

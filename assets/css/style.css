@@ -647,7 +647,7 @@ kbd {
 }
 
 /* ============================================================================
-   THEME REDESIGN — "Mopsus": black-figure clay on cool marble, Aegean teal,
+   THEME REDESIGN: "Mopsus": black-figure clay on cool marble, Aegean teal,
    gilt hairlines. Type: Fraunces (display) · IBM Plex Sans (UI) · Plex Mono.
    Appended last so these tokens/components win over the originals.
    ========================================================================== */
@@ -832,3 +832,7 @@ table.preview th { background: #f3f7f8; }
 .cite-bib-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
 .cite-bib-head h2 { margin: 0; }
 .cite-pre { margin: .5rem 0 0; padding: .8rem .9rem; background: var(--card-strong, #fff); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .82rem; line-height: 1.5; color: var(--text); white-space: pre; }
+
+/* Under-construction marks for tabs still being built */
+.wip-mark { font-size: .8em; }
+.wip-badge { display: inline-block; vertical-align: middle; margin-left: .5rem; padding: .18rem .55rem; border: 1px solid var(--line); border-radius: 999px; background: var(--card-strong, #fff); font-family: "IBM Plex Sans", sans-serif; font-size: .72rem; font-weight: 600; letter-spacing: .02em; color: var(--muted, #666); white-space: nowrap; }

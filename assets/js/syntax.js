@@ -187,7 +187,7 @@
 
   function renderRelationBars(sentences) {
     const freq = new Map();
-    for (const r of sentences.flat()) freq.set(r.deprel || '—', (freq.get(r.deprel || '—') || 0) + 1);
+    for (const r of sentences.flat()) freq.set(r.deprel || '–', (freq.get(r.deprel || '–') || 0) + 1);
     const entries = [...freq.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 16);
     const max = Math.max(...entries.map(x=>x[1]),1);
     let html = '';
@@ -226,7 +226,7 @@
     let html = '<table class="mini-table"><thead><tr><th>Distance bucket</th><th>Count</th><th>Top grammatical categories</th></tr></thead><tbody>';
     for (const [bucket, count] of [...bucketCount.entries()].sort((a,b)=>b[1]-a[1])) {
       const cats = [...categoryCount.entries()].filter(([k])=>k.startsWith(`${bucket}||`)).map(([k,v])=>[k.split('||')[1], v]).sort((a,b)=>b[1]-a[1]).slice(0,4);
-      html += `<tr><td>${esc(bucket)}</td><td>${count}</td><td>${cats.map(([k,v])=>`${esc(k)} (${v})`).join(', ') || '—'}</td></tr>`;
+      html += `<tr><td>${esc(bucket)}</td><td>${count}</td><td>${cats.map(([k,v])=>`${esc(k)} (${v})`).join(', ') || '–'}</td></tr>`;
     }
     html += '</tbody></table>';
     el.syntaxDistanceProfile.innerHTML = html;

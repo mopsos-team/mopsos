@@ -7,18 +7,17 @@ section: prosody
 <section class="hero card">
   <p class="kicker">MOPSOS</p>
   <h1>Scansion</h1>
-  <p class="tab-desc">Analyse the metre of Homeric hexameter — scan lines into feet, profile syllable quantities, and measure rhythm across the Iliad and Odyssey.</p>
+  <p class="tab-desc">Analyse the metre of Homeric hexameter: scan lines into feet, profile syllable quantities, and measure rhythm across the <em>Iliad</em> and <em>Odyssey</em>.</p>
   <div class="tab-meta-row">
     <button class="info-btn" data-info="prosodyInfo">What is this?</button>
   </div>
   <div id="prosodyInfo" class="info-panel" hidden>
     <h4>Scansion tab</h4>
-    <p>Scansion is the analysis of a line's metrical structure — marking which syllables are long and which are short, and grouping them into feet. Every Homeric line in the corpus has been scanned into its six hexameter feet, where each foot is either a dactyl (— ‿ ‿) or a spondee (— —).</p>
+    <p>Scansion marks each syllable of a line as long or short and groups the syllables into feet. Every line in the corpus has been scanned into its six hexameter feet, each a dactyl (— ‿ ‿) or a spondee (— —).</p>
     <ul>
-      <li><strong>Pick one view at a time</strong> from the drop-down — scan individual lines syllable by syllable, see the commonest foot patterns, the dactyl/spondee balance by position, where a chosen word (or a whole grammatical category) falls in the verse, the commonest words at each foot, and the long/short, length and speech profiles. The word box accepts Greek or English and suggests matching forms as you type.</li>
-      <li><strong>Limit the scope</strong> to the Iliad, the Odyssey, or a single book before running.</li>
+      <li><strong>Pick one view at a time</strong> from the drop-down: individual lines syllable by syllable, the commonest foot patterns, the dactyl/spondee balance by position, where a word or grammatical category falls in the verse, the commonest words at each foot, and the length and speech profiles. The word box accepts Greek or English and suggests matching forms as you type.</li>
+      <li><strong>Limit the scope</strong> to the <em>Iliad</em>, the <em>Odyssey</em>, or a single book before running.</li>
     </ul>
-    <p>Quantity reflects syllable weight (a syllable closed by a consonant or containing a long vowel/diphthong is heavy/long); feet are the recurring rhythmic units of the verse. Word-to-foot placement is computed by aligning each word's syllables to the foot pattern, on the ~90% of lines whose orthographic syllable count matches the scansion exactly.</p>
   </div>
 </section>
 
@@ -81,7 +80,7 @@ section: prosody
   </div>
   <div class="btn-row"><button id="btnRunScan" class="btn btn-primary" disabled>Show view</button></div>
   <details id="scanGrammar" class="adv" hidden style="margin-top:.4rem;">
-    <summary><strong>Grammatical category</strong> (optional) — restrict to words of a chosen part of speech and inflection</summary>
+    <summary><strong>Grammatical category</strong> (optional): restrict to words of a chosen part of speech and inflection</summary>
     <div class="feature-grid" style="margin-top:.5rem;">
       <div class="field"><label for="scanGPos">Part of speech</label>
         <select id="scanGPos"><option value="">(any)</option><option value="n">noun</option><option value="v">verb</option><option value="a">adjective</option><option value="p">pronoun</option><option value="d">adverb</option><option value="l">article</option><option value="r">preposition</option><option value="c">conjunction</option><option value="g">particle</option><option value="m">numeral</option><option value="i">interjection</option></select></div>
@@ -100,7 +99,7 @@ section: prosody
       <div class="field"><label for="scanGPerson">Person</label>
         <select id="scanGPerson"><option value="">(any)</option><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option></select></div>
     </div>
-    <p class="help" style="margin:.35rem 0 0;">In <em>Where a word falls</em>, leave the word box empty and set a category to see the metrical position of that whole category. Grammar is read off each form's commonest analysis in the corpus.</p>
+    <p class="help" style="margin:.35rem 0 0;">In <em>Where a word falls</em>, leave the word box empty and set a category to see the metrical position of that whole category. Grammar is read off each token's own analysis in the corpus.</p>
   </details>
   <p id="scanViewDesc" class="help" style="margin-top:.2rem;"></p>
   <div id="scanSummary" class="analysis-wrap" style="margin-top:.4rem;"></div>

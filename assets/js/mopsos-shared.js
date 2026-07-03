@@ -988,7 +988,7 @@
             .attr("fill", Number.isFinite(v) ? colorScale(v) : "#e5e7eb")
             .on("mousemove", (ev) => {
               tip.style("opacity", 1)
-                .html("<strong>" + window.MopsosUI.esc(rowLabels[r]) + " × " + window.MopsosUI.esc(colLabels[c]) + "</strong><br>" + (opts.valueLabel || "Value") + ": " + (Number.isFinite(v) ? (opts.valueFormat ? opts.valueFormat(v) : v) : "—"))
+                .html("<strong>" + window.MopsosUI.esc(rowLabels[r]) + " × " + window.MopsosUI.esc(colLabels[c]) + "</strong><br>" + (opts.valueLabel || "Value") + ": " + (Number.isFinite(v) ? (opts.valueFormat ? opts.valueFormat(v) : v) : "–"))
                 .style("left", (ev.pageX + 12) + "px").style("top", (ev.pageY - 12) + "px");
             })
             .on("mouseleave", () => tip.style("opacity", 0));

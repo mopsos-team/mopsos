@@ -48,7 +48,7 @@
     <section class="hero card">
       <p class="kicker">MOPSOS</p>
       <h1>Morphology</h1>
-      <p class="tab-desc">Browse and query the morphologically annotated corpus — every token tagged for part of speech, case, number, tense, mood, voice, gender, and degree — and chart how those features are distributed.</p>
+      <p class="tab-desc">Browse and query the morphologically annotated corpus, in which every token is tagged for part of speech, case, number, tense, mood, voice, gender, and degree, and chart how those features are distributed.</p>
       <div class="tab-meta-row">
         <button class="info-btn" data-info="morphInfo">What is this?</button>
       </div>
@@ -56,9 +56,9 @@
         <h4>Morphology tab</h4>
         <p>There are three ways to explore the corpus:</p>
         <ul>
-          <li><strong>Quick filter</strong> — pick a part of speech and MOPSOS shows only the grammatical features that actually apply to it, each offering only the values that occur. Results are paginated 50 per page, and columns that don't apply are hidden automatically.</li>
-          <li><strong>Custom queries</strong> — tucked inside the Quick filter, for writing your own read-only queries by hand. Press <kbd>Enter</kbd> to run.</li>
-          <li><strong>Explore &amp; visualize</strong> — count tokens by any dimension (book, lemma, case…), optionally broken down by a second dimension, under any filter — e.g. which books have the most aorist optatives, or how noun number and case combine.</li>
+          <li><strong>Quick filter</strong>: pick a part of speech and MOPSOS shows only the grammatical features that actually apply to it.</li>
+          <li><strong>Custom queries</strong>: tucked inside the Quick filter, for writing your own read-only queries by hand. Press <kbd>Enter</kbd> to run.</li>
+          <li><strong>Explore &amp; visualize</strong>: count tokens by any dimension (book, lemma, case…), optionally broken down by a second dimension, under any filter. For example: which books have the most aorist optatives, or how noun number and case combine.</li>
         </ul>
       </div>
     </section>
@@ -82,7 +82,7 @@
           <button id="qfSqlRun" class="btn btn-primary">Run</button>
         </div>
         <div id="qfSqlExamples" class="btn-row" style="margin-top:.45rem;flex-wrap:wrap;"></div>
-        <pre id="qfSqlStatus" class="status" style="margin-top:.55rem;">Ready — write SQL and press Enter.</pre>
+        <pre id="qfSqlStatus" class="status" style="margin-top:.55rem;">Ready: write SQL and press Enter.</pre>
         <div id="qfSqlOut" style="margin-top:.5rem;"></div>
       </div>
 
@@ -91,7 +91,7 @@
 
     <div class="card">
       <h2>Explore &amp; visualize</h2>
-      <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, cross-tabulate two of them, or draw a co-occurrence network of words that share a sentence. Add filters to focus — e.g. set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
+      <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, cross-tabulate two of them, or draw a co-occurrence network of words that share a sentence. Add filters to focus. For example, set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
       <div class="grid-3">
         <div class="field">
           <label for="exChartType"><strong>Chart</strong></label>
@@ -131,11 +131,11 @@
       </div>
       <div class="field" id="exLemmaWrap" hidden>
         <label for="exLemma"><strong>Lemma</strong></label>
-        <input type="text" id="exLemma" autocomplete="off" placeholder="e.g. μῆνις, θεός, ἀείδω — the dictionary form to lay out as a paradigm">
+        <input type="text" id="exLemma" autocomplete="off" placeholder="e.g. μῆνις, θεός, ἀείδω (the dictionary form to lay out as a paradigm)">
       </div>
       <div class="field" id="exSemanticWrap" hidden>
-        <label for="exSemantic"><strong>Semantic search</strong> <span class="help">— optional</span></label>
-        <input type="text" id="exSemantic" autocomplete="off" placeholder="any English word — e.g. blue, spear, swift, grief — or a Greek lemma. Blank = most frequent.">
+        <label for="exSemantic"><strong>Semantic search</strong> <span class="help">(optional)</span></label>
+        <input type="text" id="exSemantic" autocomplete="off" placeholder="any English word (e.g. blue, spear, swift, grief) or a Greek lemma. Blank = most frequent.">
         <p class="help" id="exSemanticNote" style="margin:.25rem 0 0;">English words are mapped to Greek via the LSJ (Liddell–Scott–Jones) lexicon, then expanded with the words the corpus uses in similar contexts.</p>
       </div>
       <details style="margin:.2rem 0 .5rem;">

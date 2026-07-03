@@ -38,8 +38,8 @@
             {% if page.section == 'phonology' or page.section == 'syntax' or page.section == 'prosody' or page.section == 'clustering' %}{% assign in_analyses = true %}{% endif %}
             <button class="nav-link nav-dropdown-toggle{% if in_analyses %} is-active{% endif %}" aria-expanded="false" aria-haspopup="true">Other <span class="caret">▾</span></button>
             <div class="nav-dropdown-menu" hidden>
-              <a href="{{ '/phonology.html' | relative_url }}" class="nav-link{% if page.section == 'phonology' %} is-active{% endif %}">Phonology</a>
-              <a href="{{ '/syntax.html' | relative_url }}" class="nav-link{% if page.section == 'syntax' %} is-active{% endif %}">Syntax</a>
+              <a href="{{ '/phonology.html' | relative_url }}" class="nav-link{% if page.section == 'phonology' %} is-active{% endif %}">Phonology <span class="wip-mark" title="Under construction" aria-label="Under construction">🚧</span></a>
+              <a href="{{ '/syntax.html' | relative_url }}" class="nav-link{% if page.section == 'syntax' %} is-active{% endif %}">Syntax <span class="wip-mark" title="Under construction" aria-label="Under construction">🚧</span></a>
               <a href="{{ '/prosody.html' | relative_url }}" class="nav-link{% if page.section == 'prosody' %} is-active{% endif %}">Scansion</a>
               <a href="{{ '/clustering.html' | relative_url }}" class="nav-link{% if page.section == 'clustering' %} is-active{% endif %}">Stylometry</a>
             </div>

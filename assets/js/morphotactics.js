@@ -1,18 +1,21 @@
 /* ============================================================================
  *  MORPHOTACTICS TAB
- *  Six SQL-driven, D3-rendered views over the shared corpus database:
- *    sequence   — POS -> next POS transition matrix (heatmap)
- *    cooccur    — feature A x feature B co-occurrence (heatmap)
- *    exponence  — most frequent form endings per feature value (grouped bars)
- *    slots      — feature value frequencies for a POS (bars)
- *    compound   — nominal-compound member-category pairing (heatmap), plus an
- *                 adaptive lookup for one compound's members/attestations
- *    infinitive — infinitive tense x voice combinations (heatmap), plus an
- *                 adaptive lookup for one verb's attested infinitive forms
+ *  Two standalone panels plus three SQL-driven, D3-rendered views over the
+ *  shared corpus database:
+ *    compound   - nominal-compound member-category pairing (heatmap), plus an
+ *                 adaptive lookup for one compound's members/attestations;
+ *                 rendered in its own panel at the top of the page
+ *    infinitive - infinitive tense x voice combinations (heatmap), plus an
+ *                 adaptive lookup for one verb's attested infinitive forms;
+ *                 also rendered in its own panel
+ *    sequence   - POS -> next POS transition matrix (heatmap)
+ *    cooccur    - feature A x feature B co-occurrence (heatmap)
+ *    slots      - feature value frequencies for a POS (bars); the feature
+ *                 drop-down offers only features attested for that POS
  *  The compound/infinitive lookups use the accent-insensitive *_search and
  *  Beta Code *_beta companion columns added in scripts/build_corpus.py (see
  *  scripts/greek_text.py), via the shared MopsosText / MopsosUI.greekCombo
- *  helpers — the same machinery any future adaptive search on this site
+ *  helpers, the same machinery any future adaptive search on this site
  *  would reuse, not something bespoke to this tab.
  * ========================================================================== */
 (() => {
@@ -42,27 +45,31 @@
     coA: $("mtCoA"),
     coB: $("mtCoB"),
     coPos: $("mtCoPos"),
-    // exponence
-    expPos: $("mtExpPos"),
-    expFeat: $("mtExpFeat"),
-    expLen: $("mtExpLen"),
     // slots
     slotPos: $("mtSlotPos"),
     slotFeat: $("mtSlotFeat"),
-    // compound
+    // compound (standalone panel)
     cmpWork: $("mtCmpWork"),
     cmpSearch: $("mtCmpSearch"),
     cmpSearchMenu: $("mtCmpSearchMenu"),
     cmpDetail: $("mtCmpDetail"),
-    // infinitive
+    cmpDesc: $("mtCmpDesc"),
+    cmpChart: $("mtCmpChart"),
+    cmpTable: $("mtCmpTable"),
+    cmpSql: $("mtCmpSql"),
+    // infinitive (standalone panel)
     infWork: $("mtInfWork"),
     infSearch: $("mtInfSearch"),
     infSearchMenu: $("mtInfSearchMenu"),
-    infDetail: $("mtInfDetail")
+    infDetail: $("mtInfDetail"),
+    infDesc: $("mtInfDesc"),
+    infChart: $("mtInfChart"),
+    infTable: $("mtInfTable"),
+    infSql: $("mtInfSql")
   };
 
   function showControls(view) {
-    document.querySelectorAll(".mt-controls").forEach((c) => {
+    document.querySelectorAll(".mt-controls[data-for]").forEach((c) => {
       if (c.dataset.for === view) c.removeAttribute("hidden");
       else c.setAttribute("hidden", "");
     });
@@ -165,61 +172,41 @@
     UI.renderTable(el.table, [featLabel(a), featLabel(b), "Count"], tbl, { paginate: false });
 
     el.outTitle.textContent = "Feature co-occurrence";
-    el.outDesc.textContent = "How often each value of " + featLabel(a) + " co-occurs with each value of " +
-      featLabel(b) + " inside the same word" + (pos ? " (restricted to " + UI.label("pos", pos) + ")" : "") + ".";
-  }
-
-  /* ---------------- View: exponence (form endings) ---------------- */
-  function viewExponence() {
-    const pos = el.expPos.value, feat = el.expFeat.value, k = Number(el.expLen.value) || 2;
-    if (!pos || !feat) return;
-    const sql =
-      "SELECT form, " + q(feat) + " AS fv\n" +
-      "FROM " + q(TABLE) + "\n" +
-      "WHERE pos = " + sqlStr(pos) + " AND form IS NOT NULL AND form <> ''\n" +
-      "  AND " + q(feat) + " IS NOT NULL AND " + q(feat) + " <> '' AND " + q(feat) + " <> '-';";
-    el.sql.textContent = sql + "\n-- endings (last " + k + " letters, diacritics stripped) tabulated in-browser";
-
-    const rows = SQL.objects(sql);
-    if (!rows.length) { Chart.groupedBars(el.chart, [], [], []); el.table.innerHTML = ""; return; }
-
-    // tabulate ending counts per feature value
-    const perValue = new Map();   // fv -> Map(ending -> count)
-    for (const r of rows) {
-      const norm = normalizeGreek(r.form);
-      if (norm.length < 1) continue;
-      const end = norm.slice(-k);
-      if (!perValue.has(r.fv)) perValue.set(r.fv, new Map());
-      const m = perValue.get(r.fv);
-      m.set(end, (m.get(end) || 0) + 1);
-    }
-    // top endings overall (columns) and feature values (rows)
-    const overall = new Map();
-    for (const m of perValue.values()) for (const [e, c] of m) overall.set(e, (overall.get(e) || 0) + c);
-    const topEndings = [...overall.entries()].sort((x, y) => y[1] - x[1]).slice(0, 10).map((e) => e[0]);
-    const values = [...perValue.keys()].sort((x, y) => UI.label(feat, x).localeCompare(UI.label(feat, y)));
-    const matrix = values.map((v) => topEndings.map((e) => perValue.get(v).get(e) || 0));
-
-    Chart.groupedBars(el.chart, matrix,
-      values.map((v) => UI.label(feat, v)), topEndings.map((e) => "-" + e),
-      { valueLabel: "Forms" });
-
-    // detail table: top ending per value
-    const detail = [];
-    for (const v of values) {
-      const m = perValue.get(v);
-      const top = [...m.entries()].sort((x, y) => y[1] - x[1]).slice(0, 3)
-        .map(([e, c]) => "-" + e + " (" + c + ")").join(", ");
-      detail.push([UI.label(feat, v), top]);
-    }
-    UI.renderTable(el.table, [featLabel(feat), "Top endings (last " + k + " letters)"], detail, { paginate: false });
-
-    el.outTitle.textContent = "Surface-final sequences by feature value";
-    el.outDesc.textContent = "For " + UI.label("pos", pos) + "s, the most frequent word-final " + k +
-      "-letter sequences that realise each value of " + featLabel(feat) + " (diacritics stripped, final ς→σ).";
+    el.outDesc.textContent = "The co-occurrence of one morphosyntactic component (" + featLabel(a) +
+      ") with another (" + featLabel(b) + ") inside the same word" +
+      (pos ? ", restricted to " + UI.label("pos", pos) + "s" : "") + ".";
   }
 
   /* ---------------- View: paradigm slots ---------------- */
+
+  // Only the features that are actually attested (non-empty, non "-") for the
+  // chosen part of speech, computed in one pass over the table.
+  const slotFeatCache = new Map();
+  function featuresForPos(pos) {
+    if (slotFeatCache.has(pos)) return slotFeatCache.get(pos);
+    const feats = presentFeatures().filter((f) => f !== "pos");
+    const sums = feats.map((f) =>
+      "SUM(CASE WHEN " + q(f) + " IS NOT NULL AND " + q(f) + " <> '' AND " + q(f) + " <> '-' THEN 1 ELSE 0 END) AS " + q(f)
+    ).join(",\n       ");
+    const sql = "SELECT " + sums + "\nFROM " + q(TABLE) + "\nWHERE pos = " + sqlStr(pos) + ";";
+    const row = SQL.objects(sql)[0] || {};
+    const out = feats.filter((f) => Number(row[f]) > 0);
+    slotFeatCache.set(pos, out);
+    return out;
+  }
+
+  function refreshSlotFeatures() {
+    const pos = el.slotPos.value;
+    if (!pos) return;
+    const prev = el.slotFeat.value;
+    const feats = featuresForPos(pos);
+    UI.fillSelect(el.slotFeat, feats, { head: null });
+    [...el.slotFeat.options].forEach((o) => { o.textContent = featLabel(o.value); });
+    if (feats.includes(prev)) el.slotFeat.value = prev;
+    else if (pos === "v" && feats.includes("mood")) el.slotFeat.value = "mood";
+    else if (feats.includes("case")) el.slotFeat.value = "case";
+  }
+
   function viewSlots() {
     const pos = el.slotPos.value, feat = el.slotFeat.value;
     if (!pos || !feat) return;
@@ -240,17 +227,17 @@
     el.outDesc.textContent = "How often each value of " + featLabel(feat) + " is filled for " + UI.label("pos", pos) + "s.";
   }
 
-  /* ---------------- View: nominal compounds ---------------- */
-  function viewCompound() {
+  /* ---------------- Panel: nominal compounds ---------------- */
+  function renderCompoundPanel() {
     const work = el.cmpWork.value;
     const sql =
       "SELECT lemma, lemma_search, member1_category AS a, member2_category AS b\n" +
       "FROM " + q("ncompounds_analysis") + "\n" +
       "WHERE member1_category IS NOT NULL AND member1_category <> ''\n" +
       "  AND member2_category IS NOT NULL AND member2_category <> '';";
-    el.sql.textContent = sql + (work
+    el.cmpSql.textContent = sql + (work
       ? "\n-- restricted in-browser to compounds attested in " + work +
-        " (accent-insensitive match against ncompounds_attestations.lemma)"
+        " (accent-insensitive match against ncompounds_attestations.compound)"
       : "");
 
     let rows = SQL.objects(sql);
@@ -259,9 +246,9 @@
         SQL.objects("SELECT DISTINCT compound FROM " + q("ncompounds_attestations") +
           " WHERE work = " + sqlStr(work) + ";").map((r) => normalizeGreek(r.compound))
       );
-      rows = rows.filter((r) => attested.has(r.compound_search));
+      rows = rows.filter((r) => attested.has(r.lemma_search));
     }
-    if (!rows.length) { Chart.heatmap(el.chart, [], [], []); el.table.innerHTML = ""; return; }
+    if (!rows.length) { Chart.heatmap(el.cmpChart, [], [], []); el.cmpTable.innerHTML = ""; return; }
 
     const av = [...new Set(rows.map((r) => r.a))].sort((x, y) => UI.label("pos", x).localeCompare(UI.label("pos", y)));
     const bv = [...new Set(rows.map((r) => r.b))].sort((x, y) => UI.label("pos", x).localeCompare(UI.label("pos", y)));
@@ -269,23 +256,22 @@
     const matrix = av.map(() => bv.map(() => 0));
     for (const r of rows) matrix[ai.get(r.a)][bi.get(r.b)] += 1;
 
-    Chart.heatmap(el.chart, matrix,
+    Chart.heatmap(el.cmpChart, matrix,
       av.map((v) => UI.label("pos", v)), bv.map((v) => UI.label("pos", v)),
       { valueLabel: "Compounds", showValues: av.length * bv.length <= 64 });
 
     const tbl = [];
     av.forEach((a, i) => bv.forEach((b, j) => { if (matrix[i][j]) tbl.push([UI.label("pos", a), UI.label("pos", b), matrix[i][j]]); }));
     tbl.sort((x, y) => y[2] - x[2]);
-    UI.renderTable(el.table, ["First member", "Second member", "Compounds"], tbl, { paginate: false });
+    UI.renderTable(el.cmpTable, ["First member", "Second member", "Compounds"], tbl, { paginate: false });
 
-    el.outTitle.textContent = "Nominal compound member-category pairing";
-    el.outDesc.textContent = "How often each (first-member category, second-member category) pairing occurs among analyzed compounds" +
+    el.cmpDesc.textContent = "How often each (first-member category, second-member category) pairing occurs among analyzed compounds" +
       (work ? ", restricted to compounds attested in " + work : "") +
       ". Categories reuse the part-of-speech codes (e.g. \u201cn\u201d = noun); a trailing \u201c?\u201d marks an uncertain member analysis in the source data.";
   }
 
-  /* ---------------- View: infinitive forms ---------------- */
-  function viewInfinitive() {
+  /* ---------------- Panel: infinitive forms ---------------- */
+  function renderInfinitivePanel() {
     const work = el.infWork.value;
     const where = ["pos = 'v'", "mood = 'n'",
       "tense IS NOT NULL AND tense <> '' AND tense <> '-'",
@@ -296,10 +282,10 @@
       "FROM " + q(TABLE) + "\n" +
       "WHERE " + where.join(" AND ") + "\n" +
       "GROUP BY a, b;";
-    el.sql.textContent = sql;
+    el.infSql.textContent = sql;
 
     const rows = SQL.objects(sql);
-    if (!rows.length) { Chart.heatmap(el.chart, [], [], []); el.table.innerHTML = ""; return; }
+    if (!rows.length) { Chart.heatmap(el.infChart, [], [], []); el.infTable.innerHTML = ""; return; }
     const TORDER = ["p", "i", "f", "a", "r", "l", "t"], VORDER = ["a", "m", "p", "e"];
     const av = [...new Set(rows.map((r) => r.a))].sort((x, y) => TORDER.indexOf(x) - TORDER.indexOf(y));
     const bv = [...new Set(rows.map((r) => r.b))].sort((x, y) => VORDER.indexOf(x) - VORDER.indexOf(y));
@@ -307,20 +293,19 @@
     const matrix = av.map(() => bv.map(() => 0));
     for (const r of rows) matrix[ai.get(r.a)][bi.get(r.b)] = r.n;
 
-    Chart.heatmap(el.chart, matrix, av.map((v) => UI.label("tense", v)), bv.map((v) => UI.label("voice", v)),
+    Chart.heatmap(el.infChart, matrix, av.map((v) => UI.label("tense", v)), bv.map((v) => UI.label("voice", v)),
       { valueLabel: "Infinitives", showValues: true, interpolator: window.d3 ? window.d3.interpolateBlues : null });
 
     const tbl = rows.slice().sort((x, y) => y.n - x.n).map((r) => [UI.label("tense", r.a), UI.label("voice", r.b), r.n]);
-    UI.renderTable(el.table, ["Tense", "Voice", "Tokens"], tbl, { paginate: false });
+    UI.renderTable(el.infTable, ["Tense", "Voice", "Tokens"], tbl, { paginate: false });
 
-    el.outTitle.textContent = "Infinitive forms";
-    el.outDesc.textContent = "Tense/voice combinations attested among infinitives (mood = infinitive)" + (work ? " in " + work : "") + ".";
+    el.infDesc.textContent = "Tense/voice combinations attested among infinitives (mood = infinitive)" + (work ? " in " + work : "") + ".";
   }
 
   /* ---------------- Compound & infinitive adaptive search ----------------
    * Both corpora here are small (hundreds to a few thousand rows), so the
    * candidate lists are simply fetched once and filtered in-browser via
-   * MopsosUI.greekCombo — no need for per-keystroke SQL round-trips. The
+   * MopsosUI.greekCombo, with no need for per-keystroke SQL round-trips. The
    * *_search / *_beta columns queried below are the ones scripts/build_corpus.py
    * derives from `lemma` / `compound` (see scripts/greek_text.py). --------- */
   let compoundItems = null, compoundAttestations = null, infinitiveItems = null;
@@ -340,13 +325,13 @@
   function renderCompoundDetail(item) {
     const r = item.row;
     const attested = compoundAttestations
-      .filter((a) => normalizeGreek(a.lemma) === item.key)
+      .filter((a) => normalizeGreek(a.compound) === item.key)
       .sort((a, b) => a.work.localeCompare(b.work) || Number(a.book) - Number(b.book) || Number(a.line_num) - Number(b.line_num));
     let html = '<table class="paradigm-table"><tbody>';
     html += "<tr><th>Compound</th><td>" + UI.esc(r.lemma) + "</td></tr>";
     html += "<tr><th>Beta Code</th><td><code>" + UI.esc(r.lemma_beta) + "</code></td></tr>";
-    html += "<tr><th>First member</th><td>" + UI.esc(r.member1 || "\u2014") + " (" + UI.esc(UI.label("pos", r.member1_category)) + ")</td></tr>";
-    html += "<tr><th>Second member</th><td>" + UI.esc(r.member2 || "\u2014") + " (" + UI.esc(UI.label("pos", r.member2_category)) + ")</td></tr>";
+    html += "<tr><th>First member</th><td>" + UI.esc(r.member1 || "\u2013") + " (" + UI.esc(UI.label("pos", r.member1_category)) + ")</td></tr>";
+    html += "<tr><th>Second member</th><td>" + UI.esc(r.member2 || "\u2013") + " (" + UI.esc(UI.label("pos", r.member2_category)) + ")</td></tr>";
     html += "</tbody></table>";
     html += attested.length
       ? '<p class="small-muted" style="margin:.5rem 0 .25rem;">Attested ' + attested.length + "\u00d7: " +
@@ -397,10 +382,7 @@
     try {
       if (v === "sequence") viewSequence();
       else if (v === "cooccur") viewCooccur();
-      else if (v === "exponence") viewExponence();
       else if (v === "slots") viewSlots();
-      else if (v === "compound") viewCompound();
-      else if (v === "infinitive") viewInfinitive();
     } catch (e) {
       el.chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Error: ' + UI.esc(e.message) + "</div>";
     }
@@ -416,7 +398,6 @@
     if (el.status) el.status.style.display = "none";
 
     const feats = presentFeatures();
-    const featSansPos = feats.filter((f) => f !== "pos");
     const posValues = SQL.distinct("pos").filter((p) => p && p !== "-");
 
     // sequence
@@ -429,33 +410,33 @@
     [...el.coA.options].forEach((o) => { o.textContent = featLabel(o.value); });
     [...el.coB.options].forEach((o) => { o.textContent = featLabel(o.value); });
     UI.fillSelect(el.coPos, posValues, { field: "pos" });
-    // exponence
-    UI.fillSelect(el.expPos, posValues, { head: null, field: "pos" });
-    el.expPos.value = posValues.includes("n") ? "n" : posValues[0];
-    UI.fillSelect(el.expFeat, featSansPos, { head: null });
-    [...el.expFeat.options].forEach((o) => { o.textContent = featLabel(o.value); });
-    el.expFeat.value = featSansPos.includes("case") ? "case" : featSansPos[0];
-    // slots
+    // slots: the feature list depends on the chosen part of speech
     UI.fillSelect(el.slotPos, posValues, { head: null, field: "pos" });
     el.slotPos.value = posValues.includes("v") ? "v" : posValues[0];
-    UI.fillSelect(el.slotFeat, featSansPos, { head: null });
-    [...el.slotFeat.options].forEach((o) => { o.textContent = featLabel(o.value); });
-    el.slotFeat.value = featSansPos.includes("mood") ? "mood" : featSansPos[0];
-    // infinitive
+    refreshSlotFeatures();
+    el.slotPos.addEventListener("change", refreshSlotFeatures);
+    // infinitive panel
     UI.fillSelect(el.infWork, SQL.distinct("work"), { head: "(all works)" });
+    el.infWork.addEventListener("change", renderInfinitivePanel);
     wireInfinitiveCombo();
-    // compound (own table; guarded in case an older cached database predates it)
+    // compound panel (own table; guarded in case an older cached database predates it)
+    let compoundsOk = true;
     try {
       UI.fillSelect(el.cmpWork,
         SQL.objects("SELECT DISTINCT work FROM " + q("ncompounds_attestations") + " ORDER BY work;").map((r) => r.work),
         { head: "(all works)" });
+      el.cmpWork.addEventListener("change", renderCompoundPanel);
       wireCompoundCombo();
     } catch (e) {
+      compoundsOk = false;
       el.cmpWork.disabled = true;
       el.cmpDetail.innerHTML = '<p class="small-muted">Compound data not available: ' + UI.esc(e.message) + "</p>";
     }
 
     el.run.disabled = false;
+    // Standalone panels render immediately; the picker card waits for a click.
+    if (compoundsOk) { try { renderCompoundPanel(); } catch (e) { el.cmpChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Error: ' + UI.esc(e.message) + "</div>"; } }
+    try { renderInfinitivePanel(); } catch (e) { el.infChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Error: ' + UI.esc(e.message) + "</div>"; }
     render();
   }
 

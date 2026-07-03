@@ -6,8 +6,8 @@ section: phonology
 
 <section class="hero card">
   <p class="kicker">MOPSOS</p>
-  <h1>Phonology</h1>
-  <p class="tab-desc">Phonological structure of the corpus: phoneme inventory, syllable shapes, onset/coda clusters, diphthongs, vowel quantity, sonority and alliteration — across any set of tokens you choose.</p>
+  <h1>Phonology <span class="wip-badge" title="Under construction">🚧 under construction</span></h1>
+  <p class="tab-desc">Phonological structure of the corpus: phoneme inventory, syllable shapes, onset/coda clusters, diphthongs, vowel quantity, sonority and alliteration, across any set of tokens you choose.</p>
   <div class="tab-meta-row">
     <button class="info-btn" data-info="phonInfo">What is this?</button>
   </div>
@@ -15,8 +15,8 @@ section: phonology
     <h4>Phonology tab</h4>
     <p>Choose which tokens to analyse and (optionally) how to limit them, then pick a single view from the drop-down. Each token is normalised (diacritics stripped, final ς→σ) and given a rule-based orthographic syllabification by the maximal-onset principle; every statistic is derived from those structured syllables.</p>
     <ul>
-      <li><strong>Flexible scope</strong> — analyse all forms, just verbs, only genitive nouns, lemmata, and more.</li>
-      <li><strong>One view at a time</strong> — use “What to view” to switch between phoneme, syllable, cluster, quantity, sonority and alliteration analyses.</li>
+      <li><strong>Flexible scope</strong>: analyse all forms, just verbs, only genitive nouns, lemmata, and more.</li>
+      <li><strong>One view at a time</strong>: use “What to view” to switch between phoneme, syllable, cluster, quantity, sonority and alliteration analyses.</li>
     </ul>
   </div>
 </section>
@@ -90,7 +90,7 @@ section: phonology
     </div>
   </div>
   <p class="help" style="margin:.5rem 0 0; padding:.55rem .7rem; border:1px solid var(--gold); border-radius:9px; background:rgba(194,161,78,.1);">
-    <strong>Note:</strong> these are heuristic analyses derived from normalized orthography — not a full reconstruction of Ancient Greek phonology. Letters stand in as proxies for phonemes, and syllabification follows orthographic rules rather than reconstructed pronunciation.
+    <strong>Note:</strong> these are heuristic analyses derived from normalized orthography, not a full reconstruction of Ancient Greek phonology. Letters stand in as proxies for phonemes, and syllabification follows orthographic rules rather than reconstructed pronunciation.
   </p>
   <p id="phonViewDesc" class="help" style="margin-top:.2rem;"></p>
   <div id="phonSummary" class="analysis-wrap" style="margin-top:.4rem;"></div>

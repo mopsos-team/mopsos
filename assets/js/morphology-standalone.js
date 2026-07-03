@@ -162,7 +162,7 @@
       });
     });
 
-    status.textContent = "OK — " + values.length + " row" + (values.length === 1 ? "" : "s") + ".";
+    status.textContent = "OK: " + values.length + " row" + (values.length === 1 ? "" : "s") + ".";
   }
 
   function wireCustomSql() {
@@ -236,7 +236,7 @@
             const res = window.MopsosSemantics.resolve(semQuery);
             if (!res.seeds.length) {
               chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No semantic match for \u201C' + UI.esc(semQuery) +
-                '\u201D. Try a concept like blue, war, sea, fear, wine \u2014 or a Greek lemma.</div>';
+                '\u201D. Try a concept like blue, war, sea, fear, wine, or a Greek lemma.</div>';
               title.textContent = ""; desc.textContent = ""; return;
             }
             const assoc = window.MopsosSemantics.expand(res.seeds, Math.min(topN, 40));
@@ -337,7 +337,7 @@
       } else if (type === "paradigm") {
         const input = ($("exLemma").value || "").trim();
         if (!input) {
-          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a lemma above (e.g. \u03bd\u03b1\u1fe6\u03c2, \u03b8\u03b5\u03cc\u03c2, \u03bb\u1f7b\u03c9) to lay out its full paradigm \u2014 every attested form, organised by the inflectional properties that actually vary for it.</div>';
+          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a lemma above (e.g. \u03bd\u03b1\u1fe6\u03c2, \u03b8\u03b5\u03cc\u03c2, \u03bb\u1f7b\u03c9) to lay out its full paradigm: every attested form, organised by the inflectional properties that actually vary for it.</div>';
           title.textContent = ""; desc.textContent = ""; return;
         }
         const stripDiacritics = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -377,7 +377,7 @@
         const sortedVals = (f) => Object.keys(vals[f]).sort((a, b) => rank(f, a) - rank(f, b) || (vals[f][b] - vals[f][a]));
         const formCell = (forms) => forms && forms.length
           ? forms.slice().sort((a, b) => b[1] - a[1]).map((x) => '<span class="pdg-form">' + UI.esc(x[0]) + '</span><span class="pdg-c">' + x[1] + "</span>").join("<br>")
-          : '<span class="pdg-gap">\u2014</span>';
+          : '<span class="pdg-gap">\u2013</span>';
 
         const fixedTxt = fixed.map((f) => displayName(f, sortedVals(f)[0])).join(" \u00b7 ");
         title.textContent = "Paradigm of " + lemma;
@@ -424,7 +424,7 @@
             return b.n - a.n;
           }).forEach((r) => {
             html += "<tr>";
-            varying.forEach((f) => { const v = r[KEY[f]]; html += "<td>" + (v && v !== "-" ? UI.esc(displayName(f, v)) : '<span class="pdg-gap">\u2014</span>') + "</td>"; });
+            varying.forEach((f) => { const v = r[KEY[f]]; html += "<td>" + (v && v !== "-" ? UI.esc(displayName(f, v)) : '<span class="pdg-gap">\u2013</span>') + "</td>"; });
             html += '<td><span class="pdg-form">' + UI.esc(r.form) + '</span></td><td>' + r.n + "</td></tr>";
           });
           html += "</tbody></table>";
