@@ -511,8 +511,7 @@
               : "Rows " + (start + 1) + "–" + end + " of " + total + " · page " + (state.page + 1) + " / " + pages) +
             "</span>";
           html += '<span class="pager-controls">';
-          html += '<button class="btn btn-sm" data-act="first"' + ((state.showAll || state.page === 0) ? " disabled" : "") + ">« First</button>";
-          html += '<button class="btn btn-sm" data-act="prev"' + ((state.showAll || state.page === 0) ? " disabled" : "") + ">‹ Prev</button>";
+          html += '<button class="btn btn-sm" data-act="prev"' + ((state.showAll || state.page === 0) ? " disabled" : "") + ">‹ Previous</button>";
           html += '<button class="btn btn-sm" data-act="next"' + ((state.showAll || state.page >= pages - 1) ? " disabled" : "") + ">Next ›</button>";
           html += '<button class="btn btn-sm" data-act="last"' + ((state.showAll || state.page >= pages - 1) ? " disabled" : "") + ">Last »</button>";
           html += '<button class="btn btn-sm ' + (state.showAll ? "btn-primary" : "") + '" data-act="all">' + (state.showAll ? "Paginate" : "Show all on one page") + "</button>";
@@ -778,7 +777,10 @@
  *  responsive (viewBox), guards empty input, and shares one tooltip element.
  * ------------------------------------------------------------------------- */
 (function () {
-  const PALETTE = ["#4f46e5", "#0ea5e9", "#06b6d4", "#10b981", "#22c55e", "#f59e0b", "#f97316", "#ef4444", "#ec4899", "#8b5cf6", "#14b8a6", "#a16207"];
+  // Color-blind-friendly categorical palette: the Okabe-Ito eight (safe for
+  // protan, deutan, and tritan vision) extended with Paul Tol muted colors.
+  // Index 10 is deliberately grey: clustering uses it for noise points.
+  const PALETTE = ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9", "#D55E00", "#F0E442", "#000000", "#332288", "#882255", "#BBBBBB", "#999933"];
 
   function d3ok() { return typeof window.d3 !== "undefined"; }
 
@@ -899,28 +901,15 @@
       .attr("preserveAspectRatio", "xMidYMid meet")
       .attr("class", "d3-svg")
       .style("width", "100%")
-      .style("height", "auto");
+      .style("height", "auto")
+      .style("--nat-w", width + "px"); // never display larger than drawn: keeps text from ballooning on small figures
     addDownloadToolbar(el);
     return sel;
   }
 
   const api = {
     PALETTE,
-    // The first series color follows the page accent from the style guide
-    // (read once, as a concrete hex, so serialized SVG/PNG downloads keep it).
-    _themed: false,
-    color(i) {
-      if (!this._themed) {
-        this._themed = true;
-        try {
-          const acc = getComputedStyle(document.body).getPropertyValue("--acc").trim();
-          const ink = getComputedStyle(document.body).getPropertyValue("--acc-ink").trim();
-          if (/^#[0-9a-fA-F]{3,8}$/.test(acc)) { PALETTE[0] = acc; }
-          if (/^#[0-9a-fA-F]{3,8}$/.test(ink)) { PALETTE[1] = ink; }
-        } catch (e) { /* keep defaults */ }
-      }
-      return PALETTE[((i % PALETTE.length) + PALETTE.length) % PALETTE.length];
-    },
+    color(i) { return PALETTE[((i % PALETTE.length) + PALETTE.length) % PALETTE.length]; },
 
     /**
      * Horizontal bar chart.

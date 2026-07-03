@@ -151,11 +151,30 @@
     const lo = readLimitOffset(sql);
 
     let html = "";
+    let total = null, pages = null, pageNo = null, lastOff = null;
     if (lo) {
+      // total row count for the query with its LIMIT/OFFSET stripped, so the
+      // pager can show "page X / Y" and jump to the last page
+      try {
+        const bare = sql.replace(/;\s*$/, "").replace(/\blimit\s+\d+(\s+offset\s+\d+)?\s*$/i, "");
+        total = SQL.scalar("SELECT COUNT(*) FROM (" + bare + ");");
+      } catch (e) { total = null; }
       const dis = (cond) => cond ? " disabled" : "";
-      html += '<div class="pager"><span class="pager-controls">';
-      html += '<button class="btn btn-sm" data-act="prev"' + dis(lo.offset === 0) + ">\u2039 Prev</button>";
-      html += '<button class="btn btn-sm" data-act="next"' + dis(values.length < lo.limit) + ">Next \u203a</button>";
+      const atEnd = total != null ? lo.offset + lo.limit >= total : values.length < lo.limit;
+      if (total != null) {
+        pages = Math.max(1, Math.ceil(total / lo.limit));
+        pageNo = Math.floor(lo.offset / lo.limit) + 1;
+        lastOff = (pages - 1) * lo.limit;
+      }
+      html += '<div class="pager">';
+      if (total != null) {
+        html += '<span class="pager-info">Rows ' + Math.min(lo.offset + 1, total) + "\u2013" +
+          Math.min(lo.offset + values.length, total) + " of " + total + " \u00b7 page " + pageNo + " / " + pages + "</span>";
+      }
+      html += '<span class="pager-controls">';
+      html += '<button class="btn btn-sm" data-act="prev"' + dis(lo.offset === 0) + ">\u2039 Previous</button>";
+      html += '<button class="btn btn-sm" data-act="next"' + dis(atEnd) + ">Next \u203a</button>";
+      if (lastOff != null) html += '<button class="btn btn-sm" data-act="last"' + dis(atEnd) + ">Last \u00bb</button>";
       html += "</span></div>";
     }
     html += renderTable(columns, values);
@@ -164,7 +183,9 @@
 
     if (lo) container.querySelectorAll("[data-act]").forEach((b) => {
       b.addEventListener("click", () => {
-        const off = b.dataset.act === "next" ? lo.offset + lo.limit : Math.max(0, lo.offset - lo.limit);
+        const off = b.dataset.act === "next" ? lo.offset + lo.limit
+          : b.dataset.act === "last" ? lastOff
+          : Math.max(0, lo.offset - lo.limit);
         $("qfSqlInput").value = setOffset(sql, off);
         runCustomSql();
       });

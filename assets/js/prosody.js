@@ -386,8 +386,7 @@
     if (total > SCAN_PAGE_SIZE) {
       pager = '<div class="pager"><span class="pager-info">Lines ' + (start + 1) + "\u2013" + end + " of " + total +
         " \u00b7 page " + (scanLineState.page + 1) + " / " + pages + '</span><span class="pager-controls">' +
-        '<button class="btn btn-sm" data-scan-act="first"' + (scanLineState.page === 0 ? " disabled" : "") + ">\u00ab First</button>" +
-        '<button class="btn btn-sm" data-scan-act="prev"' + (scanLineState.page === 0 ? " disabled" : "") + ">\u2039 Prev</button>" +
+        '<button class="btn btn-sm" data-scan-act="prev"' + (scanLineState.page === 0 ? " disabled" : "") + ">\u2039 Previous</button>" +
         '<button class="btn btn-sm" data-scan-act="next"' + (scanLineState.page >= pages - 1 ? " disabled" : "") + ">Next \u203a</button>" +
         '<button class="btn btn-sm" data-scan-act="last"' + (scanLineState.page >= pages - 1 ? " disabled" : "") + ">Last \u00bb</button>" +
         "</span></div>";

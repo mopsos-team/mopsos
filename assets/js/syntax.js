@@ -280,7 +280,7 @@
       ["Arcs crossing a line boundary", M.arcCross.toLocaleString() + " (" + crossPct.toFixed(1) + "%)"]
     ].map((c) => '<div class="analysis-card"><div class="metric">' + c[1] + '</div><div class="metric-label">' + esc(c[0]) + "</div></div>").join("") + "</div>";
 
-    el.syntaxMetreNote.textContent = "Sentence boundaries are the treebank's; positions are read from each sentence-final token's metrical record (the 3.1 / 3.2 buckets are the word positions where the caesurae fall; the bucolic bucket is a word end at 4.3). An enjambed line is one whose final word does not end its sentence. Dependency heads are recovered from the stored signed distances.";
+    el.syntaxMetreNote.textContent = "Sentence boundaries are the treebank's; positions are read from each sentence-final token's metrical record (the 3.1 / 3.2 buckets are the word positions where the caesurae fall; the bucolic bucket is a word end at 4.3). An enjambed line is one whose final word does not end its sentence. Dependency heads are recovered from the stored signed distances. Note the treebank's attachment conventions when reading the head-direction chart: a preposition HEADS its noun phrase and itself attaches to the verb it modifies, so \u201chead follows\u201d dominating for prepositions reflects Greek's late verbs (the prepositional phrase usually precedes its verb), while nouns governed by a preposition show \u201chead precedes\u201d, the familiar preposition-before-noun order.";
   }
 
   /* ----- init -------------------------------------------------------------- */
