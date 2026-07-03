@@ -874,9 +874,10 @@ table.preview th { background: #f3f7f8; }
 .scan-wordscan { max-width: 100%; }
 
 /* Compact-by-default figures with an Enlarge toggle in the toolbar */
-.fig-fit { max-width: 640px; }
-.fig-fit.fig-full { max-width: 100%; }
+.fig-fit { max-width: 640px; max-height: 430px; overflow: auto; }
+.fig-fit.fig-full { max-width: 100%; max-height: none; }
 .fig-fit svg.d3-svg { display: block; }
+.fig-fit .fig-toolbar, .fig-full .fig-toolbar { position: sticky; top: 0; z-index: 5; background: rgba(255,255,255,.93); padding: .15rem 0; }
 
 /* Whole-line pattern with the compound's feet highlighted */
 .cmp-patt { font-family: "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .18em; }
