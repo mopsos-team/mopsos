@@ -661,6 +661,83 @@
     }
   };
 
+  /* --------------------------------------------------------------------------
+   * Site-wide inline word detail: any element carrying class="wlink" and a
+   * data-word attribute renders a small detail block at the end of the panel
+   * (.card) it was clicked in, showing the word's lemma and its attestation
+   * in the corpus: token count, attested forms, works, and first citations
+   * with the line text reassembled from the corpus. Clicked forms resolve to
+   * their lemma. Pages only need to emit the spans; the one delegated
+   * listener below handles every current and future one.
+   * ------------------------------------------------------------------------ */
+  api.wordDetail = function (word, anchorEl) {
+    const SQL = window.MopsosSQL, T = window.MopsosText;
+    if (!SQL || !SQL.isReady()) return;
+    const esc = api.esc;
+    const sqlStr = (s) => "'" + String(s).replace(/'/g, "''") + "'";
+
+    // resolve: the word as a lemma, else the lemma of the word as a form
+    let key = T ? T.stripDiacritics(word) : String(word || "");
+    let lemma = key ? SQL.scalar("SELECT lemma FROM morphology WHERE lemma_search = " + sqlStr(key) + " LIMIT 1;") : null;
+    if (!lemma) {
+      lemma = SQL.scalar("SELECT lemma FROM morphology WHERE form = " + sqlStr(word) +
+        " AND lemma NOT IN ('','-') GROUP BY lemma ORDER BY COUNT(*) DESC LIMIT 1;");
+      if (lemma && T) key = T.stripDiacritics(lemma);
+    }
+
+    let html;
+    if (lemma) {
+      const tot = SQL.scalar("SELECT COUNT(*) FROM morphology WHERE lemma_search = " + sqlStr(key) + ";") || 0;
+      const works = SQL.objects("SELECT work w, COUNT(*) n FROM morphology WHERE lemma_search = " + sqlStr(key) +
+        " GROUP BY w ORDER BY n DESC;");
+      const forms = SQL.objects("SELECT form f, COUNT(*) n FROM morphology WHERE lemma_search = " + sqlStr(key) +
+        " GROUP BY f ORDER BY n DESC LIMIT 10;");
+      html = '<h4 class="word-inline-word">' + esc(lemma) +
+        (T && T.stripDiacritics(word) !== key ? ' <span class="small-muted" style="font-size:.8rem;">(form: ' + esc(word) + ")</span>" : "") + "</h4>";
+      html += '<p class="small-muted" style="margin:.15rem 0 .4rem;">' + tot.toLocaleString() +
+        " token" + (tot === 1 ? "" : "s") + " \u00b7 " + works.map((r) => esc(r.w) + " " + r.n).join(", ") + "</p>";
+      html += '<p class="small-muted" style="margin:.15rem 0 .25rem;"><strong>Attested forms</strong>: ' +
+        forms.map((r) => esc(r.f) + " (" + r.n + ")").join(", ") + "</p>";
+      const cites = SQL.objects("SELECT DISTINCT work w, book b, verse v FROM morphology WHERE lemma_search = " + sqlStr(key) +
+        " AND verse IS NOT NULL AND verse <> '' ORDER BY work, CAST(book AS INTEGER), CAST(verse AS INTEGER) LIMIT 6;");
+      if (cites.length) {
+        html += '<p class="small-muted" style="margin:.35rem 0 .2rem;"><strong>First attestations</strong></p>';
+        cites.forEach((c) => {
+          let t = "";
+          try {
+            t = SQL.scalar("SELECT GROUP_CONCAT(form, ' ' ORDER BY CAST(sentence_id AS INTEGER), id) FROM morphology WHERE work = " +
+              sqlStr(c.w) + " AND book = " + sqlStr(String(c.b)) + " AND verse = " + sqlStr(String(c.v)) + ";") || "";
+          } catch (e) { /* line text is a bonus */ }
+          html += '<div class="scan-ex">' + esc(c.w + " " + c.b + "." + c.v + (t ? ": " + t : "")) + "</div>";
+        });
+      }
+    } else {
+      html = '<h4 class="word-inline-word">' + esc(word) + "</h4>" +
+        '<p class="small-muted">Not attested as an independent word in the corpus (it may be a bound stem, a prefix, or a reconstructed member).</p>';
+    }
+
+    // render under the panel the click happened in
+    const host = (anchorEl && anchorEl.closest && anchorEl.closest(".card")) || (anchorEl && anchorEl.parentElement) || document.body;
+    let box = host.querySelector(":scope > .word-inline");
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "word-inline";
+      host.appendChild(box);
+    }
+    box.innerHTML = '<button class="word-inline-close btn btn-sm" aria-label="Dismiss">\u00d7</button>' + html;
+    box.querySelector(".word-inline-close").addEventListener("click", () => box.remove());
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+  // one listener for every .wlink on the site
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest && e.target.closest(".wlink");
+    if (!t) return;
+    const w = t.getAttribute("data-word");
+    if (!w) return;
+    e.preventDefault();
+    api.wordDetail(w, t);
+  });
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => { api.wireInfoButtons(); api.wireAdvancedToggles(); api.wireNavDropdown(); });
   } else {
@@ -776,6 +853,16 @@
       });
       return b;
     };
+    // The whole figure panel renders compact by default (so it never crowds
+    // the page); this button toggles the entire panel to full width.
+    const panel = (container.closest && container.closest(".viz-wrap")) || container;
+    panel.classList.add("fig-fit");
+    const tg = document.createElement("button");
+    tg.type = "button"; tg.className = "fig-dl";
+    const setLbl = () => { tg.textContent = panel.classList.contains("fig-full") ? "\u2921 Shrink panel" : "\u2922 Enlarge panel"; };
+    setLbl();
+    tg.addEventListener("click", () => { panel.classList.toggle("fig-full"); setLbl(); });
+    bar.appendChild(tg);
     bar.appendChild(mk("Download PNG", downloadPng));
     bar.appendChild(mk("Download SVG", downloadSvg));
     container.insertBefore(bar, container.firstChild);
@@ -1168,6 +1255,56 @@
       setTimeout(fit, 1500);
     }
   };
+
+
+  /* --------------------------------------------------------------------------
+   * Automatic figure annotation: every chart accepts opts.title, opts.xLabel
+   * and opts.yLabel and draws them INSIDE the SVG, so a downloaded PNG/SVG is
+   * self-describing. Pages compose the title from the very options the user
+   * chose (view, scope, filters). Sensible defaults: horizontal bar charts and
+   * histograms caption their value axis with opts.valueLabel when no explicit
+   * xLabel is given.
+   * ------------------------------------------------------------------------ */
+  function annotate(container, opts, kind) {
+    const el = typeof container === "string" ? document.getElementById(container) : container;
+    if (!el || !opts) return;
+    let xLabel = opts.xLabel, yLabel = opts.yLabel;
+    if (!xLabel && (kind === "bars" || kind === "histogram") && opts.valueLabel) xLabel = opts.valueLabel;
+    if (!opts.title && !xLabel && !yLabel) return;
+    const node = el.querySelector("svg.d3-svg");
+    if (!node) return;
+    const vb = (node.getAttribute("viewBox") || "").split(/\s+/).map(Number);
+    if (vb.length < 4) return;
+    const w = vb[2], h = vb[3];
+    const padTop = opts.title ? 28 : 0;
+    const padBottom = xLabel ? 22 : 0;
+    const padLeft = yLabel ? 18 : 0;
+    const NS = "http://www.w3.org/2000/svg";
+    const g = document.createElementNS(NS, "g");
+    while (node.firstChild) g.appendChild(node.firstChild);
+    if (padTop || padLeft) g.setAttribute("transform", "translate(" + padLeft + "," + padTop + ")");
+    node.appendChild(g);
+    node.setAttribute("viewBox", "0 0 " + (w + padLeft) + " " + (h + padTop + padBottom));
+    const put = (txt, attrs) => {
+      const t = document.createElementNS(NS, "text");
+      t.textContent = txt;
+      Object.keys(attrs).forEach((k) => t.setAttribute(k, attrs[k]));
+      node.appendChild(t);
+    };
+    if (opts.title) put(opts.title, { x: (w + padLeft) / 2, y: 17, "text-anchor": "middle", "font-size": 14, "font-weight": 600, fill: "#1f2937" });
+    if (xLabel) put(xLabel, { x: padLeft + w / 2, y: padTop + h + 15, "text-anchor": "middle", "font-size": 11.5, fill: "#475569" });
+    if (yLabel) put(yLabel, { x: 12, y: padTop + h / 2, "text-anchor": "middle", "font-size": 11.5, fill: "#475569",
+      transform: "rotate(-90 12 " + (padTop + h / 2) + ")" });
+  }
+  ["bars", "groupedBars", "stackedBars", "heatmap", "histogram"].forEach((fn) => {
+    const orig = api[fn];
+    if (!orig) return;
+    api[fn] = function (container) {
+      orig.apply(this, arguments);
+      const opts = arguments[arguments.length - 1];
+      if (opts && typeof opts === "object" && !Array.isArray(opts)) annotate(container, opts, fn === "bars" || fn === "histogram" ? (fn === "bars" ? "bars" : "histogram") : fn);
+    };
+  });
 
   window.MopsosChart = api;
 })();

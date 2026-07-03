@@ -15,7 +15,7 @@ section: morphotactics
     <h4>Morphotactics tab</h4>
     <p>Morphotactics is the study of how morphemes and morphological features are ordered and combined. Each panel explores a different aspect of the corpus:</p>
     <ul>
-      <li><strong>Nominal compounds</strong>: how often each pairing of first-member and second-member category (e.g. preposition + noun) occurs among the analyzed compounds, optionally restricted to compounds attested in a given work; includes a lookup for an individual compound's members, category, and attestations.</li>
+      <li><strong>Nominal compounds</strong>: filter the analyzed compounds by a specific first or second member (adaptive Greek or Beta Code input, with a browsable list of attested members) or by the members’ syntactic categories, and by attesting work. The panel shows how the member categories pair up, the commonest first and second members among the matches, and where the matching compounds are localized in the hexameter (from the merged metrical record); the lookup gives one compound’s members, every metrical pattern it shows, every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
       <li><strong>Infinitive forms</strong>: tense/voice combinations attested among infinitives, optionally restricted to a work; includes a lookup for an individual verb's attested infinitive forms.</li>
       <li><strong>Word-class sequencing</strong>: a transition matrix of part of speech to next part of speech for adjacent tokens within a sentence.</li>
       <li><strong>Feature co-occurrence</strong>: the co-occurrence of one morphosyntactic component with another inside the same word, optionally restricted to one part of speech.</li>
@@ -29,10 +29,38 @@ section: morphotactics
 <!-- ============================ Compounding ============================ -->
 <div class="card">
   <h2>Nominal compounds</h2>
-  <p class="help" style="margin-top:-.3rem;">How often each (first-member category, second-member category) pairing occurs among the analyzed compounds.</p>
+  <div class="tab-meta-row"><button class="info-btn" data-info="mtCmpInfo">What is this?</button></div>
+  <div id="mtCmpInfo" class="info-panel" hidden>
+    <h4>Nominal compounds panel</h4>
+    <p>Filter the analyzed compounds by first member, second member, member category, or attesting work; see which members are commonest, how the member categories pair up, and where the matching compounds sit in the verse.</p>
+    <ul>
+      <li><strong>Members</strong>: pick a specific member (type Greek with or without accents, or Beta Code, or click to browse the attested members) <em>or</em> a member category; a specific member fixes its category anyway, so use whichever is handier. The member values come from the compound analysis itself, and the two slots combine freely.</li>
+      <li><strong>Lookup</strong>: choosing one compound shows its members, every metrical position it takes in the verse (form, shape, feet, princeps or biceps start), every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
+    </ul>
+  </div>
   <div class="mt-controls">
+    <div class="grid-2">
+      <div class="field">
+        <label for="mtCmpM1"><strong>First member</strong></label>
+        <div class="combo">
+          <input id="mtCmpM1" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ἀ/ἀν, εὐ, πολύς, or Beta Code like eu…; click to browse">
+          <div id="mtCmpM1Menu" class="combo-menu" hidden></div>
+        </div>
+      </div>
+      <div class="field"><label for="mtCmpM1Cat"><strong>or first-member category</strong></label><select id="mtCmpM1Cat"><option value="">(any category)</option></select></div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="mtCmpM2"><strong>Second member</strong></label>
+        <div class="combo">
+          <input id="mtCmpM2" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. μάχομαι, ἵππος, or Beta Code like maxomai…; click to browse">
+          <div id="mtCmpM2Menu" class="combo-menu" hidden></div>
+        </div>
+      </div>
+      <div class="field"><label for="mtCmpM2Cat"><strong>or second-member category</strong></label><select id="mtCmpM2Cat"><option value="">(any category)</option></select></div>
+    </div>
     <div class="grid-3">
-      <div class="field"><label for="mtCmpWork"><strong>Restrict to work</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
+      <div class="field"><label for="mtCmpWork"><strong>Attested in</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
     </div>
     <div class="field">
       <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">(optional)</span></label>
@@ -43,9 +71,24 @@ section: morphotactics
       <div id="mtCmpDetail" style="margin-top:.5rem;"></div>
     </div>
   </div>
-  <p id="mtCmpDesc" class="help" style="margin-top:.4rem;"></p>
-  <div class="viz-wrap"><div id="mtCmpChart"></div></div>
-  <div id="mtCmpTable" style="margin-top:.8rem;"></div>
+  <div id="mtCmpPairSec">
+    <p id="mtCmpDesc" class="help" style="margin-top:.4rem;"></p>
+    <div class="viz-wrap"><div id="mtCmpChart"></div></div>
+    <div id="mtCmpTable" style="margin-top:.8rem;"></div>
+  </div>
+  <div id="mtCmpMembersSec">
+    <h3 style="margin-top:1rem;">Members of the matching compounds</h3>
+    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Pick a category and this shows which members carry it.</p>
+    <div class="grid-2">
+      <div class="viz-wrap" id="mtCmpM1Wrap"><div id="mtCmpM1Chart"></div></div>
+      <div class="viz-wrap" id="mtCmpM2Wrap"><div id="mtCmpM2Chart"></div></div>
+    </div>
+  </div>
+  <div id="mtCmpLocSec" hidden>
+    <h3 style="margin-top:1rem;">Metrical localization</h3>
+    <p id="mtCmpLocNote" class="help" style="margin-top:.1rem;"></p>
+    <div class="viz-wrap"><div id="mtCmpLocChart"></div></div>
+  </div>
   <details style="margin-top:.8rem;">
     <summary class="small-muted" style="cursor:pointer;">Show generated SQL</summary>
     <pre id="mtCmpSql" class="status" style="margin-top:.5rem;"></pre>

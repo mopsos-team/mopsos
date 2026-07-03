@@ -2,9 +2,19 @@
  * MOPSOS — Phonology (D3 + SQL)
  * ---------------------------------------------------------------------
  * One SQL query selects the tokens to analyse; one drop-down selects a
- * single view. Every statistic is derived from a single, structured
- * syllabification pass (maximal-onset principle) so the numbers across
- * views are mutually consistent. All charts are drawn with MopsosChart.
+ * single view. Every orthographic statistic is derived from a single,
+ * structured syllabification pass (maximal-onset principle) so numbers
+ * are mutually consistent across views. Where a view needs more than
+ * the letter string, it draws on the rest of the corpus:
+ *   - the merged metrical record (metrical_shape: H = heavy, L = light,
+ *     one letter per syllable) for weight-by-position vs. weight-by-
+ *     nature, the dichrona, and syllable-weight questions;
+ *   - the accentuation of the raw (un-normalised) forms for the accent
+ *     placement views;
+ *   - line order (sentence_id, id) for elision and hiatus at word
+ *     junctures.
+ * All charts are drawn with MopsosChart and carry an in-image title so
+ * downloads are self-describing.
  * Depends on: window.MopsosSQL, window.MopsosUI, window.MopsosChart.
  * ===================================================================== */
 (function () {
@@ -12,7 +22,6 @@
 
   // ---- Greek phonological constants ---------------------------------
   var VOWELS = "αεηιουω";
-  var CONSONANTS = "βγδζθκλμνξπρστφχψ";
   var DIPHTHONGS = ["αι", "ει", "οι", "υι", "ου", "αυ", "ευ", "ηυ", "ωυ"];
   var DIPH_SET = new Set(DIPHTHONGS);
   var LONG_V = new Set(["η", "ω"]);
@@ -48,11 +57,16 @@
 
   function isVowel(ch) { return VOWELS.indexOf(ch) >= 0; }
 
+  // Was the token elided in the text (final vowel dropped before a vowel)?
+  // Elided forms end in an apostrophe-like mark or a combining koronis.
+  function isElidedForm(raw) {
+    return /[\u2019'\u02bc\u1fbd\u0313]\s*$/.test(String(raw == null ? "" : raw).normalize("NFD"));
+  }
+
   // ---- Syllabification (single structured pass) ---------------------
-  // Returns [{onset, nucleus, coda, shape}], plus we can derive everything.
+  // Returns [{onset, nucleus, coda, shape, ...}].
   function syllabify(word) {
     if (!word) return [];
-    // 1) Parse into units: V (vowel/diphthong) or C (single consonant)
     var units = [];
     for (var k = 0; k < word.length; ) {
       var ch = word[k];
@@ -64,41 +78,33 @@
         units.push({ t: "C", s: ch }); k += 1;
       }
     }
-    // 2) Locate nuclei (V units)
     var nucIdx = [];
     units.forEach(function (u, idx) { if (u.t === "V") nucIdx.push(idx); });
     if (!nucIdx.length) return []; // no vowel -> not syllabifiable
 
     var sylls = [];
-    // leading consonants -> onset of first syllable
     var leading = units.slice(0, nucIdx[0]).map(function (u) { return u.s; });
     for (var n = 0; n < nucIdx.length; n++) {
       var here = nucIdx[n];
       var onset, coda = [];
       if (n === 0) onset = leading;
       else onset = []; // filled by previous split
-      // consonant run after this nucleus, up to next nucleus (or end)
       var nextNuc = (n + 1 < nucIdx.length) ? nucIdx[n + 1] : units.length;
       var run = units.slice(here + 1, nextNuc).map(function (u) { return u.s; });
       if (n + 1 < nucIdx.length) {
-        // split run: maximal legal onset suffix -> next onset, rest -> this coda
         var split = splitCluster(run);
         coda = split.coda;
-        // store next onset on a temp; handled below
-        var nextOnset = split.onset;
-        sylls.push({ onset: onset, nucleus: units[here].s, coda: coda, _nextOnset: nextOnset });
+        sylls.push({ onset: onset, nucleus: units[here].s, coda: coda, _nextOnset: split.onset });
       } else {
         coda = run; // final cluster -> coda
         sylls.push({ onset: onset, nucleus: units[here].s, coda: coda });
       }
     }
-    // stitch _nextOnset into following syllable's onset
     for (var m = 0; m < sylls.length - 1; m++) {
       sylls[m + 1].onset = sylls[m]._nextOnset || [];
       delete sylls[m]._nextOnset;
     }
     if (sylls.length) delete sylls[sylls.length - 1]._nextOnset;
-    // attach shape strings
     sylls.forEach(function (s) {
       s.onsetStr = s.onset.join("");
       s.codaStr = s.coda.join("");
@@ -110,12 +116,10 @@
   // Split an intervocalic consonant run into {coda(left), onset(right)}.
   function splitCluster(run) {
     if (!run.length) return { coda: [], onset: [] };
-    // try longest suffix that is a legal onset
     for (var start = 0; start < run.length; start++) {
       var suffix = run.slice(start).join("");
       if (isLegalOnset(suffix)) return { coda: run.slice(0, start), onset: run.slice(start) };
     }
-    // fallback: last consonant is onset, rest coda
     return { coda: run.slice(0, run.length - 1), onset: run.slice(run.length - 1) };
   }
 
@@ -124,9 +128,9 @@
     if (nucleus.length === 2) return "long";       // diphthong
     if (LONG_V.has(nucleus)) return "long";
     if (SHORT_V.has(nucleus)) return "short";
-    if (AMBIG_V.has(nucleus)) return "ambiguous";
-    return "ambiguous";
+    return "ambiguous";                            // dichrona α ι υ
   }
+  // Sonority scale: stop 1 < fricative 2 < nasal 3 < liquid 4 < vowel 6.
   function sonorityScore(ch) {
     if (isVowel(ch)) return 6;
     if ("ρλ".indexOf(ch) >= 0) return 4;
@@ -141,93 +145,253 @@
     if ("σζφθχ".indexOf(ch) >= 0) return "fricative";
     return "stop";
   }
+  // Rising / plateau / falling sonority across a complex onset.
+  function onsetProfile(cluster) {
+    var a = sonorityScore(cluster[0]);
+    var b = sonorityScore(cluster[cluster.length - 1]);
+    return b > a ? "rising" : (b === a ? "plateau" : "falling");
+  }
+
+  // Which syllable (index) of the word carries an accent, and which accent.
+  // Walks the raw NFD form, tracking the nucleus index with the same
+  // diphthong logic as syllabify(), and reports the first accent found.
+  var ACC = { "\u0301": "acute", "\u0300": "grave", "\u0342": "circumflex" };
+  function accentOf(raw) {
+    var s = String(raw == null ? "" : raw).toLowerCase().normalize("NFD");
+    var nuc = -1;            // current nucleus index (0-based)
+    var lastBase = "";       // last vowel letter, to detect diphthong second members
+    var prevWasVowel = false;
+    var out = null;
+    for (var k = 0; k < s.length; k++) {
+      var ch = s[k];
+      if (ch >= "\u03b1" && ch <= "\u03c9") {
+        var v = VOWELS.indexOf(ch) >= 0;
+        if (v) {
+          if (prevWasVowel && DIPH_SET.has(lastBase + ch)) {
+            // second half of a diphthong: same nucleus
+            prevWasVowel = false; lastBase = "";
+          } else {
+            nuc += 1; prevWasVowel = true; lastBase = ch;
+          }
+        } else { prevWasVowel = false; lastBase = ""; }
+      } else if (ACC[ch] && out == null && nuc >= 0) {
+        out = { type: ACC[ch], nucleus: nuc };
+      } else if (ch === "\u0308") {
+        // diaeresis: the vowel it sits on was its own nucleus already if the
+        // pair was not treated as a diphthong; nothing to correct here because
+        // the combining mark follows the vowel we just counted.
+        prevWasVowel = false; lastBase = "";
+      }
+    }
+    if (out) out.total = nuc + 1;
+    return out;
+  }
 
   function inc(map, key, by) { map.set(key, (map.get(key) || 0) + (by || 1)); }
   function mapToItems(map, labelFn) {
     var items = [];
-    map.forEach(function (v, k) { items.push({ label: labelFn ? labelFn(k) : k, value: v }); });
+    map.forEach(function (v, k) { items.push({ label: labelFn ? labelFn(k) : String(k), value: v }); });
     items.sort(function (a, b) { return b.value - a.value; });
     return items;
   }
+  function mean(arr) { return arr.length ? arr.reduce(function (a, b) { return a + b; }, 0) / arr.length : 0; }
 
   // ---- Core analysis ------------------------------------------------
+  // tokens: [{ w: rawForm, shape: metrical_shape|null }]
   function analyze(tokens) {
     var A = {
       nTokens: 0, nSyll: 0,
       phonemes: new Map(), shapes: new Map(), onsets: new Map(), codas: new Map(),
-      diphthongs: new Map(), quantity: new Map(), sonority: new Map(),
-      sylLen: new Map(), initials: new Map(), alliteration: new Map(),
+      diphthongs: new Map(), quantity: new Map(),
+      sylLen: new Map(), initials: new Map(), finals: new Map(), alliteration: new Map(),
+      posInitial: new Map(), posMedial: new Map(), posFinal: new Map(),
+      bigrams: new Map(), uni: new Map(), nBigrams: 0,
+      ssp: new Map(), sspClusters: { rising: new Map(), plateau: new Map(), falling: new Map() },
+      weight: { HH: 0, HL: 0, LH: 0, LL: 0, AH: 0, AL: 0 },  // predicted x scanned
+      weightN: 0, weightForms: 0, closedLight: new Map(),
+      dichrona: { "α": { H: 0, L: 0 }, "ι": { H: 0, L: 0 }, "υ": { H: 0, L: 0 } },
+      accent: { acute: [0, 0, 0, 0], grave: [0, 0, 0, 0], circumflex: [0, 0, 0, 0] }, // [ultima, penult, antepenult, deeper]
+      accN: 0, circLongUltima: 0, circPenult: 0, acuteAntepenultLongUltima: 0, acuteAntepenult: 0,
       vowelCount: 0, consCount: 0, openSyll: 0, closedSyll: 0,
-      onsetSizes: [], codaSizes: [], report: []
+      onsetSum: 0, onsetMax: 0, codaSum: 0, codaMax: 0, report: [],
+      types: new Set()
     };
     var prevInitial = null;
     for (var t = 0; t < tokens.length; t++) {
-      var norm = normalize(tokens[t]);
+      var raw = tokens[t].w;
+      var norm = normalize(raw);
+      var elided = isElidedForm(raw);
       if (!norm) { prevInitial = null; continue; }
       var sylls = syllabify(norm);
       if (!sylls.length) { prevInitial = null; continue; }
       A.nTokens++;
       A.nSyll += sylls.length;
       inc(A.sylLen, sylls.length);
+      A.types.add(norm);
 
-      // phonemes + balance
+      // segments, balance, positional distribution, bigrams
       for (var c = 0; c < norm.length; c++) {
-        inc(A.phonemes, norm[c]);
-        if (isVowel(norm[c])) A.vowelCount++; else A.consCount++;
-        inc(A.sonority, sonorityBucket(norm[c]));
+        var ch = norm[c];
+        inc(A.phonemes, ch);
+        if (isVowel(ch)) A.vowelCount++; else A.consCount++;
+        // an elided token's last letter is not word-final (the word ran on
+        // into the next); count it as medial and give it no # boundary
+        inc(c === 0 ? A.posInitial : (c === norm.length - 1 && !elided ? A.posFinal : A.posMedial), ch);
       }
+      var bg = "#" + norm + (elided ? "" : "#");
+      for (var b = 0; b + 1 < bg.length; b++) {
+        inc(A.bigrams, bg[b] + bg[b + 1]);
+        inc(A.uni, bg[b]);
+        A.nBigrams++;
+      }
+      if (!elided) inc(A.uni, "#"); // the final boundary counts as a unigram too
 
       // per-syllable features
       var shapesStr = [];
       sylls.forEach(function (s) {
         inc(A.shapes, s.shape);
         shapesStr.push(s.shape);
-        if (s.onset.length >= 2) inc(A.onsets, s.onsetStr);
+        if (s.onset.length >= 2) {
+          inc(A.onsets, s.onsetStr);
+          var prof = onsetProfile(s.onsetStr);
+          inc(A.ssp, prof);
+          inc(A.sspClusters[prof], s.onsetStr);
+        }
         if (s.coda.length >= 2) inc(A.codas, s.codaStr);
         if (s.nucleus.length === 2) inc(A.diphthongs, s.nucleus);
         inc(A.quantity, quantity(s.nucleus));
-        A.onsetSizes.push(s.onset.length);
-        A.codaSizes.push(s.coda.length);
+        A.onsetSum += s.onset.length; if (s.onset.length > A.onsetMax) A.onsetMax = s.onset.length;
+        A.codaSum += s.coda.length; if (s.coda.length > A.codaMax) A.codaMax = s.coda.length;
         if (s.coda.length === 0) A.openSyll++; else A.closedSyll++;
       });
 
-      // initials + alliteration
-      var init = norm[0];
+      // weight by nature (orthography) vs weight by position (the scansion)
+      var shape = tokens[t].shape;
+      if (shape && shape.length === sylls.length) {
+        A.weightForms++;
+        for (var y = 0; y < sylls.length; y++) {
+          var s2 = sylls[y];
+          var scanned = shape[y]; // 'H' or 'L'
+          if (scanned !== "H" && scanned !== "L") continue;
+          var isFinalSyll = (y === sylls.length - 1);
+          var q = quantity(s2.nucleus);
+          var predicted;
+          if (q === "long") predicted = "H";
+          else if (s2.coda.length && !isFinalSyll) predicted = "H"; // word-internally closed
+          else if (q === "short" && !s2.coda.length) predicted = "L";
+          else predicted = "?"; // dichronon nucleus, or word-final coda (weight depends on the next word)
+          A.weightN++;
+          if (predicted === "H") { if (scanned === "H") A.weight.HH++; else { A.weight.HL++; inc(A.closedLight, norm + " \u00b7 syll " + (y + 1) + (s2.coda.length ? " (" + s2.codaStr + (y + 1 < sylls.length ? sylls[y + 1].onsetStr : "") + ")" : "")); } }
+          else if (predicted === "L") { if (scanned === "L") A.weight.LL++; else A.weight.LH++; }
+          else { if (scanned === "H") A.weight.AH++; else A.weight.AL++; }
+          // dichrona: open syllable, single ambiguous vowel -> its scanned quantity
+          if (s2.nucleus.length === 1 && AMBIG_V.has(s2.nucleus) && !s2.coda.length) {
+            A.dichrona[s2.nucleus][scanned] += 1;
+          }
+        }
+      }
+
+      // accent placement (from the raw, still-accented form)
+      var acc = accentOf(raw);
+      if (acc && acc.total === sylls.length) {
+        var fromEnd = acc.total - 1 - acc.nucleus; // 0 = ultima
+        var slot = Math.min(fromEnd, 3);
+        A.accent[acc.type][slot] += 1;
+        A.accN++;
+        var lastS = sylls[sylls.length - 1];
+        var ultQ = quantity(lastS.nucleus);
+        // for the accent laws, word-final -αι / -οι count as short
+        if ((lastS.nucleus === "αι" || lastS.nucleus === "οι") && !lastS.coda.length) ultQ = "short";
+        if (acc.type === "circumflex" && fromEnd === 1) {
+          A.circPenult++;
+          if (ultQ === "long") A.circLongUltima++;
+        }
+        if (acc.type === "acute" && fromEnd === 2) {
+          A.acuteAntepenult++;
+          if (ultQ === "long") A.acuteAntepenultLongUltima++;
+        }
+      }
+
+      // initials, finals, alliteration
+      var init = norm[0], fin = norm[norm.length - 1];
       inc(A.initials, init);
+      if (!elided) inc(A.finals, fin);
       if (prevInitial !== null && prevInitial === init && !isVowel(init)) inc(A.alliteration, init);
       prevInitial = init;
 
       if (A.report.length < 5000) {
         A.report.push([norm, sylls.map(function (s) {
           return (s.onsetStr || "") + s.nucleus + (s.codaStr || "");
-        }).join("·"), shapesStr.join(" "), sylls.length]);
+        }).join("\u00b7"), shapesStr.join(" "), sylls.length]);
       }
     }
     A.meanSyll = A.nTokens ? A.nSyll / A.nTokens : 0;
-    A.meanOnset = mean(A.onsetSizes);
-    A.maxOnset = A.onsetSizes.length ? Math.max.apply(null, A.onsetSizes) : 0;
-    A.meanCoda = mean(A.codaSizes);
-    A.maxCoda = A.codaSizes.length ? Math.max.apply(null, A.codaSizes) : 0;
+    A.meanOnset = A.nSyll ? A.onsetSum / A.nSyll : 0;
+    A.maxOnset = A.onsetMax;
+    A.meanCoda = A.nSyll ? A.codaSum / A.nSyll : 0;
+    A.maxCoda = A.codaMax;
     return A;
   }
-  function mean(arr) { return arr.length ? arr.reduce(function (a, b) { return a + b; }, 0) / arr.length : 0; }
+
+  // ---- Minimal pairs / functional load (computed lazily, on demand) --
+  // Over the distinct normalised forms of the current token set: two forms
+  // are a minimal pair if they differ in exactly one segment slot. The count
+  // per segment pair is a corpus-based proxy for the functional load of that
+  // contrast.
+  function minimalPairs(types) {
+    var groups = new Map(); // wildcard key -> [{form, seg}]
+    types.forEach(function (f) {
+      for (var i = 0; i < f.length; i++) {
+        var key = f.slice(0, i) + "\u0000" + f.slice(i + 1);
+        var arr = groups.get(key);
+        if (!arr) { arr = []; groups.set(key, arr); }
+        arr.push(f[i]);
+      }
+    });
+    var contrasts = new Map();
+    var totalPairs = 0;
+    groups.forEach(function (arr) {
+      if (arr.length < 2) return;
+      arr.sort();
+      for (var a = 0; a < arr.length; a++)
+        for (var b = a + 1; b < arr.length; b++) {
+          if (arr[a] === arr[b]) continue;
+          totalPairs++;
+          inc(contrasts, arr[a] + " / " + arr[b]);
+        }
+    });
+    return { contrasts: contrasts, totalPairs: totalPairs };
+  }
 
   // ---- View metadata ------------------------------------------------
   var VIEW_DESCS = {
-    phonemes: "Frequency of each phoneme (normalised letters) across the selected tokens.",
-    shapes: "Distribution of syllable shapes (V, CV, CVC, CCV…) by the maximal-onset principle.",
+    segments: "Frequency of each segment (normalised letters as phoneme proxies) across the selected tokens.",
+    positions: "Where each segment occurs within the word: word-initially, medially, or word-finally. Positional restrictions (e.g. which consonants can end a word) show up as missing bands.",
+    initials: "The word-initial segment of each token.",
+    finals: "The word-final segment of each token. Classical Greek words end only in a vowel or in \u03bd, \u03c1, \u03c2 (plus \u03be \u03c8 = \u2026\u03ba\u03c2 \u2026\u03c0\u03c2): the final law, read directly off the corpus.",
+    bigrams: "Segment-to-segment transitions (with # as the word boundary): which sequences the language uses and, in the table, which are over- and under-represented relative to chance (pointwise mutual information).",
+    fload: "Minimal pairs among the distinct normalised forms of the current selection: which segment contrasts actually distinguish words, and how often. A corpus-based proxy for the functional load of each contrast.",
+    balance: "Total vowel vs. consonant segments across all tokens.",
+    shapes: "Distribution of syllable shapes (V, CV, CVC, CCV\u2026) by the maximal-onset principle.",
+    syllen: "How many syllables words have (1-syllable, 2-syllable\u2026).",
+    complexity: "Average and maximum onset/coda cluster sizes.",
     onsets: "Complex syllable onsets (two or more consonants).",
     codas: "Complex syllable codas (two or more consonants).",
+    sonority: "Complex onsets classified by their sonority contour (stop < fricative < nasal < liquid): the Sonority Sequencing Principle predicts rising contours, and the exceptions (mostly \u03c3-clusters) are itemised below the chart.",
     diphthongs: "Counts of the recognised diphthong nuclei.",
-    quantity: "Vowel quantity of syllable nuclei: long, short, or ambiguous (dichrona α ι υ).",
-    balance: "Total vowel vs. consonant segments across all tokens.",
-    syllen: "How many syllables words have (1-syllable, 2-syllable…).",
-    complexity: "Average and maximum onset/coda cluster sizes.",
-    sonority: "Segments grouped by sonority class (vowel > liquid > nasal > fricative > stop).",
-    initials: "The word-initial sound of each token.",
+    quantity: "Vowel quantity of syllable nuclei by orthography alone: long, short, or ambiguous (the dichrona \u03b1 \u03b9 \u03c5).",
+    weight: "Weight by nature (from the letters: long nucleus or a word-internal coda) checked against weight by position (how the syllable actually scans in the verse, from the merged metrical record). Disagreements are where the interesting phonology lives: muta cum liquida, epic correption, synizesis.",
+    dichrona: "The ambiguous vowels \u03b1 \u03b9 \u03c5 in open syllables: how often each scans heavy vs. light in the verse: the metrical record resolves what the orthography cannot.",
+    accent: "Accent type by syllable position (counted from the word end, from the fully accented forms). The classical limitation laws (no circumflex deeper than the penult, sensitivity to final-syllable quantity) are checked against the corpus below the chart.",
+    elision: "Which word forms are actually elided in the verse (final vowel dropped before a following vowel), from the alignment record of the corpus.",
+    hiatus: "Vowel junctures between adjacent words in the same line: how often a vowel-final word meets a vowel-initial one without elision, and which vowel pairs meet. Computed from the words in verse order.",
     alliteration: "Adjacent tokens (in query order) sharing the same consonant initial.",
     table: "Per-token syllabification and shape, paginated."
   };
+
+  // Views that ignore the token-source query and read the corpus directly
+  // (they need word order in the line / the alignment record).
+  var CORPUS_VIEWS = { elision: 1, hiatus: 1 };
 
   // ---- DOM ----------------------------------------------------------
   var el = {};
@@ -248,28 +412,30 @@
     if (el.phonLimitPos && el.phonLimitPos.value) where.push("pos = " + sqlStr(el.phonLimitPos.value));
     if (el.phonLimitCase && !el.phonLimitCaseWrap.hasAttribute("hidden") && el.phonLimitCase.value) where.push('"case" = ' + sqlStr(el.phonLimitCase.value));
     if (el.phonLimitWork && el.phonLimitWork.value) where.push("work = " + sqlStr(el.phonLimitWork.value));
-    var sel = asLemma ? "SELECT DISTINCT lemma AS form" : "SELECT form";
+    // metrical_shape rides along so the weight / dichrona views can use it
+    var sel = asLemma ? "SELECT DISTINCT lemma AS form" : "SELECT form, metrical_shape";
     return sel + " FROM morphology WHERE " + where.join(" AND ") + ";";
   }
 
   var EXAMPLES = [
-    { label: "All forms", sql: "SELECT form, lemma FROM morphology;" },
-    { label: "Verbs only", sql: "SELECT form FROM morphology WHERE pos = 'v';" },
-    { label: "Genitive nouns", sql: "SELECT form FROM morphology WHERE pos = 'n' AND \"case\" = 'g';" },
+    { label: "All forms", sql: "SELECT form, metrical_shape FROM morphology;" },
+    { label: "Verbs only", sql: "SELECT form, metrical_shape FROM morphology WHERE pos = 'v';" },
+    { label: "Genitive nouns", sql: "SELECT form, metrical_shape FROM morphology WHERE pos = 'n' AND \"case\" = 'g';" },
     { label: "Distinct lemmata", sql: "SELECT DISTINCT lemma AS form FROM morphology WHERE lemma <> '';" },
-    { label: "Theogony forms", sql: "SELECT form FROM morphology WHERE work LIKE 'TH%';" }
+    { label: "Theogony forms", sql: "SELECT form FROM morphology WHERE work = 'Theogony';" }
   ];
 
-  var state = { tokens: [], analysis: null };
+  var state = { tokens: [], analysis: null, fload: null, floadKey: "", corpusCache: {} };
 
   function setStatus(msg) { if (el.phonStatus) el.phonStatus.textContent = msg; }
 
   function runQueryAndAnalyze(sqlOverride) {
-    if (!window.MopsosSQL || !window.MopsosSQL.isReady()) { setStatus("Corpus not ready yet…"); return; }
+    if (!window.MopsosSQL || !window.MopsosSQL.isReady()) { setStatus("Corpus not ready yet\u2026"); return; }
     var sql = (sqlOverride != null ? sqlOverride : (el.phonSql.value || "")).trim();
     if (!sql) { setStatus("Enter a SQL query first."); return; }
     if (!window.MopsosSQL.isReadOnly(sql)) { setStatus("Only read-only queries (SELECT / WITH) are allowed here."); return; }
-    setStatus("Running query…");
+    if (sqlOverride != null) el.phonSql.value = sqlOverride;
+    setStatus("Running query\u2026");
     var res;
     try { res = window.MopsosSQL.query(sql); }
     catch (e) { setStatus("SQL error: " + e.message); return; }
@@ -287,27 +453,41 @@
              : (res.columns.indexOf(prev) >= 0 ? prev : res.columns[0]);
     el.phonTokenCol.value = pick;
     var colIdx = res.columns.indexOf(el.phonTokenCol.value);
+    var shapeIdx = res.columns.indexOf("metrical_shape");
 
-    state.tokens = res.values.map(function (r) { return r[colIdx]; }).filter(function (v) { return v != null && v !== ""; });
-    setStatus("Analyzing " + state.tokens.length.toLocaleString() + " tokens…");
-    // defer so the status paints before the (possibly heavy) analysis
+    state.tokens = [];
+    res.values.forEach(function (r) {
+      var w = r[colIdx];
+      if (w == null || w === "") return;
+      state.tokens.push({ w: w, shape: shapeIdx >= 0 ? (r[shapeIdx] || null) : null });
+    });
+    state.fload = null; state.floadKey = "";
+    setStatus("Analyzing " + state.tokens.length.toLocaleString() + " tokens\u2026");
     setTimeout(function () {
       state.analysis = analyze(state.tokens);
-      setStatus("Analyzed " + state.analysis.nTokens.toLocaleString() + " tokens · " +
-        state.analysis.nSyll.toLocaleString() + " syllables.");
+      setStatus("Analyzed " + state.analysis.nTokens.toLocaleString() + " tokens \u00b7 " +
+        state.analysis.nSyll.toLocaleString() + " syllables \u00b7 " +
+        state.analysis.types.size.toLocaleString() + " distinct normalised forms" +
+        (state.analysis.weightForms ? " \u00b7 " + state.analysis.weightForms.toLocaleString() + " with a metrical shape" : "") + ".");
       renderAll();
     }, 20);
-  }
-
-  function reanalyzeColumnOnly() {
-    // when user changes token column without re-running SQL we still have res? -> simplest: rerun
-    runQueryAndAnalyze();
   }
 
   function topN() {
     var n = parseInt(el.phonTopN.value, 10);
     return (isFinite(n) && n > 0) ? n : 24;
   }
+
+  // Figure titles built from the options the user chose.
+  function scopeSuffix() {
+    var bits = [];
+    if (el.phonAnalyze.value === "lemma") bits.push("distinct lemmata");
+    if (el.phonLimitPos.value) bits.push(window.MopsosUI.label("pos", el.phonLimitPos.value) + "s");
+    if (el.phonLimitCase && !el.phonLimitCaseWrap.hasAttribute("hidden") && el.phonLimitCase.value) bits.push(window.MopsosUI.label("case", el.phonLimitCase.value));
+    if (el.phonLimitWork.value) bits.push(el.phonLimitWork.value);
+    return bits.length ? " \u00b7 " + bits.join(", ") : "";
+  }
+  function vTitle(base) { return base + scopeSuffix(); }
 
   function renderAll() {
     savePhonState();
@@ -326,7 +506,7 @@
     var cards = [
       ["Tokens", A.nTokens.toLocaleString()],
       ["Syllables", A.nSyll.toLocaleString()],
-      ["Distinct phonemes", A.phonemes.size],
+      ["Distinct segments", A.phonemes.size],
       ["Mean syllables / word", A.meanSyll.toFixed(2)],
       ["Open syllables", pctOpen.toFixed(1) + "%"],
       ["Vowel segments", pctVowel.toFixed(1) + "%"]
@@ -337,51 +517,223 @@
     }).join("") + "</div>";
   }
 
+  // ---- Corpus-order views (elision / hiatus) -------------------------
+  function corpusScopeWhere() {
+    var conds = ["verse IS NOT NULL AND verse <> ''"];
+    if (el.phonLimitWork.value) conds.push("work = " + sqlStr(el.phonLimitWork.value));
+    return conds.join(" AND ");
+  }
+
+  function renderElision(C, host) {
+    var SQL = window.MopsosSQL, UI = window.MopsosUI;
+    var whereAll = corpusScopeWhere();
+    var total = SQL.scalar("SELECT COUNT(*) FROM morphology WHERE " + whereAll + ";");
+    var rows = SQL.objects("SELECT form f, COUNT(*) n FROM morphology WHERE match_status = 'OK_ELIDED' AND " +
+      whereAll + " GROUP BY f ORDER BY n DESC LIMIT " + topN() + ";");
+    var nEl = SQL.scalar("SELECT COUNT(*) FROM morphology WHERE match_status = 'OK_ELIDED' AND " + whereAll + ";");
+    if (!rows.length) { host.innerHTML = '<div class="small-muted" style="padding:.7rem;">No elided tokens recorded in this scope.</div>'; return; }
+    C.bars(host, rows.map(function (r) { return { label: r.f, value: r.n }; }),
+      { valueLabel: "elided tokens", labelWidth: 110, title: vTitle("Commonest elided forms") });
+    statCards([["Elided tokens", nEl.toLocaleString()], ["All tokens in scope", total.toLocaleString()],
+      ["Elision rate", total ? (100 * nEl / total).toFixed(2) + "%" : "\u2013"]]);
+    el.phonTable.innerHTML = '<p class="small-muted">Elision is read from the corpus alignment record (match_status = OK_ELIDED), i.e. tokens whose final vowel was dropped before a following vowel in the verse. The part-of-speech and case limiters do not apply here; the work limiter does.</p>';
+  }
+
+  function renderHiatus(C, host) {
+    var SQL = window.MopsosSQL, UI = window.MopsosUI;
+    var key = "hiatus|" + (el.phonLimitWork.value || "");
+    var H = state.corpusCache[key];
+    if (!H) {
+      var rows = SQL.objects("SELECT work w, book b, verse v, form f FROM morphology WHERE " + corpusScopeWhere() +
+        " ORDER BY work, CAST(book AS INTEGER), CAST(verse AS INTEGER), CAST(sentence_id AS INTEGER), id;");
+      H = { junctures: 0, vowelMeet: 0, elided: 0, pairs: new Map() };
+      var prev = null, prevLine = "";
+      for (var i2 = 0; i2 < rows.length; i2++) {
+        var r = rows[i2];
+        var line = r.w + "|" + r.b + "|" + r.v;
+        var norm = normalize(r.f);
+        var cur = norm ? {
+          first: norm[0], last: norm[norm.length - 1],
+          elided: isElidedForm(r.f)
+        } : null;
+        if (prev && cur && line === prevLine) {
+          H.junctures++;
+          if (isVowel(prev.last) && isVowel(cur.first)) {
+            if (prev.elided) H.elided++;
+            else { H.vowelMeet++; inc(H.pairs, prev.last + " + " + cur.first); }
+          } else if (prev.elided) H.elided++;
+        }
+        prev = cur; prevLine = line;
+      }
+      state.corpusCache[key] = H;
+    }
+    if (!H.junctures) { host.innerHTML = '<div class="small-muted" style="padding:.7rem;">No word junctures found in this scope.</div>'; return; }
+    var items = mapToItems(H.pairs).slice(0, topN());
+    C.bars(host, items, { valueLabel: "junctures", labelWidth: 110, title: vTitle("Vowel + vowel word junctures (unelided)") });
+    statCards([["Word junctures", H.junctures.toLocaleString()],
+      ["Vowel meets vowel (hiatus)", H.vowelMeet.toLocaleString() + " (" + (100 * H.vowelMeet / H.junctures).toFixed(2) + "%)"],
+      ["Elided junctures", H.elided.toLocaleString() + " (" + (100 * H.elided / H.junctures).toFixed(2) + "%)"]]);
+    el.phonTable.innerHTML = '<p class="small-muted">Adjacent words within the same line, in verse order. A juncture counts as hiatus when the first word ends in a vowel (and is not elided) and the next begins with one; digamma-initial and correpted junctures are included, so this is an upper bound on true hiatus. The part-of-speech and case limiters do not apply here; the work limiter does.</p>';
+  }
+
+  function statCards(pairs) {
+    el.phonSummary.innerHTML = '<div class="analysis-grid">' + pairs.map(function (c) {
+      return '<div class="analysis-card"><div class="metric">' + c[1] +
+        '</div><div class="metric-label">' + window.MopsosUI.esc(c[0]) + "</div></div>";
+    }).join("") + "</div>";
+  }
+
   function renderChart(view) {
     var A = state.analysis;
     el.phonTable.innerHTML = "";
-    var C = window.MopsosChart, host = el.phonChart;
+    var C = window.MopsosChart, UI = window.MopsosUI, host = el.phonChart;
+    if (CORPUS_VIEWS[view]) {
+      if (!window.MopsosSQL || !window.MopsosSQL.isReady()) { host.innerHTML = '<div class="small-muted" style="padding:1rem;">Corpus not ready.</div>'; return; }
+      try { if (view === "elision") renderElision(C, host); else renderHiatus(C, host); }
+      catch (e) { host.innerHTML = '<div class="small-muted" style="padding:1rem;">Error: ' + UI.esc(e.message) + "</div>"; }
+      return;
+    }
     if (!A) { host.innerHTML = '<div class="small-muted" style="padding:1rem;">Run a query to see results.</div>'; return; }
     var N = topN();
 
-    if (view === "phonemes") {
-      C.bars(host, mapToItems(A.phonemes).slice(0, N), { valueLabel: "Count", labelWidth: 90 });
-    } else if (view === "shapes") {
-      C.bars(host, mapToItems(A.shapes).slice(0, N), { valueLabel: "Count", labelWidth: 110 });
-    } else if (view === "onsets") {
-      C.bars(host, mapToItems(A.onsets).slice(0, N), { valueLabel: "Count", labelWidth: 110, emptyMsg: "No complex onsets found." });
-    } else if (view === "codas") {
-      C.bars(host, mapToItems(A.codas).slice(0, N), { valueLabel: "Count", labelWidth: 110, emptyMsg: "No complex codas found." });
-    } else if (view === "diphthongs") {
-      C.bars(host, mapToItems(A.diphthongs).slice(0, N), { valueLabel: "Count", labelWidth: 90, emptyMsg: "No diphthongs found." });
-    } else if (view === "quantity") {
-      var order = ["long", "short", "ambiguous"];
-      C.bars(host, order.filter(function (q) { return A.quantity.has(q); }).map(function (q) {
-        return { label: q, value: A.quantity.get(q) };
-      }), { valueLabel: "Nuclei", labelWidth: 120 });
+    if (view === "segments") {
+      C.bars(host, mapToItems(A.phonemes).slice(0, N), { valueLabel: "count", labelWidth: 90, title: vTitle("Segment frequencies") });
+    } else if (view === "positions") {
+      var segs = mapToItems(A.phonemes).slice(0, N).map(function (d) { return d.label; });
+      var matrix = segs.map(function (s) {
+        return [A.posInitial.get(s) || 0, A.posMedial.get(s) || 0, A.posFinal.get(s) || 0];
+      });
+      C.stackedBars(host, matrix, segs, ["word-initial", "medial", "word-final"],
+        { valueLabel: "occurrences", title: vTitle("Segment position within the word"), xLabel: "segment", yLabel: "occurrences" });
+      var finalC = mapToItems(A.posFinal).filter(function (d) { return !isVowel(d.label); });
+      el.phonTable.innerHTML = '<p class="small-muted">Word-final consonants attested: ' +
+        finalC.map(function (d) { return UI.esc(d.label) + " (" + d.value + ")"; }).join(", ") + ".</p>";
+    } else if (view === "initials") {
+      C.bars(host, mapToItems(A.initials).slice(0, N), { valueLabel: "words", labelWidth: 90, title: vTitle("Word-initial segments") });
+    } else if (view === "finals") {
+      C.bars(host, mapToItems(A.finals).slice(0, N), { valueLabel: "words", labelWidth: 90, title: vTitle("Word-final segments") });
+      var off = mapToItems(A.finals).filter(function (d) { return !isVowel(d.label) && "\u03bd\u03c1\u03c3\u03be\u03c8".indexOf(d.label) < 0; });
+      el.phonTable.innerHTML = off.length
+        ? '<p class="small-muted">Finals outside the final law (\u03bd \u03c1 \u03c2 \u03be \u03c8 or a vowel): ' + off.map(function (d) { return UI.esc(d.label) + " (" + d.value + ")"; }).join(", ") + ", typically proclitics like \u1f10\u03ba (and \u03bf\u1f50\u03c7) or textual artefacts.</p>"
+        : '<p class="small-muted">Every word-final segment in this selection obeys the final law (a vowel or \u03bd \u03c1 \u03c2 \u03be \u03c8).</p>';
+    } else if (view === "bigrams") {
+      var alpha = "#\u03b1\u03b5\u03b7\u03b9\u03bf\u03c5\u03c9\u03b2\u03b3\u03b4\u03b6\u03b8\u03ba\u03bb\u03bc\u03bd\u03be\u03c0\u03c1\u03c3\u03c4\u03c6\u03c7\u03c8".split("");
+      var present = alpha.filter(function (a) { return A.uni.get(a); });
+      var mat = present.map(function (a) { return present.map(function (b) { return A.bigrams.get(a + b) || 0; }); });
+      C.heatmap(host, mat, present, present,
+        { valueLabel: "transitions", title: vTitle("Segment bigrams (# = word boundary)"), yLabel: "first segment", xLabel: "second segment" });
+      // PMI table: over- and under-represented transitions
+      var pmi = [];
+      A.bigrams.forEach(function (n, k) {
+        if (n < 20) return;
+        var pa = A.uni.get(k[0]) || 1, pb = A.uni.get(k[1]) || 1;
+        var v = Math.log2((n * A.nBigrams) / (pa * pb));
+        pmi.push([k[0] + " " + k[1], n, +v.toFixed(2)]);
+      });
+      pmi.sort(function (a, b) { return b[2] - a[2]; });
+      var over = pmi.slice(0, 12), under = pmi.slice(-12).reverse();
+      UI.renderTable(el.phonTable, ["Transition", "Count", "PMI (bits)"], over.concat(under), { paginate: false });
+    } else if (view === "fload") {
+      var tkey = String(A.types.size);
+      if (!state.fload || state.floadKey !== tkey) {
+        host.innerHTML = '<div class="small-muted" style="padding:1rem;">Computing minimal pairs over ' + A.types.size.toLocaleString() + " distinct forms\u2026</div>";
+        setTimeout(function () {
+          state.fload = minimalPairs(A.types);
+          state.floadKey = tkey;
+          renderChart("fload");
+        }, 20);
+        return;
+      }
+      var F = state.fload;
+      C.bars(host, mapToItems(F.contrasts).slice(0, N),
+        { valueLabel: "minimal pairs", labelWidth: 110, title: vTitle("Segment contrasts by minimal-pair count") });
+      statCards([["Distinct forms", A.types.size.toLocaleString()], ["Minimal pairs", F.totalPairs.toLocaleString()],
+        ["Distinct contrasts", F.contrasts.size.toLocaleString()]]);
+      el.phonTable.innerHTML = '<p class="small-muted">Pairs of distinct normalised forms differing in exactly one segment slot, counted per segment contrast. Accentual and quantity distinctions are not visible here (forms are diacritic-stripped), so this measures segmental functional load only.</p>';
     } else if (view === "balance") {
       C.bars(host, [{ label: "Vowels", value: A.vowelCount }, { label: "Consonants", value: A.consCount }],
-        { valueLabel: "Segments", labelWidth: 120 });
+        { valueLabel: "segments", labelWidth: 120, title: vTitle("Vowel vs consonant segments") });
+    } else if (view === "shapes") {
+      C.bars(host, mapToItems(A.shapes).slice(0, N), { valueLabel: "syllables", labelWidth: 110, title: vTitle("Syllable shapes") });
     } else if (view === "syllen") {
       var keys = Array.from(A.sylLen.keys()).sort(function (a, b) { return a - b; });
       C.bars(host, keys.map(function (k) { return { label: k + (k === 1 ? " syllable" : " syllables"), value: A.sylLen.get(k) }; }),
-        { valueLabel: "Words", labelWidth: 130 });
+        { valueLabel: "words", labelWidth: 130, preserveOrder: true, title: vTitle("Syllables per word") });
     } else if (view === "complexity") {
       C.bars(host, [
         { label: "Mean onset size", value: +A.meanOnset.toFixed(3) },
         { label: "Max onset size", value: A.maxOnset },
         { label: "Mean coda size", value: +A.meanCoda.toFixed(3) },
         { label: "Max coda size", value: A.maxCoda }
-      ], { valueLabel: "Consonants", labelWidth: 150, valueFormat: function (v) { return v.toFixed ? v.toFixed(2) : v; } });
+      ], { valueLabel: "consonants", labelWidth: 150, valueFormat: function (v) { return v.toFixed ? v.toFixed(2) : v; },
+           title: vTitle("Onset and coda complexity") });
+    } else if (view === "onsets") {
+      C.bars(host, mapToItems(A.onsets).slice(0, N), { valueLabel: "syllables", labelWidth: 110, emptyMsg: "No complex onsets found.", title: vTitle("Complex onsets") });
+    } else if (view === "codas") {
+      C.bars(host, mapToItems(A.codas).slice(0, N), { valueLabel: "syllables", labelWidth: 110, emptyMsg: "No complex codas found.", title: vTitle("Complex codas") });
     } else if (view === "sonority") {
-      var so = ["vowel", "liquid", "nasal", "fricative", "stop"];
-      C.bars(host, so.filter(function (s) { return A.sonority.has(s); }).map(function (s) {
-        return { label: s, value: A.sonority.get(s) };
-      }), { valueLabel: "Segments", labelWidth: 120 });
-    } else if (view === "initials") {
-      C.bars(host, mapToItems(A.initials).slice(0, N), { valueLabel: "Words", labelWidth: 90 });
+      var order = ["rising", "plateau", "falling"];
+      C.bars(host, order.filter(function (k) { return A.ssp.has(k); }).map(function (k) { return { label: k + " sonority", value: A.ssp.get(k) }; }),
+        { valueLabel: "complex onsets", labelWidth: 150, preserveOrder: true, title: vTitle("Sonority contour of complex onsets") });
+      var vio = mapToItems(A.sspClusters.plateau).concat(mapToItems(A.sspClusters.falling));
+      vio.sort(function (a, b) { return b.value - a.value; });
+      UI.renderTable(el.phonTable, ["Non-rising onset", "Count"],
+        vio.slice(0, 25).map(function (d) { return [d.label, d.value]; }), { paginate: false });
+    } else if (view === "diphthongs") {
+      C.bars(host, mapToItems(A.diphthongs).slice(0, N), { valueLabel: "nuclei", labelWidth: 90, emptyMsg: "No diphthongs found.", title: vTitle("Diphthong nuclei") });
+    } else if (view === "quantity") {
+      var qorder = ["long", "short", "ambiguous"];
+      C.bars(host, qorder.filter(function (q) { return A.quantity.has(q); }).map(function (q) {
+        return { label: q, value: A.quantity.get(q) };
+      }), { valueLabel: "nuclei", labelWidth: 120, preserveOrder: true, title: vTitle("Nucleus quantity by orthography") });
+    } else if (view === "weight") {
+      if (!A.weightN) {
+        host.innerHTML = '<div class="small-muted" style="padding:1rem;">No metrical shapes in this selection. Analyse word forms (not lemmata) and include the metrical_shape column, e.g. via the default query.</div>';
+        return;
+      }
+      var W = A.weight;
+      var mat2 = [[W.HH, W.HL], [W.LH, W.LL], [W.AH, W.AL]];
+      C.groupedBars(host, mat2, ["predicted heavy", "predicted light", "dichronon / final"], ["scans heavy", "scans light"],
+        { valueLabel: "syllables", title: vTitle("Weight by nature vs weight by position"), xLabel: "orthographic prediction", yLabel: "syllables" });
+      var predN = W.HH + W.HL + W.LH + W.LL;
+      statCards([["Syllables compared", A.weightN.toLocaleString()],
+        ["Prediction agrees", predN ? (100 * (W.HH + W.LL) / predN).toFixed(1) + "%" : "\u2013"],
+        ["Heavy-but-light", W.HL.toLocaleString()], ["Light-but-heavy", W.LH.toLocaleString()]]);
+      var mcl = mapToItems(A.closedLight).slice(0, 15);
+      el.phonTable.innerHTML = mcl.length
+        ? '<p class="small-muted" style="margin-bottom:.25rem;"><strong>Predicted heavy but scanned light</strong> (muta cum liquida and correption candidates; the bracket shows the consonants around the syllable break):</p>'
+        : "";
+      if (mcl.length) UI.renderTable(el.phonTable.appendChild(document.createElement("div")), ["Word \u00b7 syllable", "Tokens"],
+        mcl.map(function (d) { return [d.label, d.value]; }), { paginate: false });
+    } else if (view === "dichrona") {
+      var vs = ["\u03b1", "\u03b9", "\u03c5"];
+      var mat3 = vs.map(function (v) { return [A.dichrona[v].H, A.dichrona[v].L]; });
+      if (!mat3.some(function (r) { return r[0] + r[1] > 0; })) {
+        host.innerHTML = '<div class="small-muted" style="padding:1rem;">No scanned dichrona in this selection. Analyse word forms with the metrical_shape column included.</div>';
+        return;
+      }
+      C.groupedBars(host, mat3, vs, ["scans heavy (long)", "scans light (short)"],
+        { valueLabel: "open syllables", title: vTitle("The dichrona \u03b1 \u03b9 \u03c5 as the metre resolves them"), xLabel: "vowel", yLabel: "open syllables" });
+      statCards(vs.map(function (v) {
+        var d = A.dichrona[v], t2 = d.H + d.L;
+        return ["% of open " + v + " heavy", t2 ? (100 * d.H / t2).toFixed(1) + "%" : "\u2013"];
+      }));
+    } else if (view === "accent") {
+      if (!A.accN) { host.innerHTML = '<div class="small-muted" style="padding:1rem;">No accented forms in this selection.</div>'; return; }
+      var types = ["acute", "circumflex", "grave"];
+      var mat4 = types.map(function (t3) { return A.accent[t3].slice(0, 3); });
+      C.groupedBars(host, mat4, types, ["ultima", "penult", "antepenult"],
+        { valueLabel: "words", title: vTitle("Accent type by syllable position"), xLabel: "accent", yLabel: "words" });
+      var deep = A.accent.acute[3] + A.accent.circumflex[3] + A.accent.grave[3];
+      var circDeep = A.accent.circumflex[2] + A.accent.circumflex[3];
+      statCards([["Accented words", A.accN.toLocaleString()],
+        ["Accent deeper than antepenult", deep.toLocaleString()],
+        ["Circumflex beyond the penult", circDeep.toLocaleString()],
+        ["Circumflex penult + long ultima", A.circLongUltima.toLocaleString() + " / " + A.circPenult.toLocaleString()],
+        ["Acute antepenult + long ultima", A.acuteAntepenultLongUltima.toLocaleString() + " / " + A.acuteAntepenult.toLocaleString()]]);
+      el.phonTable.innerHTML = '<p class="small-muted">The limitation laws predict zero accents deeper than the antepenult, no circumflex beyond the penult, a circumflex on the penult only over a short ultima, and no acute on the antepenult when the ultima is long. Quantity here is judged from spelling with word-final -αι/-οι counted short, but dichronal ultimas cannot be judged from spelling alone, so a small remainder is expected in the two ratio cards. Grave appears only on the ultima by definition; graves counted elsewhere would indicate tagging or normalisation noise.</p>';
     } else if (view === "alliteration") {
-      C.bars(host, mapToItems(A.alliteration).slice(0, N), { valueLabel: "Adjacent pairs", labelWidth: 90, emptyMsg: "No adjacent alliteration found." });
+      C.bars(host, mapToItems(A.alliteration).slice(0, N), { valueLabel: "adjacent pairs", labelWidth: 90, emptyMsg: "No adjacent alliteration found.", title: vTitle("Adjacent alliteration") });
     } else if (view === "table") {
       host.innerHTML = "";
       window.MopsosUI.renderTable(el.phonTable, ["form", "syllabification", "shapes", "syllables"], A.report,
@@ -420,7 +772,6 @@
     grab();
     if (!el.phonSql) return; // not on this page
 
-    // advanced custom-SQL examples
     EXAMPLES.forEach(function (ex) {
       var b = document.createElement("button");
       b.className = "btn btn-sm"; b.textContent = ex.label;
@@ -433,15 +784,14 @@
     if (el.phonLimitPos) el.phonLimitPos.addEventListener("change", refreshCaseLimiter);
     el.phonView.addEventListener("change", renderAll);
     el.phonTopN.addEventListener("change", renderAll);
-    el.phonTokenCol.addEventListener("change", reanalyzeColumnOnly);
+    el.phonTokenCol.addEventListener("change", function () { runQueryAndAnalyze(); });
     el.phonSql.addEventListener("keydown", function (e) {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); runQueryAndAnalyze(); }
     });
 
-    setStatus("Loading corpus…");
+    setStatus("Loading corpus\u2026");
     window.MopsosSQL.ready().then(function () {
       if (el.phonLoadingBar) el.phonLoadingBar.style.display = "none";
-      // populate limiter drop-downs (labels only)
       window.MopsosUI.fillSelect(el.phonLimitPos, window.MopsosSQL.distinct("pos"), { field: "pos", head: "(all)" });
       window.MopsosUI.fillSelect(el.phonLimitWork, window.MopsosSQL.distinct("work"), { head: "(all)" });
       el.phonLimitPos.disabled = false;
@@ -455,11 +805,11 @@
       refreshCaseLimiter();
       if (st) {
         if (st.limitCase && !el.phonLimitCaseWrap.hasAttribute("hidden")) el.phonLimitCase.value = st.limitCase;
-        if (st.view) el.phonView.value = st.view;
+        if (st.view && VIEW_DESCS[st.view]) el.phonView.value = st.view;
         if (st.topN) el.phonTopN.value = st.topN;
       }
       el.btnRunPhon.disabled = false;
-      setStatus("Corpus ready. Analyzing…");
+      setStatus("Corpus ready. Analyzing\u2026");
       runQueryAndAnalyze(buildSourceSql());
     }).catch(function (e) {
       setStatus("Failed to load corpus: " + e.message);

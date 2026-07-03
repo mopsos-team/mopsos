@@ -13,9 +13,9 @@ section: prosody
   </div>
   <div id="prosodyInfo" class="info-panel" hidden>
     <h4>Scansion tab</h4>
-    <p>Scansion marks each syllable of a line as long or short and groups the syllables into feet. Every line in the corpus has been scanned into its six hexameter feet, each a dactyl (— ‿ ‿) or a spondee (— —).</p>
+    <p>Scansion marks each syllable of a line as long or short and groups the syllables into feet, each a dactyl (¯ ˘ ˘) or a spondee (¯ ¯). Every word in the corpus carries its own metrical record: its syllable shape and the feet it occupies in the line. All of the views here are computed from that record.</p>
     <ul>
-      <li><strong>Pick one view at a time</strong> from the drop-down: individual lines syllable by syllable, the commonest foot patterns, the dactyl/spondee balance by position, where a word or grammatical category falls in the verse, the commonest words at each foot, and the length and speech profiles. The word box accepts Greek or English and suggests matching forms as you type.</li>
+      <li><strong>Pick one view at a time</strong> from the drop-down: individual lines word by word, the commonest foot patterns, the dactyl/spondee balance by position, where a word or grammatical category falls in the verse, the commonest words at each foot, and the length profiles. The word box accepts Greek or English and suggests matching forms as you type.</li>
       <li><strong>Limit the scope</strong> to the <em>Iliad</em>, the <em>Odyssey</em>, or a single book before running.</li>
     </ul>
   </div>
@@ -38,7 +38,6 @@ section: prosody
         <option value="quantity">Long / short syllable profile</option>
         <option value="syllables">Syllables per line</option>
         <option value="words">Words per line</option>
-        <option value="speech">Speech vs narrative</option>
         <option value="book_summary">Per-book summary table</option>
         <option value="lines_table">Browse scanned lines</option>
       </select>

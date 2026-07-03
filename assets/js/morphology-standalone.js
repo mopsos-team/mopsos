@@ -106,6 +106,14 @@
   // Render the result: same columns and rows the query returns, with coded
   // values shown as human-readable labels (e.g. 'g' -> 'Genitive').
   function renderTable(columns, values) {
+    // Internal alignment keys are never shown, even when a hand-written
+    // SELECT * returns them.
+    const HIDE = new Set(["section_id", "sentence_id"]);
+    const keep = columns.map((c, i) => (HIDE.has(String(c).toLowerCase()) ? -1 : i)).filter((i) => i >= 0);
+    if (keep.length && keep.length < columns.length) {
+      columns = keep.map((i) => columns[i]);
+      values = values.map((row) => keep.map((i) => row[i]));
+    }
     if (!columns.length || !values.length) {
       return '<div class="small-muted" style="padding:.7rem;">No rows.</div>';
     }
@@ -175,6 +183,54 @@
 
   let ex = null;
 
+  /* ----- adaptive lemma search (Greek, accents optional; Beta Code; English)
+   * One lemma list serves both word boxes: the paradigm lookup and the
+   * meaning search. Greek and Beta Code matching is MopsosUI.greekCombo's
+   * usual behaviour; English goes through the MopsosSemantics LSJ bridge. */
+  let lemmaItems = null, lemmaByStrip = null;
+  function buildLemmaItems() {
+    if (lemmaItems) return lemmaItems;
+    const T = window.MopsosText;
+    const rows = SQL.objects("SELECT lemma l, lemma_search k, lemma_beta b, COUNT(*) c FROM " + q(TABLE) +
+      " WHERE lemma NOT IN ('','-') GROUP BY l, k, b ORDER BY c DESC;");
+    lemmaByStrip = new Map();
+    lemmaItems = rows.map((r) => {
+      const key = r.k || (T ? T.stripDiacritics(r.l) : r.l);
+      const it = { key: key, display: r.l, beta: r.b || (T ? T.toBetaCode(r.l) : ""), meta: r.c + "\u00d7", c: r.c };
+      if (!lemmaByStrip.has(key)) lemmaByStrip.set(key, r.l);
+      return it;
+    });
+    return lemmaItems;
+  }
+  // Resolve free-typed input to corpus lemmata: exact Greek, accent-stripped
+  // Greek, or Beta Code, always against the corpus lemma list itself.
+  function resolveSeeds(input) {
+    const T = window.MopsosText;
+    buildLemmaItems();
+    const raw = String(input || "").trim();
+    if (!raw) return [];
+    const hasGreek = T && T.hasGreek ? T.hasGreek(raw) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
+    if (hasGreek) {
+      const exact = lemmaItems.find((it) => it.display === raw);
+      if (exact) return [exact.display];
+      const k = T ? T.stripDiacritics(raw) : raw;
+      const hit = lemmaByStrip.get(k);
+      if (hit) return [hit];
+      const pre = lemmaItems.filter((it) => it.key.indexOf(k) === 0).slice(0, 3).map((it) => it.display);
+      return pre;
+    }
+    // Latin letters: Beta Code against the lemma list (exact, then prefix)
+    if (T) {
+      const nb = T.looseBetaKey(raw);
+      if (nb) {
+        const exactB = lemmaItems.filter((it) => it.beta && T.looseBetaKey(it.beta) === nb).map((it) => it.display);
+        if (exactB.length) return exactB.slice(0, 3);
+        return lemmaItems.filter((it) => it.beta && T.looseBetaKey(it.beta).indexOf(nb) === 0).slice(0, 3).map((it) => it.display);
+      }
+    }
+    return [];
+  }
+
   function explorerFilters() {
     const all = Object.assign({}, ex.read());
     const wk = $("exLimitWork").value; if (wk) all.work = wk;
@@ -229,40 +285,38 @@
     const filterText = filterTextOf(filters);
 
     try {
-      if (semQuery && window.MopsosSemantics) {
-        const unit = "lemma"; // the semantic model is lemma-based
+      if (semQuery) {
+        const unit = "lemma"; // meaning search is lemma-based
         const proceed = () => {
           try {
-            const res = window.MopsosSemantics.resolve(semQuery);
-            if (!res.seeds.length) {
-              chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No semantic match for \u201C' + UI.esc(semQuery) +
-                '\u201D. Try a concept like blue, war, sea, fear, wine, or a Greek lemma.</div>';
+            const seeds = resolveSeeds(semQuery);
+            if (!seeds.length) {
+              chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No corpus lemma matches \u201C' + UI.esc(semQuery) +
+                '\u201D. Type a Greek lemma (accents optional) or Beta Code (e.g. mhnis), or click the box to browse the lemma list.</div>';
               title.textContent = ""; desc.textContent = ""; return;
             }
-            const assoc = window.MopsosSemantics.expand(res.seeds, Math.min(topN, 40));
-            const ids = assoc.map((a) => a.lemma);
+            // The seeds plus the lemmata that actually share a sentence with
+            // them most often, straight from the corpus (no learned model).
+            const seedIn = seeds.map(sqlStr).join(", ");
+            const coRows = SQL.objects("SELECT b.lemma t, COUNT(*) w FROM " + q(TABLE) + " a JOIN " + q(TABLE) + " b " +
+              "ON a.work = b.work AND a.sentence_id = b.sentence_id AND b.lemma <> a.lemma " +
+              "WHERE a.lemma IN (" + seedIn + ") AND b.pos IN ('n','v','a') AND b.lemma NOT IN ('','-')" +
+              (w ? " AND " + w.replace(/"(\w+)"/g, 'b."$1"') : "") +
+              " GROUP BY t ORDER BY w DESC LIMIT " + Math.min(topN, 40) + ";");
+            const ids = seeds.slice();
+            coRows.forEach((r) => { if (ids.indexOf(r.t) < 0) ids.push(r.t); });
             const freqMap = {};
-            const inList = ids.map(sqlStr).join(", ");
             SQL.objects("SELECT " + q(unit) + " AS k, COUNT(*) AS c FROM " + q(TABLE) +
-              " WHERE " + q(unit) + " IN (" + inList + ")" + (w ? " AND " + w : "") + " GROUP BY k;")
+              " WHERE " + q(unit) + " IN (" + ids.map(sqlStr).join(", ") + ")" + (w ? " AND " + w : "") + " GROUP BY k;")
               .forEach((r) => { freqMap[r.k] = r.c; });
-            const srcLabel = res.source === "english" ? "\u201C" + semQuery + "\u201D"
-              : "\u201C" + res.seeds[0] + "\u201D" + (res.source === "fuzzy" ? " (closest match)" : "");
-            buildNetworkFrom(ids, freqMap, w, unit,
-              "Words semantically associated with " + srcLabel,
-              "Semantic neighbourhood" + filterText + ". ");
+            buildNetworkFrom(ids.slice(0, Math.min(topN, 40) + seeds.length), freqMap, w, unit,
+              "Words sharing a sentence with " + seeds.map((s) => "\u201C" + s + "\u201D").join(", "),
+              "Sentence co-occurrence" + filterText + ". ");
           } catch (e) {
-            chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Semantic search error: ' + UI.esc(e.message) + "</div>";
+            chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Search error: ' + UI.esc(e.message) + "</div>";
           }
         };
-        if (!window.MopsosSemantics.isBuilt()) {
-          title.textContent = "Words semantically associated with \u201C" + UI.esc(semQuery) + "\u201D";
-          desc.textContent = "Learning semantic associations from the corpus (one-time)\u2026";
-          chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Loading the lexicon and building the semantic model\u2026</div>';
-          window.MopsosSemantics.build().then(proceed).catch(proceed);
-        } else {
-          proceed();
-        }
+        proceed();
         return;
       }
 
@@ -320,11 +374,15 @@
           title.textContent = UI.fieldTitle(dim1) + " × " + UI.fieldTitle(d2);
           desc.textContent = "Token counts for each combination" + filterText + ". Darker = more frequent.";
           Chart.heatmap(chart, matrix, rowLabels, colLabels,
-            { valueLabel: "tokens", showValues: rowVals.length <= 15 && colVals.length <= 15 });
+            { valueLabel: "tokens", showValues: rowVals.length <= 15 && colVals.length <= 15,
+              title: UI.fieldTitle(dim1) + " \u00d7 " + UI.fieldTitle(d2) + filterText,
+              yLabel: UI.fieldTitle(dim1), xLabel: UI.fieldTitle(d2) });
         } else if (type === "grouped") {
           title.textContent = UI.fieldTitle(dim1) + " by " + UI.fieldTitle(d2);
           desc.textContent = "Token counts, grouped to compare " + UI.fieldTitle(d2) + " across each " + UI.fieldTitle(dim1) + filterText + ".";
-          Chart.groupedBars(chart, matrix, rowLabels, colLabels, { valueLabel: "tokens", emptyMsg: "No tokens match." });
+          Chart.groupedBars(chart, matrix, rowLabels, colLabels, { valueLabel: "tokens", emptyMsg: "No tokens match.",
+            title: UI.fieldTitle(dim1) + " by " + UI.fieldTitle(d2) + filterText,
+            xLabel: UI.fieldTitle(dim1), yLabel: "tokens" });
         } else {
           const pct = matrix.map((row) => {
             const s = row.reduce((a, b) => a + b, 0) || 1;
@@ -332,7 +390,9 @@
           });
           title.textContent = "Composition of " + UI.fieldTitle(dim1) + " by " + UI.fieldTitle(d2);
           desc.textContent = "Each bar is one " + UI.fieldTitle(dim1) + " value, split into the % share of each " + UI.fieldTitle(d2) + filterText + ".";
-          Chart.stackedBars(chart, pct, rowLabels, colLabels, { valueLabel: "%", emptyMsg: "No tokens match." });
+          Chart.stackedBars(chart, pct, rowLabels, colLabels, { valueLabel: "%", emptyMsg: "No tokens match.",
+            title: "Composition of " + UI.fieldTitle(dim1) + " by " + UI.fieldTitle(d2) + filterText,
+            xLabel: UI.fieldTitle(dim1), yLabel: "% of tokens" });
         }
       } else if (type === "paradigm") {
         const input = ($("exLemma").value || "").trim();
@@ -340,15 +400,9 @@
           chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Type a lemma above (e.g. \u03bd\u03b1\u1fe6\u03c2, \u03b8\u03b5\u03cc\u03c2, \u03bb\u1f7b\u03c9) to lay out its full paradigm: every attested form, organised by the inflectional properties that actually vary for it.</div>';
           title.textContent = ""; desc.textContent = ""; return;
         }
-        const stripDiacritics = (s) => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        // resolve the lemma: exact match first, else accent-insensitive most-frequent
-        let lemma = SQL.scalar("SELECT lemma FROM " + q(TABLE) + " WHERE lemma = " + sqlStr(input) + " LIMIT 1;");
-        if (!lemma) {
-          const ni = stripDiacritics(input);
-          const cand = SQL.objects("SELECT lemma, COUNT(*) c FROM " + q(TABLE) + " WHERE lemma NOT IN ('','-') GROUP BY lemma;")
-            .filter((r) => stripDiacritics(r.lemma) === ni).sort((a, b) => b.c - a.c);
-          lemma = cand.length ? cand[0].lemma : null;
-        }
+        // exact Greek, accent-insensitive Greek, Beta Code, or English all resolve
+        const seeds = resolveSeeds(input);
+        let lemma = seeds.length ? seeds[0] : null;
         if (!lemma) {
           chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No lemma \u201c' + UI.esc(input) + '\u201d found in the corpus.</div>';
           title.textContent = ""; desc.textContent = ""; return;
@@ -376,7 +430,7 @@
         const rank = (f, v) => { const i = (FORDER[f] || []).indexOf(v); return i < 0 ? 99 : i; };
         const sortedVals = (f) => Object.keys(vals[f]).sort((a, b) => rank(f, a) - rank(f, b) || (vals[f][b] - vals[f][a]));
         const formCell = (forms) => forms && forms.length
-          ? forms.slice().sort((a, b) => b[1] - a[1]).map((x) => '<span class="pdg-form">' + UI.esc(x[0]) + '</span><span class="pdg-c">' + x[1] + "</span>").join("<br>")
+          ? forms.slice().sort((a, b) => b[1] - a[1]).map((x) => '<span class="pdg-form wlink" data-word="' + UI.esc(x[0]) + '">' + UI.esc(x[0]) + '</span><span class="pdg-c">' + x[1] + "</span>").join("<br>")
           : '<span class="pdg-gap">\u2013</span>';
 
         const fixedTxt = fixed.map((f) => displayName(f, sortedVals(f)[0])).join(" \u00b7 ");
@@ -403,7 +457,7 @@
           });
           html += "</tbody></table>";
           if (other.length) html += '<p class="small-muted" style="margin-top:.45rem;">Other forms: ' +
-            other.sort((a, b) => b[1] - a[1]).map((x) => '<span class="pdg-form">' + UI.esc(x[0]) + "</span>").join(", ") + "</p>";
+            other.sort((a, b) => b[1] - a[1]).map((x) => '<span class="pdg-form wlink" data-word="' + UI.esc(x[0]) + '">' + UI.esc(x[0]) + "</span>").join(", ") + "</p>";
         } else if (varying.length === 1) {
           const f1 = varying[0], cell = {};
           sortedVals(f1).forEach((v) => cell[v] = []);
@@ -413,7 +467,7 @@
           html += "</tbody></table>";
         } else if (varying.length === 0) {
           html += '<table class="data-table paradigm-table"><thead><tr><th>Form</th><th>Tokens</th></tr></thead><tbody>' +
-            rows.slice().sort((a, b) => b.n - a.n).map((r) => '<tr><td><span class="pdg-form">' + UI.esc(r.form) + "</span></td><td>" + r.n + "</td></tr>").join("") + "</tbody></table>";
+            rows.slice().sort((a, b) => b.n - a.n).map((r) => '<tr><td><span class="pdg-form wlink" data-word="' + UI.esc(r.form) + '">' + UI.esc(r.form) + "</span></td><td>" + r.n + "</td></tr>").join("") + "</tbody></table>";
         } else {
           // three or more distinguishing dimensions (verbs, 3-termination adjectives): flat inventory
           html += '<table class="data-table paradigm-table"><thead><tr>';
@@ -425,7 +479,7 @@
           }).forEach((r) => {
             html += "<tr>";
             varying.forEach((f) => { const v = r[KEY[f]]; html += "<td>" + (v && v !== "-" ? UI.esc(displayName(f, v)) : '<span class="pdg-gap">\u2013</span>') + "</td>"; });
-            html += '<td><span class="pdg-form">' + UI.esc(r.form) + '</span></td><td>' + r.n + "</td></tr>";
+            html += '<td><span class="pdg-form wlink" data-word="' + UI.esc(r.form) + '">' + UI.esc(r.form) + '</span></td><td>' + r.n + "</td></tr>";
           });
           html += "</tbody></table>";
         }
@@ -438,7 +492,8 @@
         title.textContent = "Token count by " + UI.fieldTitle(dim1);
         desc.textContent = "Top " + rows.length + " values" + filterText + ".";
         Chart.bars(chart, rows.map((r) => ({ label: displayName(dim1, r.k), value: r.c })),
-          { valueLabel: "tokens", emptyMsg: "No tokens match." });
+          { valueLabel: "tokens", emptyMsg: "No tokens match.",
+            title: "Token count by " + UI.fieldTitle(dim1) + filterText });
       }
     } catch (e) {
       chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Chart error: ' + UI.esc(e.message) + "</div>";
@@ -492,6 +547,15 @@
     $("exLimitAuthor").addEventListener("change", runExplorer);
     $("exSemantic").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runExplorer(); } });
     $("exLemma").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runExplorer(); } });
+    // adaptive search on both word boxes: Greek (accents optional) or Beta Code
+    if ($("exLemmaMenu")) UI.greekCombo($("exLemma"), $("exLemmaMenu"), {
+      items: buildLemmaItems,
+      onSelect(it) { $("exLemma").value = it.display; runExplorer(); }
+    });
+    if ($("exSemanticMenu")) UI.greekCombo($("exSemantic"), $("exSemanticMenu"), {
+      items: buildLemmaItems,
+      onSelect(it) { $("exSemantic").value = it.display; runExplorer(); }
+    });
     $("btnExRun").addEventListener("click", runExplorer);
     $("btnExReset").addEventListener("click", () => {
       ex.reset(); $("exSemantic").value = ""; $("exLimitWork").value = ""; $("exLimitAuthor").value = ""; runExplorer();

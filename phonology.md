@@ -13,10 +13,11 @@ section: phonology
   </div>
   <div id="phonInfo" class="info-panel" hidden>
     <h4>Phonology tab</h4>
-    <p>Choose which tokens to analyse and (optionally) how to limit them, then pick a single view from the drop-down. Each token is normalised (diacritics stripped, final ς→σ) and given a rule-based orthographic syllabification by the maximal-onset principle; every statistic is derived from those structured syllables.</p>
+    <p>Choose which tokens to analyse and (optionally) how to limit them, then pick a single view. Each token is normalised (diacritics stripped, final ς→σ) and syllabified by the maximal-onset principle; the segmental and syllabic views are derived from that single pass, so their numbers are mutually consistent.</p>
     <ul>
-      <li><strong>Flexible scope</strong>: analyse all forms, just verbs, only genitive nouns, lemmata, and more.</li>
-      <li><strong>One view at a time</strong>: use “What to view” to switch between phoneme, syllable, cluster, quantity, sonority and alliteration analyses.</li>
+      <li><strong>Segments</strong>: frequencies, positional distribution inside the word (including the final law read directly off the corpus), bigram phonotactics with over- and under-represented transitions (PMI), and the functional load of each segment contrast measured by minimal pairs.</li>
+      <li><strong>Syllable structure</strong>: shapes, cluster inventories, and the sonority contour of complex onsets, with the non-rising exceptions itemised.</li>
+      <li><strong>Prosody and sandhi</strong>: the views that go beyond orthography by reading the merged metrical record: weight by nature checked against weight by position (surfacing muta cum liquida and correption), the dichrona α ι υ resolved by how they scan, accent placement against the limitation laws, and elision and hiatus at word junctures in verse order.</li>
     </ul>
   </div>
 </section>
@@ -52,7 +53,7 @@ section: phonology
   <button class="adv-toggle btn btn-sm" data-adv="phonAdvPanel" style="margin-top:.5rem;">Advanced: custom SQL ▾</button>
   <div id="phonAdvPanel" class="adv-panel" hidden>
     <p class="help" style="margin-top:-.1rem;">A read-only query selecting the tokens to analyse; it must return at least one text column of word forms. <kbd>Ctrl/Cmd</kbd>+<kbd>Enter</kbd> runs.</p>
-    <textarea id="phonSql" spellcheck="false" data-nl2sql data-nl2sql-run="btnRunPhonSql">SELECT form, lemma FROM morphology;</textarea>
+    <textarea id="phonSql" spellcheck="false">SELECT form, lemma FROM morphology;</textarea>
     <div id="phonSqlExamples" class="btn-row" style="margin-top:.45rem;flex-wrap:wrap;"></div>
     <div class="grid-3" style="margin-top:.5rem;">
       <div class="field"><label for="phonTokenCol"><strong>Token / form column</strong></label><select id="phonTokenCol" disabled></select></div>
@@ -69,19 +70,36 @@ section: phonology
     <div class="field">
       <label for="phonView"><strong>What to view</strong></label>
       <select id="phonView">
-        <option value="phonemes" selected>Normalized letter / phoneme-proxy distribution</option>
-        <option value="shapes">Syllable shape profile (CV / CVC …)</option>
-        <option value="onsets">Onset clusters</option>
-        <option value="codas">Coda clusters</option>
-        <option value="diphthongs">Diphthong distribution</option>
-        <option value="quantity">Vowel quantity profile</option>
-        <option value="balance">Vowel vs consonant balance</option>
-        <option value="syllen">Syllable length profile</option>
-        <option value="complexity">Onset / coda complexity</option>
-        <option value="sonority">Sonority profile</option>
-        <option value="initials">Initial-sound profile</option>
-        <option value="alliteration">Adjacent alliteration windows</option>
-        <option value="table">Token-level phonology table</option>
+        <optgroup label="Segments">
+          <option value="segments" selected>Segment frequencies</option>
+          <option value="positions">Position within the word (initial / medial / final)</option>
+          <option value="initials">Word-initial segments</option>
+          <option value="finals">Word-final segments (the final law)</option>
+          <option value="bigrams">Bigram phonotactics (with PMI table)</option>
+          <option value="fload">Functional load (minimal pairs)</option>
+          <option value="balance">Vowel vs consonant balance</option>
+        </optgroup>
+        <optgroup label="Syllable structure">
+          <option value="shapes">Syllable shape profile (CV / CVC …)</option>
+          <option value="syllen">Syllables per word</option>
+          <option value="complexity">Onset / coda complexity</option>
+          <option value="onsets">Complex onsets</option>
+          <option value="codas">Complex codas</option>
+          <option value="sonority">Sonority sequencing in onsets</option>
+          <option value="diphthongs">Diphthong distribution</option>
+          <option value="quantity">Nucleus quantity by orthography</option>
+        </optgroup>
+        <optgroup label="Prosody and sandhi (uses the metrical record)">
+          <option value="weight">Weight: nature vs position</option>
+          <option value="dichrona">The dichrona α ι υ, resolved by the metre</option>
+          <option value="accent">Accent placement and the limitation laws</option>
+          <option value="elision">Elision in the verse</option>
+          <option value="hiatus">Hiatus at word junctures</option>
+          <option value="alliteration">Adjacent alliteration windows</option>
+        </optgroup>
+        <optgroup label="Data">
+          <option value="table">Token-level phonology table</option>
+        </optgroup>
       </select>
     </div>
     <div class="field" style="max-width:140px;">
@@ -90,7 +108,7 @@ section: phonology
     </div>
   </div>
   <p class="help" style="margin:.5rem 0 0; padding:.55rem .7rem; border:1px solid var(--gold); border-radius:9px; background:rgba(194,161,78,.1);">
-    <strong>Note:</strong> these are heuristic analyses derived from normalized orthography, not a full reconstruction of Ancient Greek phonology. Letters stand in as proxies for phonemes, and syllabification follows orthographic rules rather than reconstructed pronunciation.
+    <strong>Note:</strong> the segmental and syllabic views are heuristic analyses over normalized orthography (letters as phoneme proxies, orthographic syllabification), not a reconstruction of Ancient Greek phonology. The views under “Prosody and sandhi” additionally read the corpus itself: the per-word metrical record, the accented forms, and word order in the line.
   </p>
   <p id="phonViewDesc" class="help" style="margin-top:.2rem;"></p>
   <div id="phonSummary" class="analysis-wrap" style="margin-top:.4rem;"></div>

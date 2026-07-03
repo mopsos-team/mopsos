@@ -1,19 +1,18 @@
 /* ============================================================================
- * mopsos-semantics.js — optional, self-contained semantic layer.
+ * mopsos-semantics.js — the English-to-Greek bridge.
  *
- * Learns a small distributional model of the corpus (which lemmata are used in
- * similar contexts) so the co-occurrence network can be searched by meaning:
- * type "blue" and the words the poems associate with blue surface.
- *
- * It is deliberately isolated: it reads the corpus only through the existing
- * window.MopsosSQL query API (the same SELECTs every tab already runs) and
- * never touches how the database is built, stored, loaded, or sandboxed. If it
- * fails to build, the rest of the site is unaffected — the caller just falls
- * back to the frequency-based network.
- *
- * Model: presence-based co-occurrence of content lemmata (noun/verb/adjective)
- * within a sentence, weighted by Positive Pointwise Mutual Information, compared
- * by cosine similarity. No external data or network calls.
+ * Maps an English query to Greek corpus lemmata, so any word box on the site
+ * can also be searched in English. Two transparent sources, no learned model:
+ *   1. assets/data/lexicon_en2grc.json, built offline from the LSJ
+ *      (Liddell-Scott-Jones) short definitions and restricted to corpus
+ *      lemmata (public-domain 1940 LSJ base; structured data CC BY 4.0);
+ *   2. the curated Homeric concept list below (SEED), for poetic vocabulary
+ *      the dictionary maps less directly.
+ * Greek input (with or without accents) and Beta Code are handled by the
+ * caller's adaptive search (MopsosUI.greekCombo / MopsosText); resolve() here
+ * simply reports Greek input back as its own seed. Anything distributional
+ * (which words actually co-occur with the seeds) is computed live with SQL by
+ * the pages themselves, from real sentence co-occurrence counts.
  * ========================================================================== */
 (function () {
   "use strict";
@@ -30,13 +29,6 @@
     "τις", "ἕκαστος", "ἄμφω", "οἷος", "τοῖος", "τόσος", "ὅσος", "ἄν", "πρότερος", "ὕστερος"
   ]);
 
-  let built = false;
-  let building = false;
-  let vocab = [];              // [lemma]
-  let idx = {};                // lemma -> column index
-  let vectors = [];            // vectors[i] = Map(j -> ppmi weight)
-  let norms = [];              // L2 norm of each vector
-  let normIndex = {};          // diacritic-stripped lemma -> canonical lemma
 
   // English -> Greek bridge, built offline from the LSJ (Liddell-Scott-Jones)
   // short definitions and restricted to corpus lemmata. Lets the user type any
@@ -107,158 +99,31 @@
     year: ["ἔτος", "ἐνιαυτός"], time: ["χρόνος"]
   };
 
-  function buildVectors() {
-    if (built || building) return;
-    building = true;
-    const SQL = window.MopsosSQL;
-    const posIn = "('" + CONTENT_POS.join("','") + "')";
+  function stripLemmaKey(l) { return stripDia(l); }
 
-    // 1. vocabulary: most frequent content lemmata
-    const vrows = SQL.objects(
-      "SELECT lemma AS l, COUNT(*) AS c FROM " + SQL.quoteId(SQL.table) +
-      " WHERE lemma IS NOT NULL AND lemma NOT IN ('','-') AND pos IN " + posIn +
-      " GROUP BY lemma HAVING c >= " + MIN_FREQ + " ORDER BY c DESC LIMIT " + VOCAB_SIZE + ";");
-    vocab = vrows.map((r) => r.l).filter((l) => !STOP.has(l));
-    idx = {}; vocab.forEach((l, i) => { idx[l] = i; });
-    normIndex = {};
-    vocab.forEach((l) => { const n = stripDia(l); if (!(n in normIndex)) normIndex[n] = l; });
-
-    // 2. presence-based co-occurrence within sentences
-    const toks = SQL.objects(
-      "SELECT sentence_id AS s, lemma AS l FROM " + SQL.quoteId(SQL.table) +
-      " WHERE pos IN " + posIn + " AND lemma NOT IN ('','-') ORDER BY sentence_id;");
-    const co = vocab.map(() => new Map());
-    const uni = new Float64Array(vocab.length);
-    let total = 0, p = 0;
-    while (p < toks.length) {
-      const sid = toks[p].s; const present = [];
-      while (p < toks.length && toks[p].s === sid) {
-        const i = idx[toks[p].l];
-        if (i != null && present.indexOf(i) < 0) present.push(i);
-        p++;
-      }
-      for (let a = 0; a < present.length; a++) {
-        uni[present[a]] += 1; total += 1;
-        for (let b = a + 1; b < present.length; b++) {
-          const i = present[a], j = present[b];
-          co[i].set(j, (co[i].get(j) || 0) + 1);
-          co[j].set(i, (co[j].get(i) || 0) + 1);
-        }
-      }
-    }
-
-    // 3. PPMI weighting + vector norms
-    vectors = vocab.map(() => new Map());
-    norms = new Float64Array(vocab.length);
-    for (let i = 0; i < vocab.length; i++) {
-      const vi = vectors[i]; let nn = 0;
-      co[i].forEach((cij, j) => {
-        const pmi = Math.log((cij * total) / (uni[i] * uni[j]));
-        if (pmi > 0) { vi.set(j, pmi); nn += pmi * pmi; }
-      });
-      norms[i] = Math.sqrt(nn);
-    }
-    built = true; building = false;
-  }
-
-  function dot(a, b) {
-    let s = 0, small = a, big = b;
-    if (a.size > b.size) { small = b; big = a; }
-    small.forEach((v, k) => { const w = big.get(k); if (w) s += v * w; });
-    return s;
-  }
-  function cosine(i, j) {
-    const n = norms[i] * norms[j];
-    return n ? dot(vectors[i], vectors[j]) / n : 0;
-  }
-
-  function neighbors(lemma, k) {
-    const i = idx[lemma];
-    if (i == null || !norms[i]) return [];
-    const out = [];
-    for (let j = 0; j < vocab.length; j++) {
-      if (j === i || !norms[j]) continue;
-      const s = cosine(i, j);
-      if (s > 0) out.push([j, s]);
-    }
-    out.sort((a, b) => b[1] - a[1]);
-    return out.slice(0, k || 12).map((e) => ({ lemma: vocab[e[0]], score: e[1] }));
-  }
-
-  function sameCaseClass(a, b) {
-    const ua = a[0] !== a[0].toLowerCase();
-    const ub = b[0] !== b[0].toLowerCase();
-    return ua === ub;
-  }
-  // Resolve one candidate lemma: exact first, else a diacritic-insensitive match
-  // that keeps the same case class (so lowercase "blue"/γλαυκός never resolves to
-  // the capitalised hero Γλαῦκος).
-  function resolveLemma(l) {
-    if (idx[l] != null) return l;
-    const cand = normIndex[stripDia(l)];
-    return (cand && sameCaseClass(l, cand)) ? cand : null;
-  }
-
-  /* Resolve a query (any English word via the LSJ bridge, a curated concept, a
-   * Greek lemma, or a prefix) to seed lemmata. */
+  /* Resolve a query to Greek seed lemmata.
+   * English -> bridge + curated concepts; Greek (any accents) -> itself. */
   function resolve(query) {
     const raw = String(query || "").trim();
     if (!raw) return { seeds: [], source: "none" };
+    const hasGreek = /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
+    if (hasGreek) return { seeds: [raw], source: "greek" };
     const lc = raw.toLowerCase();
     const seeds = [];
     const push = (l) => { if (l && seeds.indexOf(l) < 0) seeds.push(l); };
-
-    // 1. dictionary bridge — any English word (try the whole phrase, then its first word)
     if (bridge) {
       let hit = bridge[lc];
       if (!hit) { const fw = lc.split(/[^a-z]+/).filter(Boolean)[0]; if (fw) hit = bridge[fw]; }
       if (hit) hit.forEach((pair) => push(pair[0]));
     }
-    // 2. curated Homeric supplement
-    if (SEED[lc]) SEED[lc].forEach((l) => push(resolveLemma(l)));
-    if (seeds.length) return { seeds: seeds.slice(0, 12), source: "english" };
-
-    // 3. a Greek lemma typed directly, else a prefix match
-    const direct = resolveLemma(raw);
-    if (direct) return { seeds: [direct], source: "greek" };
-    const n = stripDia(raw);
-    const fuzzy = vocab.filter((l) => stripDia(l).indexOf(n) === 0).slice(0, 3);
-    if (fuzzy.length) return { seeds: fuzzy, source: "fuzzy" };
-    return { seeds: [], source: "none" };
-  }
-
-  /* Seeds plus their nearest semantic neighbours, ranked, capped at k. */
-  function expand(seeds, k) {
-    const acc = new Map();
-    (seeds || []).forEach((s) => {
-      acc.set(s, Math.max(acc.get(s) || 0, 1));
-      neighbors(s, k).forEach((nb) => { acc.set(nb.lemma, Math.max(acc.get(nb.lemma) || 0, nb.score)); });
-    });
-    return Array.from(acc.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, k || 24)
-      .map((e) => ({ lemma: e[0], score: e[1] }));
-  }
-
-  /* Public async build: load the English bridge, then compute the vectors.
-   * A 0ms yield lets the caller paint a "learning…" message before the
-   * (synchronous) vector build briefly occupies the main thread. */
-  function build() {
-    if (built) return Promise.resolve();
-    return loadBridge().then(function () {
-      return new Promise(function (resolve) {
-        setTimeout(function () { try { buildVectors(); } catch (e) { /* leave unbuilt */ } resolve(); }, 0);
-      });
-    });
+    if (SEED[lc]) SEED[lc].forEach(push);
+    return { seeds: seeds.slice(0, 12), source: seeds.length ? "english" : "none" };
   }
 
   window.MopsosSemantics = {
-    build: build,
     loadBridge: loadBridge,
-    isBuilt: function () { return built; },
+    isReady: function () { return bridge != null; },
     resolve: resolve,
-    neighbors: neighbors,
-    expand: expand,
     conceptList: function () { return Object.keys(SEED).sort(); }
   };
 })();
