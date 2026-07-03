@@ -4,13 +4,16 @@ title: Phonology
 section: phonology
 ---
 
-<section class="hero card">
-  <p class="kicker">MOPSOS</p>
-  <h1>Phonology <span class="wip-badge" title="Under construction">🚧 under construction</span></h1>
-  <p class="tab-desc">Phonological structure of the corpus: phoneme inventory, syllable shapes, onset/coda clusters, diphthongs, vowel quantity, sonority and alliteration, across any set of tokens you choose.</p>
-  <div class="tab-meta-row">
+<div id="phonLoadingBar" class="load-progress"><span>Loading corpus…</span></div>
+
+<section class="panel" data-open="true">
+  <button class="panel-head" type="button" aria-expanded="false">
+    <span class="panel-title">Phonology Search</span>
+    <span class="panel-toggle">&rsaquo; Expand</span>
+  </button>
+  <div class="panel-body" hidden>
+  <div class="panel-info">
     <button class="info-btn" data-info="phonInfo">What is this?</button>
-  </div>
   <div id="phonInfo" class="info-panel" hidden>
     <h4>Phonology tab</h4>
     <p>Choose which tokens to analyse and (optionally) how to limit them, then pick a single view. Each token is normalised (diacritics stripped, final ς→σ) and syllabified by the maximal-onset principle; the segmental and syllabic views are derived from that single pass, so their numbers are mutually consistent.</p>
@@ -20,9 +23,7 @@ section: phonology
       <li><strong>Prosody and sandhi</strong>: the views that go beyond orthography by reading the merged metrical record: weight by nature checked against weight by position (surfacing muta cum liquida and correption), the dichrona α ι υ resolved by how they scan, accent placement against the limitation laws, and elision and hiatus at word junctures in verse order.</li>
     </ul>
   </div>
-</section>
-
-<div id="phonLoadingBar" class="load-progress"><span>Loading corpus…</span></div>
+  </div>
 
 <div class="card">
   <h2>1. What to analyze</h2>
@@ -115,3 +116,6 @@ section: phonology
   <div class="viz-wrap" style="margin-top:.7rem;"><div id="phonChart"></div></div>
   <div id="phonTable" style="margin-top:.7rem;"></div>
 </div>
+
+  </div>
+</section>

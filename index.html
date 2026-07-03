@@ -2,178 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Morphology · MOPSOS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MoPSoS · Database of Ancient Greek Morphology, Phonology, Syntax, and Scansion</title>
+  <meta name="description" content="MoPSoS: an open-access digital corpus of Archaic Greek works searchable for morphemes, phonological and syntactic structures, and meter." />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preload" href="assets/data/corpus.sqlite.gz" as="fetch" type="application/gzip">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Cardo:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
-  <div class="bg-glow bg-glow-left" aria-hidden="true"></div>
-  <div class="bg-glow bg-glow-right" aria-hidden="true"></div>
-
-  <header class="site-header">
-    <div class="container header-shell">
-      <div class="header-inner">
-        <a class="site-brand" href="index.html">
-          <span class="brand-mark" aria-hidden="true">Μ</span>
-          <span class="brand-copy">
-            <strong>MOPSOS</strong>
-            <small>Database of Ancient Greek Morphology, Prosody, Syntax, and Scansion</small>
-          </span>
-        </a>
-        <nav class="site-nav" aria-label="Main navigation">
-          <a href="morphotactics.html" class="nav-link">Morphotactics</a>
-          <a href="index.html" class="nav-link is-active">Morphology</a>
-          <div class="nav-dropdown">
-            <button class="nav-link nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Other <span class="caret">▾</span></button>
-            <div class="nav-dropdown-menu" hidden>
-              <a href="phonology.html" class="nav-link">Phonology <span class="wip-mark" title="Under construction" aria-label="Under construction">🚧</span></a>
-              <a href="syntax.html" class="nav-link">Syntax <span class="wip-mark" title="Under construction" aria-label="Under construction">🚧</span></a>
-              <a href="prosody.html" class="nav-link">Scansion</a>
-              <a href="clustering.html" class="nav-link">Stylometry</a>
-            </div>
-          </div>
-          <a href="cite.html" class="nav-link">How to Cite</a>
-        </nav>
+<body class="page-home">
+  <main class="landing">
+    <h1 class="landing-title">MoPSoS</h1>
+    <p class="landing-sub">Database of Ancient Greek Morphology, Phonology, Syntax, and Scansion</p>
+    <p class="landing-intro">MoPSoS is an open-access digital corpus of Archaic Greek works that can be searched for linguistic sub-categories not otherwise encoded in similar databases, like morphemes, phonological and syntactic structures, and meter.</p>
+    <p class="landing-intro">MoPSoS is a work in progress being built by PhD students to answer research questions about the Ancient Greek language. The collection of texts in the database is under development.</p>
+    <div class="landing-grid">
+      <a class="pill pill-morph landing-pill" data-part="lp-morph" href="morphology.html">Morphology</a>
+      <div class="landing-logo">
+<svg class="mopsos-logo" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MoPSoS logo">
+  <g class="lp lp-morph"><path class="lp-quad" fill="#7fcbec" opacity=".3" d="M.2.26v69.38h22.42c0-1.09.16-2.62.85-4.25,1.77-4.19,6.35-7.39,11.48-7.4,5.13-.01,9.31,3.17,11.27,6.84.99,1.86,1.29,3.63,1.39,4.81,7.36,0,14.72,0,22.09,0v-22.17c.86,0,5.28-.09,8.88-3.66.54-.53,3.75-3.83,3.75-8.99,0-4.64-2.61-8.81-6.3-10.96-2.55-1.49-5.04-1.68-6.32-1.69V0C46.53.09,23.37.17.2.26Z"/><text fill="#0097da" stroke="#0097da" stroke-miterlimit="10" style="font-family:'Segoe UI','IBM Plex Sans',sans-serif;font-size:36.18px;font-weight:600" transform="translate(18.26 48.34)">Μ</text></g>
+  <g class="lp lp-phon"><path class="lp-quad" fill="#91c99a" opacity=".3" d="M139.74,0h-70.05v22.17c1.23,0,4.39.19,7.41,2.38,5.11,3.7,5.21,9.8,5.21,10.27,0,5.18-3.2,8.45-3.75,8.99-3.59,3.56-8.01,3.66-8.88,3.66v22.17c7.51,0,15.02,0,22.53,0,0,1.04.14,4.94,3.11,8.34,3.68,4.23,8.78,4.31,9.51,4.31,5.09,0,8.31-3.1,8.88-3.67,3.65-3.62,3.74-8.14,3.74-8.98,7.51,0,15.02,0,22.53,0-.09-23.21-.17-46.43-.26-69.64Z"/><text fill="#239938" stroke="#00983a" stroke-miterlimit="10" style="font-family:'Segoe UI','IBM Plex Sans',sans-serif;font-size:36.18px;font-weight:600" transform="translate(91.35 48.34)">Π</text></g>
+  <g class="lp lp-syn"><path class="lp-quad" fill="#f3d0e3" opacity=".3" d="M.46,140h69.23v-22.74c-1.19.02-4.47-.08-7.57-2.33-4.96-3.61-5.06-9.54-5.06-10.11,0-5.97,4.27-9.49,4.98-10.05,3.06-2.44,6.36-2.79,7.64-2.85v-22.27c-7.36,0-14.72,0-22.09,0-.12-1.26-.54-4.01-2.54-6.64-3.75-4.93-9.66-5.02-10.12-5.01-.56,0-6.58.12-10.12,5.11-1.85,2.6-2.15,5.3-2.21,6.54-7.47,0-14.94,0-22.42,0,.09,23.45.17,46.91.26,70.36Z"/><text fill="#e7a2c8" stroke="#e7a2c8" stroke-miterlimit="10" style="font-family:'Segoe UI','IBM Plex Sans',sans-serif;font-size:36.18px;font-weight:600" transform="translate(25.1 118.21)">Σ</text></g>
+  <g class="lp lp-scan"><path class="lp-quad" fill="#fbedbc" opacity=".3" d="M140,139.74v-70.1c-7.51,0-15.02,0-22.53,0,0,6.94-5.7,12.65-12.62,12.65s-12.62-5.71-12.62-12.65c-7.51,0-15.02,0-22.53,0v22.27c-1.28.07-4.58.42-7.64,2.85-.71.56-4.98,4.08-4.98,10.05,0,.57.1,6.5,5.06,10.11,3.1,2.26,6.38,2.35,7.57,2.33l.1,22.74c23.4-.09,46.81-.17,70.21-.26Z"/><text fill="#f9dc78" stroke="#f9dc78" stroke-miterlimit="10" style="font-family:'Segoe UI','IBM Plex Sans',sans-serif;font-size:36.18px;font-weight:600" transform="translate(94.95 117.97)">Σ</text></g>
+</svg>
       </div>
+      <a class="pill pill-phon landing-pill" data-part="lp-phon" href="phonology.html">Phonology</a>
+      <a class="pill pill-syn landing-pill" data-part="lp-syn" href="syntax.html">Syntax</a>
+      <a class="pill pill-scan landing-pill" data-part="lp-scan" href="prosody.html">Scansion</a>
     </div>
-  </header>
-
-  <main class="container site-main">
-    <section class="hero card">
-      <p class="kicker">MOPSOS</p>
-      <h1>Morphology</h1>
-      <p class="tab-desc">Browse and query the morphologically annotated corpus, in which every token is tagged for part of speech, case, number, tense, mood, voice, gender, and degree, and chart how those features are distributed.</p>
-      <div class="tab-meta-row">
-        <button class="info-btn" data-info="morphInfo">What is this?</button>
-      </div>
-      <div id="morphInfo" class="info-panel" hidden>
-        <h4>Morphology tab</h4>
-        <p>There are three ways to explore the corpus:</p>
-        <ul>
-          <li><strong>Quick filter</strong>: pick a part of speech and MOPSOS shows only the grammatical features that actually apply to it.</li>
-          <li><strong>Custom queries</strong>: tucked inside the Quick filter, for writing your own read-only queries by hand. Press <kbd>Enter</kbd> to run.</li>
-          <li><strong>Explore &amp; visualize</strong>: count tokens by any dimension (book, lemma, case…), optionally broken down by a second dimension, under any filter. For example: which books have the most aorist optatives, or how noun number and case combine.</li>
-        </ul>
-      </div>
-    </section>
-
-    <div id="morphLoadStatus" class="load-progress"><span>Loading corpus…</span></div>
-
-    <div class="card">
-      <h2>Quick filter</h2>
-      <p class="help" style="margin-top:-.35rem;">Pick a part of speech to reveal the features that apply to it; choose any values and Apply. Results are paginated 50 per page.</p>
-      <div id="qfGroup" class="filter-group"></div>
-      <div class="btn-row">
-        <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply filter</button>
-        <button id="btnResetFilter" class="btn">Reset</button>
-        <button class="adv-toggle btn" data-adv="qfSqlPanel">Edit underlying SQL ▾</button>
-      </div>
-
-      <div id="qfSqlPanel" class="adv-panel" hidden>
-        <p class="help">Read-only SQL over table <code>morphology</code>. Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. <kbd>Enter</kbd> runs · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line · results are not paginated.</p>
-        <textarea id="qfSqlInput" spellcheck="false"></textarea>
-        <div class="btn-row" style="margin-top:.5rem;">
-          <button id="qfSqlRun" class="btn btn-primary">Run</button>
-        </div>
-        <div id="qfSqlExamples" class="btn-row" style="margin-top:.45rem;flex-wrap:wrap;"></div>
-        <pre id="qfSqlStatus" class="status" style="margin-top:.55rem;">Ready: write SQL and press Enter.</pre>
-        <div id="qfSqlOut" style="margin-top:.5rem;"></div>
-      </div>
-
-      <div id="qfResults" style="margin-top:.7rem;"></div>
-    </div>
-
-    <div class="card">
-      <h2>Explore &amp; visualize</h2>
-      <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, cross-tabulate two of them, or draw a co-occurrence network of words that share a sentence. Add filters to focus. For example, set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
-      <div class="grid-3">
-        <div class="field">
-          <label for="exChartType"><strong>Chart</strong></label>
-          <select id="exChartType">
-            <option value="bars" selected>Bar chart</option>
-            <option value="heatmap">Heat-map (two dimensions)</option>
-            <option value="grouped">Grouped bars (compare two dimensions)</option>
-            <option value="proportion">Composition (100% stacked)</option>
-            <option value="paradigm">Paradigm of one lemma</option>
-            <option value="network">Co-occurrence network</option>
-          </select>
-        </div>
-        <div class="field" id="exDim1Wrap">
-          <label for="exDim1"><strong>Count by</strong></label>
-          <select id="exDim1" disabled></select>
-        </div>
-        <div class="field" id="exDim2Wrap">
-          <label for="exDim2"><strong>Break down by</strong></label>
-          <select id="exDim2" disabled></select>
-        </div>
-        <div class="field" id="exNodeUnitWrap" hidden>
-          <label for="exNodeUnit"><strong>Nodes are</strong></label>
-          <select id="exNodeUnit">
-            <option value="lemma" selected>Lemmata</option>
-            <option value="form">Word forms</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="exTopN"><strong>Show top</strong></label>
-          <select id="exTopN">
-            <option value="10">10</option>
-            <option value="20" selected>20</option>
-            <option value="30">30</option>
-            <option value="50">50</option>
-          </select>
-        </div>
-      </div>
-      <div class="field" id="exLemmaWrap" hidden>
-        <label for="exLemma"><strong>Lemma</strong></label>
-        <div class="combo">
-          <input type="text" id="exLemma" autocomplete="off" spellcheck="false" placeholder="e.g. μῆνις (accents optional), or Beta Code like mhnis; click to browse">
-          <div id="exLemmaMenu" class="combo-menu" hidden></div>
-        </div>
-      </div>
-      <div class="field" id="exSemanticWrap" hidden>
-        <label for="exSemantic"><strong>Search by lemma</strong> <span class="help">(optional)</span></label>
-        <div class="combo">
-          <input type="text" id="exSemantic" autocomplete="off" spellcheck="false" placeholder="a Greek lemma (accents optional) or Beta Code like mhnis; click to browse. Blank = most frequent.">
-          <div id="exSemanticMenu" class="combo-menu" hidden></div>
-        </div>
-        <p class="help" id="exSemanticNote" style="margin:.25rem 0 0;">Greek and Beta Code match the corpus lemma list directly (accent-insensitive). The network shows the words that actually share a sentence with the chosen lemma, counted live from the corpus.</p>
-      </div>
-      <details style="margin:.2rem 0 .5rem;">
-        <summary class="help" style="cursor:pointer;">Limit by (optional)</summary>
-        <div class="grid-2" style="margin-top:.5rem;">
-          <div class="field">
-            <label for="exLimitWork"><strong>Limit to work</strong></label>
-            <select id="exLimitWork"><option value="">(all works)</option></select>
-          </div>
-          <div class="field">
-            <label for="exLimitAuthor"><strong>Limit to author</strong></label>
-            <select id="exLimitAuthor"><option value="">(all authors)</option></select>
-          </div>
-        </div>
-        <label style="display:block;margin:.2rem 0 .3rem;"><strong>Limit to grammar</strong></label>
-        <div id="exGroup" class="filter-group"></div>
-      </details>
-      <div class="btn-row">
-        <button id="btnExRun" class="btn btn-primary" disabled>Draw chart</button>
-        <button id="btnExReset" class="btn">Reset filters</button>
-      </div>
-      <h3 id="exTitle" style="margin:.8rem 0 .15rem;"></h3>
-      <p id="exDesc" class="small-muted" style="margin:0 0 .4rem;"></p>
-      <div id="exChart" class="viz-wrap"></div>
+    <div class="landing-row">
+      <a class="pill pill-cite landing-pill" href="cite.html">About</a>
     </div>
   </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-  <script src="assets/js/papa-fallback.js"></script>
-  <script src="assets/js/mopsos-shared.js"></script>
-  <script src="assets/js/morphology-standalone.js"></script>
+  <script>
+    (function () {
+      var logo = document.querySelector(".landing .mopsos-logo");
+      if (!logo) return;
+      document.querySelectorAll(".landing-pill[data-part]").forEach(function (pill) {
+        var part = logo.querySelector("." + pill.getAttribute("data-part"));
+        if (!part) return;
+        pill.addEventListener("mouseenter", function () { logo.classList.add("dim"); part.classList.add("lit"); });
+        pill.addEventListener("mouseleave", function () { logo.classList.remove("dim"); part.classList.remove("lit"); });
+        pill.addEventListener("focus", function () { logo.classList.add("dim"); part.classList.add("lit"); });
+        pill.addEventListener("blur", function () { logo.classList.remove("dim"); part.classList.remove("lit"); });
+      });
+    })();
+  </script>
 </body>
 </html>

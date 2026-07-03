@@ -4,13 +4,16 @@ title: Prosody
 section: prosody
 ---
 
-<section class="hero card">
-  <p class="kicker">MOPSOS</p>
-  <h1>Scansion</h1>
-  <p class="tab-desc">Analyse the metre of Homeric hexameter: scan lines into feet, profile syllable quantities, and measure rhythm across the <em>Iliad</em> and <em>Odyssey</em>.</p>
-  <div class="tab-meta-row">
+<div id="scanLoadStatus" class="load-progress"><span>Loading scansion corpus…</span></div>
+
+<section class="panel" data-open="true">
+  <button class="panel-head" type="button" aria-expanded="false">
+    <span class="panel-title">Meter Search</span>
+    <span class="panel-toggle">&rsaquo; Expand</span>
+  </button>
+  <div class="panel-body" hidden>
+  <div class="panel-info">
     <button class="info-btn" data-info="prosodyInfo">What is this?</button>
-  </div>
   <div id="prosodyInfo" class="info-panel" hidden>
     <h4>Scansion tab</h4>
     <p>Scansion marks each syllable of a line as long or short and groups the syllables into feet, each a dactyl (¯ ˘ ˘) or a spondee (¯ ¯). Every word in the corpus carries its own metrical record: its syllable shape and the feet it occupies in the line. All of the views here are computed from that record.</p>
@@ -19,9 +22,7 @@ section: prosody
       <li><strong>Limit the scope</strong> to the <em>Iliad</em>, the <em>Odyssey</em>, or a single book before running.</li>
     </ul>
   </div>
-</section>
-
-<div id="scanLoadStatus" class="load-progress"><span>Loading scansion corpus…</span></div>
+  </div>
 
 <div class="card">
   <h2>What to view</h2>
@@ -105,3 +106,6 @@ section: prosody
   <div class="viz-wrap" style="margin-top:.7rem;"><div id="scanChart"></div></div>
   <div id="scanTable" style="margin-top:.7rem;"></div>
 </div>
+
+  </div>
+</section>

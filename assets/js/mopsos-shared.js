@@ -738,10 +738,35 @@
     api.wordDetail(w, t);
   });
 
+  /* --------------------------------------------------------------------------
+   * Collapsible page panels: every top-level section on a tab renders as a
+   * contracted bar (title + "Expand"); clicking the bar reveals the body.
+   * Markup: <section class="panel"><button class="panel-head">...
+   * <div class="panel-body" hidden>...</div></section>. A panel with
+   * data-open="true" starts expanded (used on How to Cite).
+   * ------------------------------------------------------------------------ */
+  api.wirePanels = function () {
+    document.querySelectorAll(".panel").forEach((panel) => {
+      const head = panel.querySelector(".panel-head");
+      const body = panel.querySelector(".panel-body");
+      const tog = panel.querySelector(".panel-toggle");
+      if (!head || !body) return;
+      const set = (open) => {
+        body.hidden = !open;
+        panel.classList.toggle("is-open", open);
+        head.setAttribute("aria-expanded", open ? "true" : "false");
+        if (tog) tog.innerHTML = open ? "&#94; Reduce" : "&rsaquo; Expand";
+      };
+      set(panel.getAttribute("data-open") === "true");
+      head.addEventListener("click", () => set(body.hidden));
+    });
+  };
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => { api.wireInfoButtons(); api.wireAdvancedToggles(); api.wireNavDropdown(); });
+    document.addEventListener("DOMContentLoaded", () => { api.wireInfoButtons(); api.wirePanels(); api.wireAdvancedToggles(); api.wireNavDropdown(); });
   } else {
-    api.wireInfoButtons(); api.wireAdvancedToggles(); api.wireNavDropdown();
+    api.wireInfoButtons();
+    api.wirePanels(); api.wireAdvancedToggles(); api.wireNavDropdown();
   }
 
   window.MopsosUI = api;
@@ -859,7 +884,7 @@
     panel.classList.add("fig-fit");
     const tg = document.createElement("button");
     tg.type = "button"; tg.className = "fig-dl";
-    const setLbl = () => { tg.textContent = panel.classList.contains("fig-full") ? "\u2921 Shrink panel" : "\u2922 Enlarge panel"; };
+    const setLbl = () => { tg.textContent = panel.classList.contains("fig-full") ? "\u2921 Shrink figure" : "\u2922 Enlarge figure"; };
     setLbl();
     tg.addEventListener("click", () => { panel.classList.toggle("fig-full"); setLbl(); });
     bar.appendChild(tg);
@@ -881,7 +906,21 @@
 
   const api = {
     PALETTE,
-    color(i) { return PALETTE[((i % PALETTE.length) + PALETTE.length) % PALETTE.length]; },
+    // The first series color follows the page accent from the style guide
+    // (read once, as a concrete hex, so serialized SVG/PNG downloads keep it).
+    _themed: false,
+    color(i) {
+      if (!this._themed) {
+        this._themed = true;
+        try {
+          const acc = getComputedStyle(document.body).getPropertyValue("--acc").trim();
+          const ink = getComputedStyle(document.body).getPropertyValue("--acc-ink").trim();
+          if (/^#[0-9a-fA-F]{3,8}$/.test(acc)) { PALETTE[0] = acc; }
+          if (/^#[0-9a-fA-F]{3,8}$/.test(ink)) { PALETTE[1] = ink; }
+        } catch (e) { /* keep defaults */ }
+      }
+      return PALETTE[((i % PALETTE.length) + PALETTE.length) % PALETTE.length];
+    },
 
     /**
      * Horizontal bar chart.
@@ -913,7 +952,7 @@
         .attr("class", "lab")
         .attr("x", margin.left - 8).attr("y", (d) => y(d.label) + y.bandwidth() / 2)
         .attr("text-anchor", "end").attr("dominant-baseline", "central")
-        .attr("font-size", 12).attr("fill", "#374151")
+        .attr("font-size", 11).attr("fill", "#374151")
         .text((d) => d.label.length > 28 ? d.label.slice(0, 27) + "…" : d.label)
         .append("title").text((d) => d.label);
 
@@ -934,7 +973,7 @@
       root.append("g").selectAll("text.val").data(data).join("text")
         .attr("class", "val")
         .attr("x", (d) => x(d.value) + 6).attr("y", (d) => y(d.label) + y.bandwidth() / 2)
-        .attr("dominant-baseline", "central").attr("font-size", 11).attr("fill", "#475569")
+        .attr("dominant-baseline", "central").attr("font-size", 10).attr("fill", "#475569")
         .text((d) => opts.valueFormat ? opts.valueFormat(d.value) : d.value);
     },
 
@@ -965,7 +1004,7 @@
 
       root.append("g").attr("transform", "translate(0," + (height - margin.bottom) + ")")
         .call(d3.axisBottom(x0)).selectAll("text")
-        .attr("transform", "rotate(-35)").style("text-anchor", "end").attr("font-size", 11);
+        .attr("transform", "rotate(-35)").style("text-anchor", "end").attr("font-size", 10);
       root.append("g").attr("transform", "translate(" + margin.left + ",0)").call(d3.axisLeft(y).ticks(6));
 
       const groups = root.append("g").selectAll("g").data(matrix).join("g")
@@ -987,7 +1026,7 @@
       colLabels.forEach((c, i) => {
         const g = lg.append("g").attr("transform", "translate(" + lx + ",0)");
         g.append("rect").attr("width", 11).attr("height", 11).attr("rx", 2).attr("fill", api.color(i));
-        const txt = g.append("text").attr("x", 15).attr("y", 10).attr("font-size", 11).attr("fill", "#475569").text(c);
+        const txt = g.append("text").attr("x", 15).attr("y", 10).attr("font-size", 10).attr("fill", "#475569").text(c);
         lx += 28 + (c.length * 6.4);
         if (lx > width - margin.right - 40) { /* leave it; rare overflow */ }
         void txt;
@@ -1023,7 +1062,7 @@
 
       root.append("g").attr("transform", "translate(0," + (height - margin.bottom) + ")")
         .call(d3.axisBottom(x)).selectAll("text")
-        .attr("transform", "rotate(-35)").style("text-anchor", "end").attr("font-size", 11);
+        .attr("transform", "rotate(-35)").style("text-anchor", "end").attr("font-size", 10);
       root.append("g").attr("transform", "translate(" + margin.left + ",0)").call(d3.axisLeft(y).ticks(6));
 
       root.append("g").selectAll("g").data(series).join("g")
@@ -1082,7 +1121,7 @@
           if (opts.showValues && Number.isFinite(v) && cell >= 30) {
             root.append("text").attr("x", x(c) + cell / 2).attr("y", y(r) + cell / 2)
               .attr("text-anchor", "middle").attr("dominant-baseline", "central")
-              .attr("font-size", 9).attr("fill", "#fff").attr("pointer-events", "none")
+              .attr("font-size", 8.5).attr("fill", "#fff").attr("pointer-events", "none")
               .text(opts.valueFormat ? opts.valueFormat(v) : v);
           }
         }
@@ -1090,14 +1129,14 @@
       // column labels (rotated)
       colLabels.forEach((c, i) => {
         root.append("text").attr("x", x(i) + cell / 2).attr("y", margin.top - 8)
-          .attr("text-anchor", "start").attr("font-size", 11).attr("fill", "#374151")
+          .attr("text-anchor", "start").attr("font-size", 10).attr("fill", "#374151")
           .attr("transform", "rotate(-45," + (x(i) + cell / 2) + "," + (margin.top - 8) + ")")
           .text(String(c).length > 16 ? String(c).slice(0, 15) + "…" : c);
       });
       // row labels
       rowLabels.forEach((r, i) => {
         root.append("text").attr("x", margin.left - 6).attr("y", y(i) + cell / 2)
-          .attr("text-anchor", "end").attr("dominant-baseline", "central").attr("font-size", 11).attr("fill", "#374151")
+          .attr("text-anchor", "end").attr("dominant-baseline", "central").attr("font-size", 10).attr("fill", "#374151")
           .text(String(r).length > 22 ? String(r).slice(0, 21) + "…" : r);
       });
     },
@@ -1138,7 +1177,7 @@
       if (opts.labels !== false) {
         root.append("g").selectAll("text").data(points).join("text")
           .attr("x", (d) => x(d.x) + 8).attr("y", (d) => y(d.y) - 6)
-          .attr("font-size", 10).attr("fill", "#334155")
+          .attr("font-size", 9).attr("fill", "#334155")
           .text((d) => d.label || "");
       }
     },
@@ -1220,7 +1259,7 @@
             .style("left", (ev.pageX + 12) + "px").style("top", (ev.pageY - 12) + "px");
         })
         .on("mouseleave", () => tip.style("opacity", 0));
-      node.append("text").attr("x", 12).attr("y", 4).attr("font-size", 11).attr("fill", "#334155")
+      node.append("text").attr("x", 12).attr("y", 4).attr("font-size", 10).attr("fill", "#334155")
         .text((d) => d.label || d.id);
 
       // Reframe the viewBox around all nodes (+ their labels) so the whole graph is visible at once.
@@ -1291,9 +1330,9 @@
       Object.keys(attrs).forEach((k) => t.setAttribute(k, attrs[k]));
       node.appendChild(t);
     };
-    if (opts.title) put(opts.title, { x: (w + padLeft) / 2, y: 17, "text-anchor": "middle", "font-size": 14, "font-weight": 600, fill: "#1f2937" });
-    if (xLabel) put(xLabel, { x: padLeft + w / 2, y: padTop + h + 15, "text-anchor": "middle", "font-size": 11.5, fill: "#475569" });
-    if (yLabel) put(yLabel, { x: 12, y: padTop + h / 2, "text-anchor": "middle", "font-size": 11.5, fill: "#475569",
+    if (opts.title) put(opts.title, { x: (w + padLeft) / 2, y: 17, "text-anchor": "middle", "font-size": 12.5, "font-weight": 600, fill: "#1f2937" });
+    if (xLabel) put(xLabel, { x: padLeft + w / 2, y: padTop + h + 15, "text-anchor": "middle", "font-size": 10.5, fill: "#475569" });
+    if (yLabel) put(yLabel, { x: 12, y: padTop + h / 2, "text-anchor": "middle", "font-size": 10.5, fill: "#475569",
       transform: "rotate(-90 12 " + (padTop + h / 2) + ")" });
   }
   ["bars", "groupedBars", "stackedBars", "heatmap", "histogram"].forEach((fn) => {

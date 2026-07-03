@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Morphology · MOPSOS</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preload" href="assets/data/corpus.sqlite.gz" as="fetch" type="application/gzip">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Cardo:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body class="page-morphology">
+
+  <header class="site-header">
+    <div class="container">
+      <nav class="pill-nav" aria-label="Main navigation">
+        <a class="nav-logo" href="index.html" aria-label="MoPSoS home"><svg class="mopsos-logo" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MoPSoS logo">  <g class="lp lp-morph"><path class="lp-quad" fill="#7fcbec" opacity=".3" d="M.2.26v69.38h22.42c0-1.09.16-2.62.85-4.25,1.77-4.19,6.35-7.39,11.48-7.4,5.13-.01,9.31,3.17,11.27,6.84.99,1.86,1.29,3.63,1.39,4.81,7.36,0,14.72,0,22.09,0v-22.17c.86,0,5.28-.09,8.88-3.66.54-.53,3.75-3.83,3.75-8.99,0-4.64-2.61-8.81-6.3-10.96-2.55-1.49-5.04-1.68-6.32-1.69V0C46.53.09,23.37.17.2.26Z"/><text fill="#0097da" stroke="#0097da" stroke-miterlimit="10" style="font-family:'Segoe UI','IBM Plex Sans',sans-serif;font-size:36.18px;font-weight:600" transform="translate(18.26 48.34)">Μ</text></g>  <g class="lp lp-phon"><path class="lp-quad" fill="#91c99a" opacity=".3" d="M139.74,0h-70.05v22.17c1.23,0,4.39.19,7.41,2.38,5.11,3.7,5.21,9.8,5.21,10.27,0,5.18-3.2,8.45-3.75,8.99-3.59,3.56-8.01,3.66-8.88,3.66v22.17c7.51,0,15.02,0,22.53,0,0,1.04.14,4.94,3.11,8.34,3.68,4.23,8.78,4.31,9.51,4.31,5.09,0,8.31-3.1,8.88-3.67,3.65-3.62,3.74-8.14,3.74-8.98,7.51,0,15.02,0,22.53,0-.09-23.21-.17-46.43-.26-69.64Z"/><text fill="#239938" stroke="#00983a" stroke-miterlimit="10" style="font-family:'Segoe UI','IBM Plex Sans',sans-serif;font-size:36.18px;font-weight:600" transform="translate(91.35 48.34)">Π</text></g>  <g class="lp lp-syn"><path class="lp-quad" fill="#f3d0e3" opacity=".3" d="M.46,140h69.23v-22.74c-1.19.02-4.47-.08-7.57-2.33-4.96-3.61-5.06-9.54-5.06-10.11,0-5.97,4.27-9.49,4.98-10.05,3.06-2.44,6.36-2.79,7.64-2.85v-22.27c-7.36,0-14.72,0-22.09,0-.12-1.26-.54-4.01-2.54-6.64-3.75-4.93-9.66-5.02-10.12-5.01-.56,0-6.58.12-10.12,5.11-1.85,2.6-2.15,5.3-2.21,6.54-7.47,0-14.94,0-22.42,0,.09,23.45.17,46.91.26,70.36Z"/><text fill="#e7a2c8" stroke="#e7a2c8" stroke-miterlimit="10" style="font-family:'Segoe UI','IBM Plex Sans',sans-serif;font-size:36.18px;font-weight:600" transform="translate(25.1 118.21)">Σ</text></g>  <g class="lp lp-scan"><path class="lp-quad" fill="#fbedbc" opacity=".3" d="M140,139.74v-70.1c-7.51,0-15.02,0-22.53,0,0,6.94-5.7,12.65-12.62,12.65s-12.62-5.71-12.62-12.65c-7.51,0-15.02,0-22.53,0v22.27c-1.28.07-4.58.42-7.64,2.85-.71.56-4.98,4.08-4.98,10.05,0,.57.1,6.5,5.06,10.11,3.1,2.26,6.38,2.35,7.57,2.33l.1,22.74c23.4-.09,46.81-.17,70.21-.26Z"/><text fill="#f9dc78" stroke="#f9dc78" stroke-miterlimit="10" style="font-family:'Segoe UI','IBM Plex Sans',sans-serif;font-size:36.18px;font-weight:600" transform="translate(94.95 117.97)">Σ</text></g></svg></a>
+        <a href="morphology.html" class="pill pill-morph is-active">Morphology</a>
+        <a href="phonology.html" class="pill pill-phon">Phonology <span class="wip-mark" title="Under construction">🚧</span></a>
+        <a href="syntax.html" class="pill pill-syn">Syntax <span class="wip-mark" title="Under construction">🚧</span></a>
+        <a href="prosody.html" class="pill pill-scan">Scansion</a>
+        <a href="cite.html" class="pill pill-cite">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container site-main">
+    <div id="morphLoadStatus" class="load-progress"><span>Loading corpus…</span></div>
+    <div id="mtLoadStatus" class="load-progress" style="display:none"><span>Loading corpus…</span></div>
+    <div id="clusterLoadStatus" class="load-progress" style="display:none"><span>Loading corpus…</span></div>
+
+  <section class="panel">
+    <button class="panel-head" type="button" aria-expanded="false">
+      <span class="panel-title">Word Search</span>
+      <span class="panel-toggle">&rsaquo; Expand</span>
+    </button>
+    <div class="panel-body" hidden>
+    <div class="panel-info">
+      <div class="tab-meta-row">
+      <button class="info-btn" data-info="morphInfo">What is this?</button>
+    </div>
+    <div id="morphInfo" class="info-panel" hidden>
+      <h4>Morphology tab</h4>
+      <p>There are three ways to explore the corpus:</p>
+      <ul>
+        <li><strong>Filter</strong>: pick a part of speech and MOPSOS shows only the grammatical features that actually apply to it.</li>
+        <li><strong>Custom queries</strong>: tucked inside the Filter card, for writing your own read-only queries by hand. Press <kbd>Enter</kbd> to run.</li>
+        <li><strong>Distribution Charts</strong>: count tokens by any dimension (book, lemma, case…), optionally broken down by a second dimension, under any filter. For example: which books have the most aorist optatives, or how noun number and case combine.</li>
+      </ul>
+    </div>
+    </div>
+    <div class="card">
+      <h2>Filter</h2>
+      <p class="help" style="margin-top:-.35rem;">Pick a part of speech to reveal the features that apply to it; choose any values and Apply. Results are paginated 50 per page.</p>
+      <div id="qfGroup" class="filter-group"></div>
+      <div class="btn-row">
+        <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply filter</button>
+        <button id="btnResetFilter" class="btn">Reset</button>
+        <button class="adv-toggle btn" data-adv="qfSqlPanel">Edit underlying SQL ▾</button>
+      </div>
+
+      <div id="qfSqlPanel" class="adv-panel" hidden>
+        <p class="help">Read-only SQL over table <code>morphology</code>. Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. <kbd>Enter</kbd> runs · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line · results are not paginated.</p>
+        <textarea id="qfSqlInput" spellcheck="false"></textarea>
+        <div class="btn-row" style="margin-top:.5rem;">
+          <button id="qfSqlRun" class="btn btn-primary">Run</button>
+        </div>
+        <div id="qfSqlExamples" class="btn-row" style="margin-top:.45rem;flex-wrap:wrap;"></div>
+        <pre id="qfSqlStatus" class="status" style="margin-top:.55rem;">Ready: write SQL and press Enter.</pre>
+        <div id="qfSqlOut" style="margin-top:.5rem;"></div>
+      </div>
+
+      <div id="qfResults" style="margin-top:.7rem;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Distribution Charts</h2>
+      <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, cross-tabulate two of them, or draw a co-occurrence network of words that share a sentence. Add filters to focus. For example, set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
+      <div class="grid-3">
+        <div class="field">
+          <label for="exChartType"><strong>Chart</strong></label>
+          <select id="exChartType">
+            <option value="bars" selected>Bar chart</option>
+            <option value="heatmap">Heat-map (two dimensions)</option>
+            <option value="grouped">Grouped bars (compare two dimensions)</option>
+            <option value="proportion">Composition (100% stacked)</option>
+            <option value="paradigm">Paradigm of one lemma</option>
+            <option value="network">Co-occurrence network</option>
+          </select>
+        </div>
+        <div class="field" id="exDim1Wrap">
+          <label for="exDim1"><strong>Count by</strong></label>
+          <select id="exDim1" disabled></select>
+        </div>
+        <div class="field" id="exDim2Wrap">
+          <label for="exDim2"><strong>Break down by</strong></label>
+          <select id="exDim2" disabled></select>
+        </div>
+        <div class="field" id="exNodeUnitWrap" hidden>
+          <label for="exNodeUnit"><strong>Nodes are</strong></label>
+          <select id="exNodeUnit">
+            <option value="lemma" selected>Lemmata</option>
+            <option value="form">Word forms</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="exTopN"><strong>Show top</strong></label>
+          <select id="exTopN">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" id="exLemmaWrap" hidden>
+        <label for="exLemma"><strong>Lemma</strong></label>
+        <div class="combo">
+          <input type="text" id="exLemma" autocomplete="off" spellcheck="false" placeholder="e.g. μῆνις (accents optional), or Beta Code like mhnis; click to browse">
+          <div id="exLemmaMenu" class="combo-menu" hidden></div>
+        </div>
+      </div>
+      <div class="field" id="exSemanticWrap" hidden>
+        <label for="exSemantic"><strong>Search by lemma</strong> <span class="help">(optional)</span></label>
+        <div class="combo">
+          <input type="text" id="exSemantic" autocomplete="off" spellcheck="false" placeholder="a Greek lemma (accents optional) or Beta Code like mhnis; click to browse. Blank = most frequent.">
+          <div id="exSemanticMenu" class="combo-menu" hidden></div>
+        </div>
+        <p class="help" id="exSemanticNote" style="margin:.25rem 0 0;">Greek and Beta Code match the corpus lemma list directly (accent-insensitive). The network shows the words that actually share a sentence with the chosen lemma, counted live from the corpus.</p>
+      </div>
+      <details style="margin:.2rem 0 .5rem;">
+        <summary class="help" style="cursor:pointer;">Limit by (optional)</summary>
+        <div class="grid-2" style="margin-top:.5rem;">
+          <div class="field">
+            <label for="exLimitWork"><strong>Limit to work</strong></label>
+            <select id="exLimitWork"><option value="">(all works)</option></select>
+          </div>
+          <div class="field">
+            <label for="exLimitAuthor"><strong>Limit to author</strong></label>
+            <select id="exLimitAuthor"><option value="">(all authors)</option></select>
+          </div>
+        </div>
+        <label style="display:block;margin:.2rem 0 .3rem;"><strong>Limit to grammar</strong></label>
+        <div id="exGroup" class="filter-group"></div>
+      </details>
+      <div class="btn-row">
+        <button id="btnExRun" class="btn btn-primary" disabled>Draw chart</button>
+        <button id="btnExReset" class="btn">Reset filters</button>
+      </div>
+      <h3 id="exTitle" style="margin:.8rem 0 .15rem;"></h3>
+      <p id="exDesc" class="small-muted" style="margin:0 0 .4rem;"></p>
+      <div id="exChart" class="viz-wrap"></div>
+    </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <button class="panel-head" type="button" aria-expanded="false">
+      <span class="panel-title">Compound Search</span>
+      <span class="panel-toggle">&rsaquo; Expand</span>
+    </button>
+    <div class="panel-body" hidden>
+<div class="card">
+  <h2>Nominal compounds</h2>
+  <div class="tab-meta-row"><button class="info-btn" data-info="mtCmpInfo">What is this?</button></div>
+  <div id="mtCmpInfo" class="info-panel" hidden>
+    <h4>Nominal compounds panel</h4>
+    <p>Filter the analyzed compounds by first member, second member, member category, or attesting work; see which members are commonest, how the member categories pair up, and where the matching compounds sit in the verse.</p>
+    <ul>
+      <li><strong>Members</strong>: pick a specific member (type Greek with or without accents, or Beta Code, or click to browse the attested members) <em>or</em> a member category; a specific member fixes its category anyway, so use whichever is handier. The member values come from the compound analysis itself, and the two slots combine freely.</li>
+      <li><strong>Lookup</strong>: choosing one compound shows its members, every metrical position it takes in the verse (form, shape, feet, princeps or biceps start), every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
+    </ul>
+  </div>
+  <div class="mt-controls">
+    <div class="grid-2">
+      <div class="field">
+        <label for="mtCmpM1"><strong>First member</strong></label>
+        <div class="combo">
+          <input id="mtCmpM1" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ἀ/ἀν, εὐ, πολύς, or Beta Code like eu…; click to browse">
+          <div id="mtCmpM1Menu" class="combo-menu" hidden></div>
+        </div>
+      </div>
+      <div class="field"><label for="mtCmpM1Cat"><strong>or first-member category</strong></label><select id="mtCmpM1Cat"><option value="">(any category)</option></select></div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label for="mtCmpM2"><strong>Second member</strong></label>
+        <div class="combo">
+          <input id="mtCmpM2" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. μάχομαι, ἵππος, or Beta Code like maxomai…; click to browse">
+          <div id="mtCmpM2Menu" class="combo-menu" hidden></div>
+        </div>
+      </div>
+      <div class="field"><label for="mtCmpM2Cat"><strong>or second-member category</strong></label><select id="mtCmpM2Cat"><option value="">(any category)</option></select></div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label for="mtCmpWork"><strong>Attested in</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
+    </div>
+    <div class="field">
+      <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">(optional)</span></label>
+      <div class="combo">
+        <input id="mtCmpSearch" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek (accents optional) or Beta Code, e.g. ῥοδοδάκτυλος or rododaktulos, or click to browse…">
+        <div id="mtCmpSearchMenu" class="combo-menu" hidden></div>
+      </div>
+      <div id="mtCmpDetail" style="margin-top:.5rem;"></div>
+    </div>
+  </div>
+  <div id="mtCmpPairSec">
+    <p id="mtCmpDesc" class="help" style="margin-top:.4rem;"></p>
+    <div class="viz-wrap"><div id="mtCmpChart"></div></div>
+    <div id="mtCmpTable" style="margin-top:.8rem;"></div>
+  </div>
+  <div id="mtCmpMembersSec">
+    <h3 style="margin-top:1rem;">Members of the matching compounds</h3>
+    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Pick a category and this shows which members carry it.</p>
+    <div class="grid-2">
+      <div class="viz-wrap" id="mtCmpM1Wrap"><div id="mtCmpM1Chart"></div></div>
+      <div class="viz-wrap" id="mtCmpM2Wrap"><div id="mtCmpM2Chart"></div></div>
+    </div>
+  </div>
+  <div id="mtCmpLocSec" hidden>
+    <h3 style="margin-top:1rem;">Metrical localization</h3>
+    <p id="mtCmpLocNote" class="help" style="margin-top:.1rem;"></p>
+    <div class="viz-wrap"><div id="mtCmpLocChart"></div></div>
+  </div>
+  <details style="margin-top:.8rem;">
+    <summary class="small-muted" style="cursor:pointer;">Show generated SQL</summary>
+    <pre id="mtCmpSql" class="status" style="margin-top:.5rem;"></pre>
+  </details>
+</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <button class="panel-head" type="button" aria-expanded="false">
+      <span class="panel-title">Infinitive Search</span>
+      <span class="panel-toggle">&rsaquo; Expand</span>
+    </button>
+    <div class="panel-body" hidden>
+<div class="card">
+  <h2>Infinitive forms</h2>
+  <p class="help" style="margin-top:-.3rem;">Tense and voice combinations attested among infinitives.</p>
+  <div class="mt-controls">
+    <div class="grid-3">
+      <div class="field"><label for="mtInfWork"><strong>Restrict to work</strong></label><select id="mtInfWork"><option value="">(all works)</option></select></div>
+    </div>
+    <div class="field">
+      <label for="mtInfSearch"><strong>Look up a verb's infinitives</strong> <span class="help">(optional, by lemma)</span></label>
+      <div class="combo">
+        <input id="mtInfSearch" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek (accents optional) or Beta Code, e.g. λύω or luw, or click to browse…">
+        <div id="mtInfSearchMenu" class="combo-menu" hidden></div>
+      </div>
+      <div id="mtInfDetail" style="margin-top:.5rem;"></div>
+    </div>
+  </div>
+  <p id="mtInfDesc" class="help" style="margin-top:.4rem;"></p>
+  <div class="viz-wrap"><div id="mtInfChart"></div></div>
+  <div id="mtInfTable" style="margin-top:.8rem;"></div>
+  <details style="margin-top:.8rem;">
+    <summary class="small-muted" style="cursor:pointer;">Show generated SQL</summary>
+    <pre id="mtInfSql" class="status" style="margin-top:.5rem;"></pre>
+  </details>
+</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <button class="panel-head" type="button" aria-expanded="false">
+      <span class="panel-title">Morphotactic Search</span>
+      <span class="panel-toggle">&rsaquo; Expand</span>
+    </button>
+    <div class="panel-body" hidden>
+    <div class="panel-info">
+  <button class="info-btn" data-info="mtInfo">What is this?</button>
+  <div id="mtInfo" class="info-panel" hidden>
+    <h4>Morphotactics tab</h4>
+    <p>Morphotactics is the study of how morphemes and morphological features are ordered and combined. Each panel explores a different aspect of the corpus:</p>
+    <ul>
+      <li><strong>Nominal compounds</strong>: filter the analyzed compounds by a specific first or second member (adaptive Greek or Beta Code input, with a browsable list of attested members) or by the members’ syntactic categories, and by attesting work. The panel shows how the member categories pair up, the commonest first and second members among the matches, and where the matching compounds are localized in the hexameter (from the merged metrical record); the lookup gives one compound’s members, every metrical pattern it shows, every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
+      <li><strong>Infinitive forms</strong>: tense/voice combinations attested among infinitives, optionally restricted to a work; includes a lookup for an individual verb's attested infinitive forms.</li>
+      <li><strong>Word-class sequencing</strong>: a transition matrix of part of speech to next part of speech for adjacent tokens within a sentence.</li>
+      <li><strong>Feature co-occurrence</strong>: the co-occurrence of one morphosyntactic component with another inside the same word, optionally restricted to one part of speech.</li>
+      <li><strong>Paradigm slots</strong>: how often each value of a feature is filled for a chosen part of speech; only the features that actually apply to that part of speech are offered.</li>
+    </ul>
+  </div>
+    </div>
+<div class="card">
+  <h2>More views</h2>
+  <div class="view-picker">
+    <div class="field">
+      <label for="mtView"><strong>What to view</strong></label>
+      <select id="mtView">
+        <option value="sequence" selected>Word-class sequencing (POS → next POS)</option>
+        <option value="cooccur">Feature co-occurrence (e.g. case × number)</option>
+        <option value="slots">Paradigm slots (feature value frequencies)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Sequence controls -->
+  <div class="mt-controls" data-for="sequence">
+    <div class="grid-3">
+      <div class="field"><label for="mtSeqWork"><strong>Restrict to work</strong></label><select id="mtSeqWork"><option value="">(all works)</option></select></div>
+      <div class="field"><label for="mtSeqMode"><strong>Cell value</strong></label><select id="mtSeqMode"><option value="count">Transition counts</option><option value="prob" selected>Row probabilities P(next | current)</option></select></div>
+    </div>
+  </div>
+
+  <!-- Co-occurrence controls -->
+  <div class="mt-controls" data-for="cooccur" hidden>
+    <div class="grid-3">
+      <div class="field"><label for="mtCoA"><strong>Rows (feature A)</strong></label><select id="mtCoA"></select></div>
+      <div class="field"><label for="mtCoB"><strong>Columns (feature B)</strong></label><select id="mtCoB"></select></div>
+      <div class="field"><label for="mtCoPos"><strong>Restrict to POS</strong></label><select id="mtCoPos"><option value="">(any)</option></select></div>
+    </div>
+  </div>
+
+  <!-- Slots controls -->
+  <div class="mt-controls" data-for="slots" hidden>
+    <div class="grid-3">
+      <div class="field"><label for="mtSlotPos"><strong>Part of speech</strong></label><select id="mtSlotPos"></select></div>
+      <div class="field"><label for="mtSlotFeat"><strong>Feature</strong></label><select id="mtSlotFeat"></select></div>
+    </div>
+    <p class="help" style="margin:.2rem 0 0;">Only the features that actually apply to the chosen part of speech are offered.</p>
+  </div>
+
+  <div class="btn-row"><button id="mtRun" class="btn btn-primary" disabled>Render view</button></div>
+</div>
+<div class="card">
+  <h2 id="mtOutTitle">Result</h2>
+  <p id="mtOutDesc" class="help" style="margin-top:-.3rem;">Pick a view above and click “Render view”.</p>
+  <div class="viz-wrap"><div id="mtChart"></div></div>
+  <div id="mtTable" style="margin-top:.8rem;"></div>
+  <details style="margin-top:.8rem;">
+    <summary class="small-muted" style="cursor:pointer;">Show generated SQL</summary>
+    <pre id="mtSql" class="status" style="margin-top:.5rem;"></pre>
+  </details>
+</div>
+    </div>
+  </section>
+
+<section class="panel">
+  <button class="panel-head" type="button" aria-expanded="false">
+    <span class="panel-title">Style Search</span>
+    <span class="panel-toggle">&rsaquo; Expand</span>
+  </button>
+  <div class="panel-body" hidden>
+  <div class="panel-info">
+    <button class="info-btn" data-info="clusterInfo">What is this?</button>
+  <div id="clusterInfo" class="info-panel" hidden>
+    <h4>Stylometry tab</h4>
+    <p>Each unit you cluster (a work, an author, a part-of-speech class…) becomes a "document". Its features are the frequencies of the tokens it contains, turned into a profile and compared with a distance measure; units that come out close together are grouped into the same cluster.</p>
+    <ul>
+      <li><strong>Cluster by</strong> sets what each point represents. For part of speech, number, and case you can pick a specific value (e.g. cluster works by how they use verbs) or cluster the categories themselves.</li>
+      <li><strong>Limit to</strong> restricts the corpus before features are built: by work, by author, or by grammar (pick a part of speech, then add only the features that apply to it).</li>
+      <li><strong>Advanced features / clustering options</strong> expose the feature model, distance metric, method, and number of clusters. Sensible defaults are used otherwise.</li>
+    </ul>
+  </div>
+  </div>
+
+<div class="card">
+  <h2>1. Configure features</h2>
+  <p class="help" style="margin-top:-.35rem;">Pick what each point represents and (optionally) restrict the data. Everything else has sensible defaults under Advanced features.</p>
+  <div class="grid-2">
+    <div class="field">
+      <label for="clusterByVar"><strong>Cluster by</strong></label>
+      <select id="clusterByVar" disabled>
+        <option value="work" selected>Books / works</option>
+        <option value="author">Authors</option>
+        <option value="lemma">Lemmata</option>
+        <option value="form">Word forms</option>
+        <option value="pos">Part of speech</option>
+        <option value="number">Grammatical number</option>
+        <option value="case">Case</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="clusterLimitWork"><strong>Limit to work</strong></label>
+      <select id="clusterLimitWork" disabled><option value="">(all works)</option></select>
+    </div>
+  </div>
+  <div class="submenu-row" id="clusterBySubRow" hidden>
+    <div class="field">
+      <label for="clusterBySub"><strong id="clusterBySubLabel">Which value?</strong></label>
+      <select id="clusterBySub"></select>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="field">
+      <label for="clusterLimitAuthor"><strong>Limit to author</strong></label>
+      <select id="clusterLimitAuthor" disabled><option value="">(all authors)</option></select>
+    </div>
+  </div>
+  <div class="field" style="margin-top:.2rem;">
+    <label><strong>Limit to grammar</strong></label>
+    <p class="help" style="margin:-.1rem 0 .45rem;">Choose a part of speech first; then only the features that apply to it can be added, so compatible attributes combine (e.g. tense + number on a verb) while incompatible ones (e.g. person + case) never appear together.</p>
+    <div id="clusterLimitGroup" class="filter-group"></div>
+  </div>
+
+  <button class="adv-toggle" data-adv="clusterFeatAdv">Advanced features</button>
+  <div id="clusterFeatAdv" class="adv-panel" hidden>
+    <div class="grid-3">
+      <div class="field"><label for="clusterTokenCol"><strong>Feature (token) column</strong></label><select id="clusterTokenCol"><option value="lemma" selected>lemma</option><option value="form">form</option></select></div>
+      <div class="field"><label for="clusterFeatureMode"><strong>Feature mode</strong></label><select id="clusterFeatureMode"><option value="token" selected>Direct tokens</option><option value="collocation">Collocations (n-grams)</option></select></div>
+      <div class="field"><label for="clusterNgram"><strong>Collocation size n</strong></label><input id="clusterNgram" type="text" value="2" /></div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label for="clusterVectorModel"><strong>Vector model</strong></label><select id="clusterVectorModel"><option value="binary">Binary presence</option><option value="count">Raw counts</option><option value="tfidf" selected>TF-IDF</option><option value="bm25">BM25 (Okapi)</option><option value="bm25plus">BM25+</option></select></div>
+      <div class="field"><label for="clusterDistance"><strong>Distance metric</strong></label><select id="clusterDistance"><option value="cosine" selected>Cosine</option><option value="jaccard">Jaccard</option><option value="euclidean">Euclidean</option><option value="manhattan">Manhattan</option></select></div>
+      <div class="field"><label for="clusterExcludeFunction"><strong>Exclude function words</strong></label><select id="clusterExcludeFunction"><option value="off" selected>No</option><option value="on">Yes</option></select></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label for="clusterMinDocFreq"><strong>Min document frequency ratio</strong></label><input id="clusterMinDocFreq" type="text" value="0.00" /></div>
+      <div class="field"><label for="clusterMaxDocFreq"><strong>Max document frequency ratio</strong></label><input id="clusterMaxDocFreq" type="text" value="1.00" /></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>2. Clustering strategy</h2>
+  <p id="clusterStrategyNote" class="help" style="margin-top:-.2rem;">Sensible defaults are applied. Open Advanced clustering options to change the method or the number of clusters.</p>
+  <button class="adv-toggle" data-adv="clusterStratAdv">Advanced clustering options</button>
+  <div id="clusterStratAdv" class="adv-panel" hidden>
+    <div class="grid-3">
+      <div class="field"><label for="clusterMethod"><strong>Clustering method</strong></label><select id="clusterMethod">
+        <option value="threshold">Threshold graph components</option>
+        <option value="single">Agglomerative single-link</option>
+        <option value="complete">Agglomerative complete-link</option>
+        <option value="average">Agglomerative average-link</option>
+        <option value="ward" selected>Agglomerative Ward</option>
+        <option value="kmeans">K-means</option>
+        <option value="kmedoids">K-medoids</option>
+        <option value="dbscan">DBSCAN</option>
+        <option value="labelprop">Label propagation (graph)</option>
+        <option value="mds_kmeans">MDS + K-means</option>
+      </select></div>
+      <div class="field"><label for="clusterK"><strong>Target clusters (k)</strong></label><input id="clusterK" type="text" value="6" /></div>
+      <div class="field"><label for="clusterThreshold"><strong>Similarity threshold</strong></label><input id="clusterThreshold" type="text" value="0.25" /></div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label for="clusterEps"><strong>DBSCAN epsilon (distance)</strong></label><input id="clusterEps" type="text" value="0.65" /></div>
+      <div class="field"><label for="clusterMinPts"><strong>DBSCAN minPts</strong></label><input id="clusterMinPts" type="text" value="2" /></div>
+      <div class="field"><label for="clusterTopFeatures"><strong>Top features per cluster</strong></label><input id="clusterTopFeatures" type="text" value="10" /></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button id="btnRunCluster" class="btn btn-primary" disabled>Run clustering</button>
+    <button id="btnClusterBenchmark" class="btn" disabled>Benchmark methods</button>
+    <button id="btnClusterStress" class="btn" disabled>Stress test</button>
+    <button id="btnClusterExport" class="btn">Export assignments (CSV)</button>
+  </div>
+  <details style="margin-top:.6rem;"><summary class="small-muted" style="cursor:pointer;">Generated SQL</summary><pre id="clusterSql" class="status" style="white-space:pre-wrap;margin-top:.4rem;"></pre></details>
+  <div id="clusterStressOut" class="analysis-wrap" style="margin-top:.5rem;"><div class="small-muted">Benchmark / stress-test output will appear here.</div></div>
+</div>
+
+<div class="card">
+  <h2>3. Visualizations</h2>
+  <div id="clusterSummary" class="analysis-wrap"></div>
+  <div class="grid-2">
+    <div class="viz-wrap"><h3>MDS scatter</h3><div id="clusterMds"></div></div>
+    <div class="viz-wrap"><h3>Cluster sizes</h3><div id="clusterSizeBars"></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="viz-wrap"><h3>Similarity heatmap</h3><div id="clusterHeatmap"></div></div>
+    <div class="viz-wrap"><h3>Similarity network</h3><div id="clusterNetwork"></div></div>
+  </div>
+  <div class="viz-wrap"><h3>Similarity distribution</h3><div id="clusterSimilarityDist"></div></div>
+  <div class="viz-wrap"><h3>Cluster feature signatures</h3><div id="clusterFeatures"></div></div>
+  <div class="viz-wrap"><h3>Method benchmark</h3><div id="clusterBenchmark"></div></div>
+</div>
+
+  </div>
+</section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="assets/js/papa-fallback.js"></script>
+  <script src="assets/js/mopsos-shared.js"></script>
+  <script src="assets/js/morphology-standalone.js"></script>
+  <script src="assets/js/morphotactics.js"></script>
+  <script src="assets/js/clustering.js"></script>
+</body>
+</html>

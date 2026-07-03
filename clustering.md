@@ -4,13 +4,16 @@ title: Stylometry
 section: clustering
 ---
 
-<section class="hero card">
-  <p class="kicker">MOPSOS</p>
-  <h1>Stylometry</h1>
-  <p class="tab-desc">Group texts, or any other unit, by how they use the language. Choose what to cluster, optionally limit the data, and MOPSOS turns each unit into a profile, measures how similar they are, and groups them.</p>
-  <div class="tab-meta-row">
+<div id="clusterLoadStatus" class="load-progress"><span>Loading corpus…</span></div>
+
+<section class="panel">
+  <button class="panel-head" type="button" aria-expanded="false">
+    <span class="panel-title">Style Search</span>
+    <span class="panel-toggle">&rsaquo; Expand</span>
+  </button>
+  <div class="panel-body" hidden>
+  <div class="panel-info">
     <button class="info-btn" data-info="clusterInfo">What is this?</button>
-  </div>
   <div id="clusterInfo" class="info-panel" hidden>
     <h4>Stylometry tab</h4>
     <p>Each unit you cluster (a work, an author, a part-of-speech class…) becomes a "document". Its features are the frequencies of the tokens it contains, turned into a profile and compared with a distance measure; units that come out close together are grouped into the same cluster.</p>
@@ -20,9 +23,7 @@ section: clustering
       <li><strong>Advanced features / clustering options</strong> expose the feature model, distance metric, method, and number of clusters. Sensible defaults are used otherwise.</li>
     </ul>
   </div>
-</section>
-
-<div id="clusterLoadStatus" class="load-progress"><span>Loading corpus…</span></div>
+  </div>
 
 <div class="card">
   <h2>1. Configure features</h2>
@@ -134,3 +135,6 @@ section: clustering
   <div class="viz-wrap"><h3>Cluster feature signatures</h3><div id="clusterFeatures"></div></div>
   <div class="viz-wrap"><h3>Method benchmark</h3><div id="clusterBenchmark"></div></div>
 </div>
+
+  </div>
+</section>

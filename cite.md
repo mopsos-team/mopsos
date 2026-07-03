@@ -1,13 +1,16 @@
 ---
 layout: default
-title: How to Cite
+title: About
 section: cite
 ---
 
-<section class="hero card">
-  <h1>How to Cite</h1>
-  <p class="lede">If you use MOPSOS in published or presented research, please cite the project as a conference presentation.</p>
-</section>
+
+<section class="panel" data-open="true">
+  <button class="panel-head" type="button" aria-expanded="false">
+    <span class="panel-title">How to Cite</span>
+    <span class="panel-toggle">&rsaquo; Expand</span>
+  </button>
+  <div class="panel-body" hidden>
 
 <div class="card cite-page">
   <h2>Reference</h2>
@@ -50,3 +53,6 @@ section: cite
   })();
 </script>
 {% endraw %}
+
+  </div>
+</section>

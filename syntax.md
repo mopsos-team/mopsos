@@ -4,13 +4,16 @@ title: Syntax
 section: syntax
 ---
 
-<section class="hero card">
-  <p class="kicker">MOPSOS</p>
-  <h1>Syntax Workbench <span class="wip-badge" title="Under construction">🚧 under construction</span></h1>
-  <p class="tab-desc">Dependency trees for any sentence of the corpus, drawn from the stored dependency distances, and corpus-wide measurements of where syntax meets the metre: sentence ends in the verse, enjambment, and dependency arcs across the line boundary.</p>
-  <div class="tab-meta-row">
+<div id="syntaxLoadStatus" class="load-progress"><span>Loading the corpus…</span></div>
+
+<section class="panel" data-open="true">
+  <button class="panel-head" type="button" aria-expanded="false">
+    <span class="panel-title">Syntax Search</span>
+    <span class="panel-toggle">&rsaquo; Expand</span>
+  </button>
+  <div class="panel-body" hidden>
+  <div class="panel-info">
     <button class="info-btn" data-info="syntaxInfo">What is this?</button>
-  </div>
   <div id="syntaxInfo" class="info-panel" hidden>
     <h4>Syntax tab</h4>
     <p>Every token in the corpus carries a signed dependency distance to its head (distance = position of the word minus position of its head; 0 marks the root). The workbench recovers each word’s head from that record and draws the sentence’s dependency tree; the trees are unlabelled, because the corpus stores the attachment but not the relation name.</p>
@@ -19,9 +22,7 @@ section: syntax
       <li><strong>Syntax meets the metre</strong>: because the same tokens carry their metrical record, the tab measures the syntax-metre interface directly from the corpus: where sentence boundaries fall in the verse (line end, the caesura points, the bucolic diaeresis), how many lines are enjambed, how many dependency arcs cross a line boundary, plus head direction and dependency length by part of speech.</li>
     </ul>
   </div>
-</section>
-
-<div id="syntaxLoadStatus" class="load-progress"><span>Loading the corpus…</span></div>
+  </div>
 
 <div class="card">
   <h2>Pick a sentence from the corpus</h2>
@@ -87,3 +88,6 @@ section: syntax
   </div>
   <p id="syntaxMetreNote" class="help" style="margin-top:.5rem;"></p>
 </div>
+
+  </div>
+</section>
