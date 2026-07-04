@@ -102,6 +102,17 @@
     const lo = readLimitOffset(sql);
     return lo ? sql.replace(LIMIT_RE, "LIMIT " + lo.limit + " OFFSET " + offset + ";") : sql;
   }
+  // Total row count of the query with its trailing LIMIT/OFFSET stripped
+  // (COUNT(*) over it as a subquery), or null if it cannot be determined.
+  function countRows(sql) {
+    const inner = sql.replace(LIMIT_RE, "").trim();
+    try {
+      const r = SQL.query("SELECT COUNT(*) FROM (" + inner + ");");
+      return (r.values && r.values.length) ? Number(r.values[0][0]) : null;
+    } catch (e) {
+      return null;
+    }
+  }
 
   // Render the result: same columns and rows the query returns, with coded
   // values shown as human-readable labels (e.g. 'g' -> 'Genitive').
@@ -132,7 +143,7 @@
   // Runs whatever is in the editor, exactly as written, into #qfResults.
   // If the query ends in LIMIT/OFFSET, Prev/Next rewrite the OFFSET in the
   // editor and re-run — so the query shown is always the query that ran.
-  function runCustomSql() {
+function runCustomSql() {
     const sql = $("qfSqlInput").value;
     const status = $("qfSqlStatus");
     if (!SQL.isReadOnly(sql)) {
@@ -148,45 +159,36 @@
       return;
     }
     const columns = res.columns || [], values = res.values || [];
-    const lo = readLimitOffset(sql);
+    const lo = manualSql ? null : readLimitOffset(sql);
+    const total = lo ? countRows(sql) : null;
+    const canPage = !!(lo && total != null && lo.limit > 0);
 
-    let html = "";
-    let total = null, pages = null, pageNo = null, lastOff = null;
-    if (lo) {
-      // total row count for the query with its LIMIT/OFFSET stripped, so the
-      // pager can show "page X / Y" and jump to the last page
-      try {
-        const bare = sql.replace(/;\s*$/, "").replace(/\blimit\s+\d+(\s+offset\s+\d+)?\s*$/i, "");
-        total = SQL.scalar("SELECT COUNT(*) FROM (" + bare + ");");
-      } catch (e) { total = null; }
-      const dis = (cond) => cond ? " disabled" : "";
-      const atEnd = total != null ? lo.offset + lo.limit >= total : values.length < lo.limit;
-      if (total != null) {
-        pages = Math.max(1, Math.ceil(total / lo.limit));
-        pageNo = Math.floor(lo.offset / lo.limit) + 1;
-        lastOff = (pages - 1) * lo.limit;
-      }
-      html += '<div class="pager">';
-      if (total != null) {
-        html += '<span class="pager-info">Rows ' + Math.min(lo.offset + 1, total) + "\u2013" +
-          Math.min(lo.offset + values.length, total) + " of " + total + " \u00b7 page " + pageNo + " / " + pages + "</span>";
-      }
-      html += '<span class="pager-controls">';
-      html += '<button class="btn btn-sm" data-act="prev"' + dis(lo.offset === 0) + ">\u2039 Previous</button>";
-      html += '<button class="btn btn-sm" data-act="next"' + dis(atEnd) + ">Next \u203a</button>";
-      if (lastOff != null) html += '<button class="btn btn-sm" data-act="last"' + dis(atEnd) + ">Last \u00bb</button>";
-      html += "</span></div>";
-    }
+    const pages = canPage ? Math.max(1, Math.ceil(total / lo.limit)) : 0;
+    const page = canPage ? Math.floor(lo.offset / lo.limit) + 1 : 0;
+    const lastOff = canPage ? (pages - 1) * lo.limit : 0;
+    const atStart = !canPage || lo.offset === 0;
+    const atEnd = !canPage || lo.offset >= lastOff;
+    // Enabled buttons carry the OFFSET they jump to; disabled ones carry nothing.
+    const btn = (label, off, dis) =>
+      '<button class="btn btn-sm"' + (dis ? " disabled" : ' data-off="' + off + '"') + ">" + label + "</button>";
+
+    let html = '<div class="pager"><span class="pager-controls">';
+    html += btn("\u00ab First", 0, atStart);
+    html += btn("\u2039 Prev", canPage ? Math.max(0, lo.offset - lo.limit) : 0, atStart);
+    html += btn("Next \u203a", canPage ? lo.offset + lo.limit : 0, atEnd);
+    html += btn("Last \u00bb", lastOff, atEnd);
+    html += "</span>";
+    if (canPage) html += '<span class="small-muted" style="margin-left:.6rem;">Rows ' +
+      Math.min(lo.offset + 1, total) + "\u2013" + Math.min(lo.offset + values.length, total) +
+      " of " + total + " \u00b7 page " + page + " of " + pages + "</span>";
+    html += "</div>";
     html += renderTable(columns, values);
     const container = $("qfResults");
     container.innerHTML = html;
 
-    if (lo) container.querySelectorAll("[data-act]").forEach((b) => {
+    container.querySelectorAll("[data-off]").forEach((b) => {
       b.addEventListener("click", () => {
-        const off = b.dataset.act === "next" ? lo.offset + lo.limit
-          : b.dataset.act === "last" ? lastOff
-          : Math.max(0, lo.offset - lo.limit);
-        $("qfSqlInput").value = setOffset(sql, off);
+        $("qfSqlInput").value = setOffset(sql, parseInt(b.dataset.off, 10));
         runCustomSql();
       });
     });
