@@ -6,7 +6,7 @@ section: prosody
 
 <div id="scanLoadStatus" class="load-progress"><span>Loading scansion corpus…</span></div>
 
-<section class="panel" data-open="true">
+<section class="panel">
   <button class="panel-head" type="button" aria-expanded="false">
     <span class="panel-title">Meter Search</span>
     <span class="panel-toggle">&rsaquo; Expand</span>
@@ -25,7 +25,6 @@ section: prosody
   </div>
 
 <div class="card">
-  <h2>What to view</h2>
   <div class="view-picker">
     <div class="field">
       <label for="scanView"><strong>View</strong></label>

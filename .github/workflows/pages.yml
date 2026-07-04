@@ -1,0 +1,82 @@
+# Explicit GitHub Pages deployment, replacing the opaque managed
+# "pages build and deployment" workflow.
+#
+# BEFORE this takes effect: repo Settings -> Pages -> Build and deployment ->
+# Source must be switched from "Deploy from a branch" to "GitHub Actions".
+# (Until the source is switched, the old managed workflow keeps deploying
+# and this one's deploy job will fail.)
+#
+# The build uses actions/jekyll-build-pages -- the exact same Docker builder
+# GitHub's managed pipeline runs (github-pages gem, Jekyll 3.10, automatic
+# baseurl handling) -- so it is guaranteed to build this site the same way
+# the site has always been built. On top of that this workflow adds:
+#   * a diagnostics step that prints the built site's size and biggest files
+#     and HARD-FAILS if corpus.sqlite.gz is missing from the build, so a
+#     broken artifact can never silently reach deployment again;
+#   * actions/deploy-pages with a longer status-polling budget and a higher
+#     tolerated error count, riding out the transient service blips that
+#     surface as "Deployment failed, try again later".
+name: Deploy Jekyll site to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build with Jekyll (GitHub Pages builder)
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      - name: Report artifact contents (diagnostics)
+        run: |
+          echo "== built site size =="
+          sudo du -sh ./_site
+          echo "== file count =="
+          sudo find ./_site -type f | wc -l
+          echo "== files over 5 MB =="
+          sudo find ./_site -type f -size +5M -exec ls -lh {} \; || true
+          echo "== corpus database present? =="
+          sudo ls -lh ./_site/assets/data/corpus.sqlite.gz || { echo "::error::corpus.sqlite.gz is MISSING from the built site"; exit 1; }
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          # tolerate transient status-API errors for longer than the defaults
+          # (default: timeout 600000 ms, error_count 10)
+          timeout: 900000
+          error_count: 20
+          reporting_interval: 10000

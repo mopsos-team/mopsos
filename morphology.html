@@ -53,7 +53,7 @@
     </div>
     </div>
     <div class="card">
-      <h2>Filter</h2>
+      <h2>1. Filter</h2>
       <p class="help" style="margin-top:-.35rem;">Pick a part of speech to reveal the features that apply to it; choose any values and Apply. Results are paginated 50 per page.</p>
       <div id="qfGroup" class="filter-group"></div>
       <div class="btn-row">
@@ -77,7 +77,7 @@
     </div>
 
     <div class="card">
-      <h2>Distribution Charts</h2>
+      <h2>2. Distribution Charts</h2>
       <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, cross-tabulate two of them, or draw a co-occurrence network of words that share a sentence. Add filters to focus. For example, set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
       <div class="grid-3">
         <div class="field">
@@ -164,18 +164,18 @@
     </button>
     <div class="panel-body" hidden>
 <div class="card">
-  <h2>Nominal compounds</h2>
+  <h2>1. Nominal compounds</h2>
   <div class="tab-meta-row"><button class="info-btn" data-info="mtCmpInfo">What is this?</button></div>
   <div id="mtCmpInfo" class="info-panel" hidden>
     <h4>Nominal compounds panel</h4>
-    <p>Filter the analyzed compounds by first member, second member, member category, or attesting work; see which members are commonest, how the member categories pair up, and where the matching compounds sit in the verse.</p>
+    <p>Filter the analyzed compounds by first member, second member, member category, stem subcategory (s-stem, thematic, and so on), or attesting work; see which members are commonest, how the member categories pair up, and where the matching compounds sit in the verse.</p>
     <ul>
-      <li><strong>Members</strong>: pick a specific member (type Greek with or without accents, or Beta Code, or click to browse the attested members) <em>or</em> a member category; a specific member fixes its category anyway, so use whichever is handier. The member values come from the compound analysis itself, and the two slots combine freely.</li>
+      <li><strong>Members</strong>: pick a specific member (type Greek with or without accents, or Beta Code, or click to browse the attested members) <em>or</em> a member category; a specific member fixes its category anyway, so use whichever is handier. A stem subcategory (s-stem, thematic, and so on) narrows a slot further wherever the analysis records one, and its list adapts to the chosen category. The member values come from the compound analysis itself, and the slots combine freely.</li>
       <li><strong>Lookup</strong>: choosing one compound shows its members, every metrical position it takes in the verse (form, shape, feet, princeps or biceps start), every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
     </ul>
   </div>
   <div class="mt-controls">
-    <div class="grid-2">
+    <div class="grid-3">
       <div class="field">
         <label for="mtCmpM1"><strong>First member</strong></label>
         <div class="combo">
@@ -184,8 +184,9 @@
         </div>
       </div>
       <div class="field"><label for="mtCmpM1Cat"><strong>or first-member category</strong></label><select id="mtCmpM1Cat"><option value="">(any category)</option></select></div>
+      <div class="field"><label for="mtCmpM1Sub"><strong>or first-member subcategory</strong></label><select id="mtCmpM1Sub" disabled><option value="">(any subcategory)</option></select></div>
     </div>
-    <div class="grid-2">
+    <div class="grid-3">
       <div class="field">
         <label for="mtCmpM2"><strong>Second member</strong></label>
         <div class="combo">
@@ -194,6 +195,7 @@
         </div>
       </div>
       <div class="field"><label for="mtCmpM2Cat"><strong>or second-member category</strong></label><select id="mtCmpM2Cat"><option value="">(any category)</option></select></div>
+      <div class="field"><label for="mtCmpM2Sub"><strong>or second-member subcategory</strong></label><select id="mtCmpM2Sub" disabled><option value="">(any subcategory)</option></select></div>
     </div>
     <div class="grid-3">
       <div class="field"><label for="mtCmpWork"><strong>Attested in</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
@@ -240,7 +242,7 @@
     </button>
     <div class="panel-body" hidden>
 <div class="card">
-  <h2>Infinitive forms</h2>
+  <h2>1. Infinitive forms</h2>
   <p class="help" style="margin-top:-.3rem;">Tense and voice combinations attested among infinitives.</p>
   <div class="mt-controls">
     <div class="grid-3">
@@ -278,7 +280,7 @@
     <h4>Morphotactics tab</h4>
     <p>Morphotactics is the study of how morphemes and morphological features are ordered and combined. Each panel explores a different aspect of the corpus:</p>
     <ul>
-      <li><strong>Nominal compounds</strong>: filter the analyzed compounds by a specific first or second member (adaptive Greek or Beta Code input, with a browsable list of attested members) or by the members’ syntactic categories, and by attesting work. The panel shows how the member categories pair up, the commonest first and second members among the matches, and where the matching compounds are localized in the hexameter (from the merged metrical record); the lookup gives one compound’s members, every metrical pattern it shows, every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
+      <li><strong>Nominal compounds</strong>: filter the analyzed compounds by a specific first or second member (adaptive Greek or Beta Code input, with a browsable list of attested members) or by the members’ syntactic categories or stem subcategories (s-stem, thematic, and so on, wherever the analysis records one), and by attesting work. The panel shows how the member categories pair up, the commonest first and second members among the matches, and where the matching compounds are localized in the hexameter (from the merged metrical record); the lookup gives one compound’s members, every metrical pattern it shows, every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
       <li><strong>Infinitive forms</strong>: tense/voice combinations attested among infinitives, optionally restricted to a work; includes a lookup for an individual verb's attested infinitive forms.</li>
       <li><strong>Word-class sequencing</strong>: a transition matrix of part of speech to next part of speech for adjacent tokens within a sentence.</li>
       <li><strong>Feature co-occurrence</strong>: the co-occurrence of one morphosyntactic component with another inside the same word, optionally restricted to one part of speech.</li>
@@ -287,7 +289,6 @@
   </div>
     </div>
 <div class="card">
-  <h2>More views</h2>
   <div class="view-picker">
     <div class="field">
       <label for="mtView"><strong>What to view</strong></label>

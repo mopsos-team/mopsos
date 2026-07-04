@@ -6,7 +6,7 @@ section: phonology
 
 <div id="phonLoadingBar" class="load-progress"><span>Loading corpus…</span></div>
 
-<section class="panel" data-open="true">
+<section class="panel">
   <button class="panel-head" type="button" aria-expanded="false">
     <span class="panel-title">Phonology Search</span>
     <span class="panel-toggle">&rsaquo; Expand</span>
@@ -108,7 +108,7 @@ section: phonology
       <input id="phonTopN" type="text" value="24" />
     </div>
   </div>
-  <p class="help" style="margin:.5rem 0 0; padding:.55rem .7rem; border:1px solid var(--gold); border-radius:9px; background:rgba(194,161,78,.1);">
+  <p class="help" style="margin:.5rem 0 0; padding:.55rem .7rem; border:1px solid var(--acc2); border-radius:9px; background:var(--pgbg);">
     <strong>Note:</strong> the segmental and syllabic views are heuristic analyses over normalized orthography (letters as phoneme proxies, orthographic syllabification), not a reconstruction of Ancient Greek phonology. The views under “Prosody and sandhi” additionally read the corpus itself: the per-word metrical record, the accented forms, and word order in the line.
   </p>
   <p id="phonViewDesc" class="help" style="margin-top:.2rem;"></p>

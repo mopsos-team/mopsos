@@ -14,10 +14,12 @@ adds the five things this site needs that a plain importer doesn't:
   * `derived_columns` - columns computed from another column already in this
                  table rather than read from the CSV, e.g.
                  {"lemma_search": ("lemma", greek_text.strip_diacritics)}.
-                 Used for the accent-insensitive search key and Beta Code
-                 transliteration columns (see greek_text.py) -- SQLite has no
-                 built-in Unicode-accent-insensitive collation, so those live
-                 as precomputed columns instead. One dict entry per derived
+                 Used for the accent-insensitive search key (see greek_text.py)
+                 -- SQLite has no built-in Unicode-accent-insensitive collation,
+                 so that lives as a precomputed column instead. (Beta Code is
+                 deliberately NOT derived here: it is a pure function of the
+                 Greek lemma, so the app transliterates it in the browser to
+                 keep the shipped database smaller.) One dict entry per derived
                  column; safe to add more the same way.
   * VIEWS      - summaries are SQL views over one base table, not a second copy
                  of the data (e.g. scansion_books is a GROUP BY over
@@ -71,11 +73,13 @@ TABLES = [
         indexes=["lemma", "form", "work", "author", "sentence_id", "lemma_search"],
         # lemma_search: accent/breathing-insensitive key for "ignore accents"
         # search (e.g. WHERE lemma_search LIKE 'luo%' matches every accented
-        # spelling of a lemma). lemma_beta: Beta Code transliteration, kept
-        # fully accented -- see greek_text.py for what each does and why.
+        # spelling of a lemma) -- SQLite has no accent-insensitive collation, so
+        # this lives as a precomputed column. Beta Code is NOT stored: it is a
+        # pure function of the Greek lemma, so the app transliterates it in the
+        # browser (MopsosText.toBetaCode) instead, keeping the database smaller
+        # and quicker to load.
         derived_columns={
             "lemma_search": ("lemma", lambda t: greek_text.strip_diacritics(t).lower()),
-            "lemma_beta": ("lemma", greek_text.to_beta_code),
         },
     ),
     dict(
@@ -102,15 +106,14 @@ TABLES = [
         sql_types={},
         data_coercion={},
         indexes=["lemma", "lemma_search"],
-        # Same idea as morphology.lemma_search / lemma_beta above, for the
-        # compound headword. Powers the compound panel's adaptive search
-        # (accent-insensitive and Beta-Code-typeable) and lets it join against
-        # ncompounds_attestations by normalized spelling, not just exact
+        # Same idea as morphology.lemma_search above, for the compound headword.
+        # Powers the compound panel's adaptive search (accent-insensitive, and
+        # Beta-Code-typeable via in-browser transliteration) and lets it join
+        # against ncompounds_attestations by normalized spelling, not just exact
         # string match (attestations record inflected/capitalized forms that
         # don't always match the analysis headword byte-for-byte).
         derived_columns={
             "lemma_search": ("lemma", greek_text.strip_diacritics),
-            "lemma_beta": ("lemma", greek_text.to_beta_code),
         },
     ),
     dict(

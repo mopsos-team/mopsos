@@ -21,9 +21,9 @@
   const el = {};
   function grab() {
     ["syntaxLoadStatus", "syntaxWork", "syntaxBook", "syntaxLine", "btnSyntaxDraw", "syntaxSentSel", "syntaxSentWrap",
-     "syntaxInput", "btnSyntaxTsv",
-     "syntaxSummary", "syntaxDepSvg", "syntaxPhrase", "syntaxTable", "syntaxPicked",
-     "syntaxMetreWork", "btnSyntaxMetre", "syntaxMetreSummary", "syntaxSentEnd", "syntaxHeadDir", "syntaxDepLen", "syntaxMetreNote"]
+     "syntaxInput", "btnSyntaxTsv", "syntaxTreeMode",
+     "syntaxSummary", "syntaxTree", "syntaxPhrase", "syntaxTable",
+     "syntaxMetreWork", "syntaxMetreBook", "btnSyntaxMetre", "syntaxMetreSummary", "syntaxSentEnd", "syntaxHeadDir", "syntaxDepLen", "syntaxMetreNote"]
       .forEach((id) => { el[id] = $(id); });
   }
 
@@ -35,7 +35,11 @@
     rows.forEach((r) => {
       const d = Number(r.distance);
       const head = Number.isFinite(d) && d !== 0 ? r.id - d : 0;
-      r.head = ids.has(head) ? head : 0;   // roots and broken links hang from 0
+      // a link whose target is missing points at a token removed during corpus
+      // building (punctuation, which the treebank uses as coordination heads);
+      // it is displayed hanging from the top, but flagged as distinct from a root
+      r.orphan = head !== 0 && !ids.has(head);
+      r.head = ids.has(head) ? head : 0;
       r.deprel = "";
     });
     return rows;
@@ -68,12 +72,14 @@
 
   /* ----- renderers --------------------------------------------------------- */
   function renderSummary(rows, meta) {
-    const roots = rows.filter((x) => x.head === 0).length;
+    const roots = rows.filter((x) => x.head === 0 && !x.orphan).length;
+    const orphans = rows.filter((x) => x.orphan).length;
     const dists = rows.map((r) => Math.abs(Number(r.distance) || (r.head ? r.head - r.id : 0))).filter((d) => d > 0);
     const mean = dists.length ? (dists.reduce((a, b) => a + b, 0) / dists.length).toFixed(2) : "\u2013";
     const cards = [
       ["Tokens", rows.length],
-      ["Roots / unattached", roots],
+      ["Roots", roots],
+      ["Heads removed with punctuation", orphans],
       ["Mean dependency length", mean]
     ];
     if (meta) cards.unshift(["Sentence", meta]);
@@ -81,33 +87,105 @@
       '<div class="analysis-card"><div class="metric">' + esc(c[1]) + '</div><div class="metric-label">' + esc(c[0]) + "</div></div>").join("") + "</div>";
   }
 
-  function renderDepTree(rows) {
-    const n = Math.max(rows.length, 1);
-    const step = Math.max(46, Math.min(90, Math.floor(1400 / n)));
-    const w = Math.max(760, 120 + n * step);
-    const H = 460, y = H - 70;
-    el.syntaxDepSvg.setAttribute("viewBox", "0 0 " + w + " " + H);
-    const x = new Map(rows.map((r, i) => [r.id, 60 + i * step]));
-    let html = '<rect x="0" y="0" width="' + w + '" height="' + H + '" fill="#f8fafc" rx="12"/>';
-    for (const r of rows) {
-      const tx = x.get(r.id), hx = x.get(r.head);
-      if (!tx) continue;
-      if (!hx || r.head === 0) {
-        html += '<line x1="' + tx + '" y1="60" x2="' + tx + '" y2="' + (y - 20) + '" stroke="#64748b" stroke-dasharray="4 4"/>';
-      } else {
-        const mid = (tx + hx) / 2, h = Math.min(300, 44 + Math.abs(tx - hx) * 0.3);
-        html += '<path d="M ' + hx + " " + (y - 20) + " Q " + mid + " " + (y - h) + " " + tx + " " + (y - 20) + '" fill="none" stroke="#4f46e5" stroke-width="2"/>';
-        if (r.deprel) html += '<text x="' + (mid - 18) + '" y="' + (y - h - 6) + '" font-size="11" fill="#1e293b">' + esc(r.deprel) + "</text>";
-      }
+  /* ----- Dependency Tree: d3 tidy tree (after the Observable tree component),
+   * renderable horizontally, vertically, or as bracketed text. ----- */
+  function buildHierarchy(rows) {
+    const byId = new Map(rows.map((r) => [r.id, { r, children: [] }]));
+    const roots = [];
+    rows.forEach((t) => {
+      const node = byId.get(t.id);
+      if (t.head && byId.has(t.head)) byId.get(t.head).children.push(node);
+      else roots.push(node);
+    });
+    byId.forEach((n) => n.children.sort((a, b) => a.r.id - b.r.id));
+    roots.sort((a, b) => a.r.id - b.r.id);
+    if (roots.length === 1) return roots[0];
+    return { r: { id: 0, form: "S", pos: "", synthetic: true }, children: roots };
+  }
+
+  function renderTree(rows, mode) {
+    const host = el.syntaxTree;
+    if (mode === "t") {
+      host.innerHTML = "";
+      el.syntaxPhrase.hidden = false;
+      renderPhrase(rows);
+      return;
     }
-    for (const r of rows) {
-      const cx = x.get(r.id);
-      html += '<circle cx="' + cx + '" cy="' + (y - 20) + '" r="15" fill="#0891b2"/>';
-      html += '<text x="' + cx + '" y="' + (y - 15) + '" text-anchor="middle" font-size="10" fill="#fff">' + r.id + "</text>";
-      html += '<text x="' + cx + '" y="' + (y + 14) + '" text-anchor="middle" font-size="14" fill="#0f172a">' + esc(r.form) + "</text>";
-      html += '<text x="' + cx + '" y="' + (y + 32) + '" text-anchor="middle" font-size="11" fill="#64748b">' + esc(UI.label("pos", r.pos)) + "</text>";
+    el.syntaxPhrase.hidden = true;
+    host.innerHTML = "";
+    if (!window.d3) { host.innerHTML = '<div class="small-muted" style="padding:.8rem;">Charting library not loaded.</div>'; return; }
+    const d3v = window.d3;
+    const data = buildHierarchy(rows);
+    const root = d3v.hierarchy(data, (d) => d.children);
+    const maxLen = Math.max(4, ...rows.map((r) => String(r.form || "").length));
+
+    let vb, linkGen, nodeXY;
+    if (mode === "v") {
+      const dx = Math.max(64, maxLen * 8.5 + 16), dy = 84;
+      d3v.tree().nodeSize([dx, dy])(root);
+      let x0 = Infinity, x1 = -Infinity;
+      root.each((d) => { if (d.x < x0) x0 = d.x; if (d.x > x1) x1 = d.x; });
+      vb = [x0 - dx / 1.5, -40, x1 - x0 + dx * 1.4, (root.height + 1) * dy + 62];
+      linkGen = d3v.linkVertical().x((d) => d.x).y((d) => d.y);
+      nodeXY = (d) => [d.x, d.y];
+    } else {
+      const dx = 30, dy = Math.max(120, maxLen * 9.5 + 55);
+      d3v.tree().nodeSize([dx, dy])(root);
+      let x0 = Infinity, x1 = -Infinity;
+      root.each((d) => { if (d.x < x0) x0 = d.x; if (d.x > x1) x1 = d.x; });
+      // left margin holds the root's label, drawn to the LEFT of internal
+      // nodes so text never lies on the links fanning out to the children
+      const labelW = maxLen * 9.5 + 25;
+      vb = [-labelW, x0 - dx, (root.height + 1) * dy + labelW + 55, x1 - x0 + dx * 2];
+      linkGen = d3v.linkHorizontal().x((d) => d.y).y((d) => d.x);
+      nodeXY = (d) => [d.y, d.x];
     }
-    el.syntaxDepSvg.innerHTML = html;
+
+    const svg = d3v.select(host).append("svg")
+      .attr("viewBox", vb.join(" "))
+      .attr("preserveAspectRatio", "xMidYMid meet")
+      .attr("class", "d3-svg")
+      .style("width", "100%").style("height", "auto")
+      .style("--nat-w", Math.round(vb[2]) + "px")
+      .attr("font-family", "IBM Plex Sans, sans-serif");
+    svg.append("g").attr("fill", "none").attr("stroke", "#0072B2").attr("stroke-opacity", .5).attr("stroke-width", 1.6)
+      .selectAll("path").data(root.links()).join("path").attr("d", linkGen);
+    const node = svg.append("g").selectAll("g").data(root.descendants()).join("g")
+      .attr("transform", (d) => "translate(" + nodeXY(d) + ")");
+    node.append("circle")
+      .attr("r", 4.5)
+      .attr("fill", (d) => d.data.r.synthetic ? "#fff" : (d.data.r.orphan ? "#E69F00" : "#0072B2"))
+      .attr("stroke", (d) => d.data.r.synthetic ? "#888" : "none");
+    // Labels never overlap the tree: internal nodes carry their text on the
+    // side AWAY from their children (above in the vertical tree, left in the
+    // horizontal tree), leaves on the open side; every label also gets a halo
+    // in the card colour (paint-order: stroke) so the one link that reaches
+    // the node from its head is masked under the text instead of crossing it.
+    const halo = (t) => t.attr("paint-order", "stroke").attr("stroke", "#fffbf1")
+      .attr("stroke-width", 3.5).attr("stroke-linejoin", "round");
+    const hasKids = (d) => !!(d.children && d.children.length);
+    if (mode === "v") {
+      halo(node.append("text")
+        .attr("y", (d) => hasKids(d) ? -14 : 20)
+        .attr("text-anchor", "middle").attr("font-size", 13)
+        .attr("fill", "#000").text((d) => d.data.r.form));
+      halo(node.append("text")
+        .attr("y", (d) => hasKids(d) ? -27 : 34)
+        .attr("text-anchor", "middle").attr("font-size", 9.5)
+        .attr("fill", "#4a4a4a").text((d) => d.data.r.pos ? UI.label("pos", d.data.r.pos) : ""));
+    } else {
+      halo(node.append("text")
+        .attr("x", (d) => hasKids(d) ? -9 : 9)
+        .attr("text-anchor", (d) => hasKids(d) ? "end" : "start")
+        .attr("dy", "0.32em").attr("font-size", 13)
+        .attr("fill", "#000").text((d) => d.data.r.form));
+      halo(node.append("text")
+        .attr("x", (d) => hasKids(d) ? -9 : 9)
+        .attr("text-anchor", (d) => hasKids(d) ? "end" : "start")
+        .attr("y", 14).attr("font-size", 9.5)
+        .attr("fill", "#4a4a4a").text((d) => d.data.r.pos ? UI.label("pos", d.data.r.pos) : ""));
+    }
+    if (window.MopsosChart && window.MopsosChart.addToolbar) window.MopsosChart.addToolbar(host);
   }
 
   function renderPhrase(rows) {
@@ -127,7 +205,7 @@
   function renderTable(rows) {
     const byId = new Map(rows.map((r) => [r.id, r]));
     UI.renderTable(el.syntaxTable, ["id", "form", "lemma", "pos", "head", "distance"],
-      rows.map((r) => [r.id, r.form, r.lemma, UI.label("pos", r.pos), r.head ? r.head + " (" + (byId.get(r.head) || {}).form + ")" : "root",
+      rows.map((r) => [r.id, r.form, r.lemma, UI.label("pos", r.pos), r.head ? r.head + " (" + (byId.get(r.head) || {}).form + ")" : (r.orphan ? "(head removed with punctuation)" : "root"),
         Number.isFinite(Number(r.distance)) ? Number(r.distance) : ""]),
       { paginate: rows.length > 60, pageSize: 60 });
   }
@@ -138,11 +216,9 @@
     const books = [...new Set(rows.map((r) => r.book))];
     const vs = rows.map((r) => parseInt(r.verse, 10)).filter(Number.isFinite);
     const span = books[0] + "." + Math.min.apply(null, vs) + (vs.length > 1 && Math.min.apply(null, vs) !== Math.max.apply(null, vs) ? "\u2013" + Math.max.apply(null, vs) : "");
-    el.syntaxPicked.textContent = work + " " + span + " \u00b7 sentence " + sid +
-      " \u00b7 heads recovered from the corpus dependency distances (unlabelled).";
+    state.lastRows = rows;
     renderSummary(rows, work + " " + span);
-    renderDepTree(rows);
-    renderPhrase(rows);
+    renderTree(rows, el.syntaxTreeMode.value);
     renderTable(rows);
   }
 
@@ -169,11 +245,11 @@
   function drawFromTsv() {
     const sentences = parseInputTsv(el.syntaxInput.value);
     if (!sentences.length) return;
-    el.syntaxPicked.textContent = "Manual TSV input.";
     const rows = sentences[0];
+    rows.forEach((r) => { r.orphan = false; });
+    state.lastRows = rows;
     renderSummary(rows, "manual");
-    renderDepTree(rows);
-    renderPhrase(rows);
+    renderTree(rows, el.syntaxTreeMode.value);
     renderTable(rows);
   }
 
@@ -181,17 +257,29 @@
    * All computed live from the corpus: sentence ends located by the metrical
    * position of the sentence-final token; enjambment as the share of lines
    * whose final word does not end its sentence; and dependency arcs checked
-   * for whether head and dependent share a line. Cached per work scope. */
+   * for whether head and dependent share a line. Cached per scope (work and,
+   * when one is chosen, a single book of it). */
+  const state = { lastRows: null };
   const metreCache = {};
-  function metreScope() {
-    const conds = ["verse IS NOT NULL AND verse <> ''"];
+  // Book only narrows the scope when a single work is chosen (book numbers
+  // repeat between the poems, so "(both poems) book 6" would be ambiguous).
+  function metreBook() {
     const w = el.syntaxMetreWork.value;
-    conds.push(w ? "work = " + sqlStr(w) : "work IN ('Iliad','Odyssey')");
+    const b = el.syntaxMetreBook ? el.syntaxMetreBook.value : "";
+    return w && b ? b : "";
+  }
+  function metreScope(prefix) {
+    const p = prefix ? prefix + "." : "";
+    const conds = [p + "verse IS NOT NULL AND " + p + "verse <> ''"];
+    const w = el.syntaxMetreWork.value;
+    conds.push(w ? p + "work = " + sqlStr(w) : p + "work IN ('Iliad','Odyssey')");
+    const b = metreBook();
+    if (b) conds.push(p + "book = " + sqlStr(b));
     return conds.join(" AND ");
   }
 
   function runMetre() {
-    const key = el.syntaxMetreWork.value || "(both)";
+    const key = (el.syntaxMetreWork.value || "(both)") + "\u00b7" + (metreBook() || "(all books)");
     let M = metreCache[key];
     if (!M) {
       const scope = metreScope();
@@ -213,13 +301,11 @@
       M.lines = enj.lines || 0;
       M.closed = enj.closed || 0;
       // dependency arcs and whether they cross a line boundary
-      const wv = el.syntaxMetreWork.value;
-      const workCondA = wv ? "a.work = " + sqlStr(wv) : "a.work IN ('Iliad','Odyssey')";
       const arcs = SQL.objects(
         "SELECT COUNT(*) total, SUM(CASE WHEN a.verse <> b.verse THEN 1 ELSE 0 END) crossing " +
         "FROM morphology a JOIN morphology b ON b.work = a.work AND b.sentence_id = a.sentence_id " +
         "AND b.id = a.id - CAST(a.distance AS INTEGER) " +
-        "WHERE a.verse IS NOT NULL AND a.verse <> '' AND " + workCondA +
+        "WHERE " + metreScope("a") +
         " AND a.distance IS NOT NULL AND a.distance <> 0 AND b.verse IS NOT NULL;")[0] || {};
       M.arcTotal = arcs.total || 0;
       M.arcCross = arcs.crossing || 0;
@@ -234,7 +320,7 @@
         " AND distance IS NOT NULL AND distance <> 0 GROUP BY d ORDER BY d;");
       metreCache[key] = M;
     }
-    const wlab = el.syntaxMetreWork.value || "Iliad + Odyssey";
+    const wlab = (el.syntaxMetreWork.value || "Iliad + Odyssey") + (metreBook() ? " \u00b7 Book " + metreBook() : "");
 
     // classify sentence-end positions
     const buckets = { end: 0, masc: 0, fem: 0, buc: 0, other: 0 };
@@ -261,9 +347,9 @@
     Chart.groupedBars(el.syntaxHeadDir,
       posRows.map((r) => [r.before, r.after]),
       posRows.map((r) => UI.label("pos", r.pos)),
-      ["head precedes", "head follows"],
-      { valueLabel: "tokens", title: "Head direction by part of speech \u00b7 " + wlab,
-        xLabel: "part of speech of the dependent", yLabel: "tokens" });
+      ["its own head precedes it", "its own head follows it"],
+      { valueLabel: "tokens", title: "Where each word's head stands, by the word's part of speech \u00b7 " + wlab,
+        xLabel: "part of speech of the DEPENDENT word", yLabel: "tokens" });
 
     Chart.bars(el.syntaxDepLen,
       M.lenHist.map((r) => ({ label: r.d >= 15 ? "15+" : String(r.d), value: r.n })),
@@ -280,7 +366,7 @@
       ["Arcs crossing a line boundary", M.arcCross.toLocaleString() + " (" + crossPct.toFixed(1) + "%)"]
     ].map((c) => '<div class="analysis-card"><div class="metric">' + c[1] + '</div><div class="metric-label">' + esc(c[0]) + "</div></div>").join("") + "</div>";
 
-    el.syntaxMetreNote.textContent = "Sentence boundaries are the treebank's; positions are read from each sentence-final token's metrical record (the 3.1 / 3.2 buckets are the word positions where the caesurae fall; the bucolic bucket is a word end at 4.3). An enjambed line is one whose final word does not end its sentence. Dependency heads are recovered from the stored signed distances. Note the treebank's attachment conventions when reading the head-direction chart: a preposition HEADS its noun phrase and itself attaches to the verb it modifies, so \u201chead follows\u201d dominating for prepositions reflects Greek's late verbs (the prepositional phrase usually precedes its verb), while nouns governed by a preposition show \u201chead precedes\u201d, the familiar preposition-before-noun order.";
+    el.syntaxMetreNote.textContent = "Sentence boundaries are the treebank's; positions are read from each sentence-final token's metrical record (the 3.1 / 3.2 buckets are the word positions where the caesurae fall; the bucolic bucket is a word end at 4.3). An enjambed line is one whose final word does not end its sentence. Dependency heads are recovered from the stored signed distances. The head-direction chart reads per dependent: the Preposition bars describe where the preposition\u2019s own head (the verb its phrase modifies) stands, not the noun inside the phrase; that noun is counted under Noun, where its prepositional head precedes it 91% of the time (the rest is anastrophe). Note the treebank's attachment conventions when reading the head-direction chart: a preposition HEADS its noun phrase and itself attaches to the verb it modifies, so \u201chead follows\u201d dominating for prepositions reflects Greek's late verbs (the prepositional phrase usually precedes its verb), while nouns governed by a preposition show \u201chead precedes\u201d, the familiar preposition-before-noun order.";
   }
 
   /* ----- init -------------------------------------------------------------- */
@@ -292,17 +378,35 @@
     UI.fillSelect(el.syntaxBook, books, { head: null });
   }
 
+  // Books available for the metre panel's chosen work; disabled (and cleared
+  // back to "(all books)") while the scope is "(both poems)".
+  function populateMetreBooks() {
+    if (!el.syntaxMetreBook) return;
+    const work = el.syntaxMetreWork.value;
+    if (!work) {
+      UI.fillSelect(el.syntaxMetreBook, [], { head: "(all books)" });
+      el.syntaxMetreBook.disabled = true;
+      return;
+    }
+    const books = SQL.query("SELECT DISTINCT book FROM morphology WHERE work = " + sqlStr(work) +
+      " ORDER BY CAST(book AS INTEGER);").values.map((r) => r[0]);
+    UI.fillSelect(el.syntaxMetreBook, books, { head: "(all books)" });
+    el.syntaxMetreBook.disabled = false;
+  }
+
   function init() {
     grab();
-    if (!el.syntaxDepSvg) return; // not on this page
+    if (!el.syntaxTree) return; // not on this page
 
     el.btnSyntaxDraw.addEventListener("click", drawFromPicker);
     el.syntaxLine.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); drawFromPicker(); } });
     el.syntaxSentSel.addEventListener("change", () => drawSentence(el.syntaxWork.value, el.syntaxSentSel.value));
     el.syntaxWork.addEventListener("change", populateBooks);
     if (el.btnSyntaxTsv) el.btnSyntaxTsv.addEventListener("click", drawFromTsv);
+    el.syntaxTreeMode.addEventListener("change", () => { if (state.lastRows) renderTree(state.lastRows, el.syntaxTreeMode.value); });
     el.btnSyntaxMetre.addEventListener("click", runMetre);
-    el.syntaxMetreWork.addEventListener("change", runMetre);
+    el.syntaxMetreWork.addEventListener("change", () => { populateMetreBooks(); runMetre(); });
+    if (el.syntaxMetreBook) el.syntaxMetreBook.addEventListener("change", runMetre);
 
     SQL.ready().then(() => {
       if (el.syntaxLoadStatus) el.syntaxLoadStatus.style.display = "none";
@@ -311,6 +415,9 @@
       if (works.includes("Iliad")) el.syntaxWork.value = "Iliad";
       populateBooks();
       UI.fillSelect(el.syntaxMetreWork, ["Iliad", "Odyssey"].filter((w) => works.includes(w)), { head: "(both poems)" });
+      populateMetreBooks();
+      el.syntaxWork.disabled = false;
+      el.syntaxMetreWork.disabled = false;
       el.btnSyntaxDraw.disabled = false;
       el.btnSyntaxMetre.disabled = false;
       drawFromPicker();

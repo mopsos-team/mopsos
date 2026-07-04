@@ -17,11 +17,13 @@
  *    cooccur    - feature A x feature B co-occurrence (heatmap)
  *    slots      - feature value frequencies for a POS (bars); the feature
  *                 drop-down offers only features attested for that POS
- *  The compound/infinitive lookups use the accent-insensitive *_search and
- *  Beta Code *_beta companion columns added in scripts/build_corpus.py (see
- *  scripts/greek_text.py), via the shared MopsosText / MopsosUI.greekCombo
- *  helpers, the same machinery any future adaptive search on this site
- *  would reuse, not something bespoke to this tab.
+ *  The compound/infinitive lookups use the accent-insensitive *_search
+ *  companion column added in scripts/build_corpus.py (see scripts/greek_text.py);
+ *  the Beta Code each candidate carries is transliterated from its Greek lemma
+ *  in the browser (MopsosText.toBetaCode), not stored in the database. Both go
+ *  through the shared MopsosText / MopsosUI.greekCombo helpers, the same
+ *  machinery any future adaptive search on this site would reuse, not something
+ *  bespoke to this tab.
  * ========================================================================== */
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -31,6 +33,9 @@
   const TABLE = "morphology";
   const q = SQL.quoteId;
   const sqlStr = (s) => "'" + String(s).replace(/'/g, "''") + "'";
+  // Beta Code is derived from the Greek lemma in the browser (MopsosText) rather
+  // than stored as a DB column, keeping the database smaller and faster to load.
+  const betaOf = (greek) => (window.MopsosText ? window.MopsosText.toBetaCode(greek || "") : "");
 
   const FEATURE_FIELDS = ["pos", "person", "number", "tense", "mood", "voice", "gender", "case", "degree"];
 
@@ -70,6 +75,8 @@
     cmpM2Chart: $("mtCmpM2Chart"),
     cmpM1Cat: $("mtCmpM1Cat"),
     cmpM2Cat: $("mtCmpM2Cat"),
+    cmpM1Sub: $("mtCmpM1Sub"),
+    cmpM2Sub: $("mtCmpM2Sub"),
     cmpLocNote: $("mtCmpLocNote"),
     cmpLocChart: $("mtCmpLocChart"),
     cmpLocSec: $("mtCmpLocSec"),
@@ -445,15 +452,19 @@
       m1: memberNeedle(el.cmpM1),
       m2: memberNeedle(el.cmpM2),
       m1cat: el.cmpM1Cat.value,
-      m2cat: el.cmpM2Cat.value
+      m2cat: el.cmpM2Cat.value,
+      m1sub: el.cmpM1Sub ? el.cmpM1Sub.value : "",
+      m2sub: el.cmpM2Sub ? el.cmpM2Sub.value : ""
     };
   }
   function filterLabel(f) {
     const bits = [];
     if (f.m1) bits.push("with first member \u201c" + f.m1.raw + "\u201d");
     if (f.m1cat) bits.push("with first member a " + catLabel(f.m1cat));
+    if (f.m1sub) bits.push("with first member of the \u201c" + f.m1sub + "\u201d subcategory");
     if (f.m2) bits.push("with second member \u201c" + f.m2.raw + "\u201d");
     if (f.m2cat) bits.push("with second member a " + catLabel(f.m2cat));
+    if (f.m2sub) bits.push("with second member of the \u201c" + f.m2sub + "\u201d subcategory");
     if (f.work) bits.push("attested in the " + f.work);
     return bits.join(", ");
   }
@@ -462,6 +473,8 @@
     let rows = compoundRows.slice();
     if (f.m1cat) rows = rows.filter((r) => r.member1_category === f.m1cat);
     if (f.m2cat) rows = rows.filter((r) => r.member2_category === f.m2cat);
+    if (f.m1sub) rows = rows.filter((r) => r.member1_subcategory === f.m1sub);
+    if (f.m2sub) rows = rows.filter((r) => r.member2_subcategory === f.m2sub);
     if (f.m1) rows = rows.filter((r) => memberHits(f.m1, r.member1));
     if (f.m2) rows = rows.filter((r) => memberHits(f.m2, r.member2));
     if (f.work) {
@@ -493,7 +506,7 @@
     }
 
     el.cmpSql.textContent =
-      "SELECT lemma, lemma_search, segmentation, member1, member1_category, member2, member2_category\n" +
+      "SELECT lemma, lemma_search, segmentation, member1, member1_category, member1_subcategory, member2, member2_category, member2_subcategory\n" +
       "FROM " + q("ncompounds_analysis") + ";\n\n" +
       "SELECT m.lemma_search, m.foot_start, m.foot_end, COUNT(*)\n" +
       "FROM " + q(TABLE) + " m JOIN " + q("ncompounds_analysis") + " a ON a.lemma_search = m.lemma_search\n" +
@@ -528,7 +541,7 @@
      * is already fixed (every match trivially shares it), and entirely while
      * one compound's record is open; the localization evidence appears only
      * once a member or category is actually selected. */
-    const catOrMember = !!(f.m1 || f.m2 || f.m1cat || f.m2cat);
+    const catOrMember = !!(f.m1 || f.m2 || f.m1cat || f.m2cat || f.m1sub || f.m2sub);
     el.cmpLocSec.hidden = !catOrMember;
     el.cmpM1Wrap.hidden = !!f.m1;
     el.cmpM2Wrap.hidden = !!f.m2;
@@ -615,8 +628,10 @@
    * Both corpora here are small (hundreds to a few thousand rows), so the
    * candidate lists are simply fetched once and filtered in-browser via
    * MopsosUI.greekCombo, with no need for per-keystroke SQL round-trips. The
-   * *_search / *_beta columns queried below are the ones scripts/build_corpus.py
-   * derives from `lemma` / `compound` (see scripts/greek_text.py). --------- */
+   * lemma_search column queried below is derived by scripts/build_corpus.py
+   * from `lemma` / `compound`; the Beta Code each item carries is derived from
+   * the Greek lemma in the browser via betaOf() (see scripts/greek_text.py for
+   * the equivalent Python). ------------------------------------------------- */
   let compoundItems = null, compoundAttestations = null, infinitiveItems = null;
   let compoundRows = null, compoundByKey = null;
   let compoundDetailActive = false;
@@ -625,10 +640,10 @@
   function buildCompoundData() {
     if (compoundItems) return;
     compoundRows = SQL.objects(
-      "SELECT lemma, lemma_search, lemma_beta, segmentation, member1, member1_category, member2, member2_category\n" +
+      "SELECT lemma, lemma_search, segmentation, member1, member1_category, member1_subcategory, member2, member2_category, member2_subcategory\n" +
       "FROM " + q("ncompounds_analysis") + " ORDER BY lemma;");
     compoundItems = compoundRows.map((r) => ({
-      key: r.lemma_search, display: r.lemma, beta: r.lemma_beta,
+      key: r.lemma_search, display: r.lemma, beta: betaOf(r.lemma),
       meta: (r.member1 || "?") + " + " + (r.member2 || "?"), row: r
     }));
     compoundByKey = new Map();
@@ -650,49 +665,16 @@
 
     let html = '<table class="paradigm-table"><tbody>';
     html += "<tr><th>Compound</th><td>" + UI.esc(r.lemma) + "</td></tr>";
-    html += "<tr><th>Beta Code</th><td><code>" + UI.esc(r.lemma_beta) + "</code></td></tr>";
+    html += "<tr><th>Beta Code</th><td><code>" + UI.esc(betaOf(r.lemma)) + "</code></td></tr>";
     if (r.segmentation) html += "<tr><th>Segmentation</th><td>" + UI.esc(r.segmentation) + "</td></tr>";
     html += "<tr><th>First member</th><td>" + wlink(r.member1) + " (" + UI.esc(catLabel(r.member1_category)) + ")</td></tr>";
+    if (r.member1_subcategory) html += "<tr><th>First-member subcategory</th><td>" + UI.esc(r.member1_subcategory) + "</td></tr>";
     html += "<tr><th>Second member</th><td>" + wlink(r.member2) + " (" + UI.esc(catLabel(r.member2_category)) + ")</td></tr>";
+    if (r.member2_subcategory) html += "<tr><th>Second-member subcategory</th><td>" + UI.esc(r.member2_subcategory) + "</td></tr>";
     html += "</tbody></table>";
 
-    /* metrical record: attested forms with their shapes and starting feet */
-    const forms = SQL.objects(
-      "SELECT form, metrical_shape shp, foot_start ft, foot_start_pos fsp, foot_end fe, COUNT(*) n\n" +
-      "FROM " + q(TABLE) + "\n" +
-      "WHERE lemma_search = " + sqlStr(item.key) + "\n" +
-      "  AND match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND foot_start IS NOT NULL\n" +
-      "GROUP BY form, shp, ft, fsp, fe ORDER BY n DESC;");
-    if (m && m.tot) {
-      let best = 0;
-      for (let i = 1; i < 6; i++) if (m.start[i] > m.start[best]) best = i;
-      html += '<p class="small-muted" style="margin:.6rem 0 .25rem;"><strong>Metrical positions</strong>: most often begins in foot ' +
-        (best + 1) + " (" + Math.round(100 * m.start[best] / m.tot) + "% of placements); " +
-        Math.round(100 * m.end6 / m.tot) + "% of placements run to the line end.</p>";
-      html += '<div id="mtCmpDetChart" style="margin:.2rem 0 .4rem;"></div>';
-      // every distinct placement the compound takes in the verse
-      const seen = new Set();
-      const places = [];
-      forms.forEach((fr) => {
-        const posLab = String(fr.fsp) === "1" ? "on the princeps" : "in the biceps";
-        const k2 = fr.form + "|" + fr.shp + "|" + fr.ft + "|" + fr.fe + "|" + posLab;
-        if (seen.has(k2)) return;
-        seen.add(k2);
-        places.push([fr.form, fr.shp, fr.ft, fr.fe, posLab]);
-      });
-      places.sort((a2, b2) => Number(a2[2]) - Number(b2[2]) || a2[0].localeCompare(b2[0], "el"));
-      html += '<table class="paradigm-table"><thead><tr><th>Form</th><th>Metrical shape</th><th>Feet</th><th>Begins</th></tr></thead><tbody>' +
-        places.map((p2) =>
-          "<tr><td>" + wlink(p2[0]) + "</td>" +
-          '<td><span class="scan-marks">' + shapeMarks(p2[1]) + "</span></td>" +
-          "<td>" + UI.esc(p2[3] && p2[3] !== p2[2] ? p2[2] + "\u2013" + p2[3] : String(p2[2])) + "</td>" +
-          "<td>" + UI.esc(p2[4]) + "</td></tr>").join("") +
-        "</tbody></table>";
-    } else {
-      html += '<p class="small-muted" style="margin-top:.5rem;">No metrically aligned tokens of this compound in the corpus, so no metrical record to show.</p>';
-    }
-
-    /* every occurrence in the corpus (all works), with rebuilt line text */
+    /* every occurrence in the corpus (all works), with rebuilt line text —
+     * shown FIRST, before the metrical record and its charts */
     const occ = SQL.objects("SELECT work w, book b, CAST(verse AS INTEGER) v, COUNT(*) n FROM " + q(TABLE) +
       " WHERE lemma_search = " + sqlStr(item.key) + " AND verse IS NOT NULL AND verse <> ''" +
       " GROUP BY w, b, v ORDER BY w, CAST(b AS INTEGER), v;");
@@ -722,6 +704,57 @@
       html += attested.slice(0, 12).map((a) => '<div class="scan-ex">' + UI.esc(a.work + " " + a.book + "." + a.line_num) + "</div>").join("");
     } else {
       html += '<p class="small-muted" style="margin-top:.5rem;">Not attested in the corpus under this spelling.</p>';
+    }
+
+    /* metrical record: attested forms with their shapes, starting feet, and
+     * the lines (book.verse) where each placement occurs */
+    const formToks = SQL.objects(
+      "SELECT form, metrical_shape shp, foot_start ft, foot_start_pos fsp, foot_end fe, work w, book b, CAST(verse AS INTEGER) v\n" +
+      "FROM " + q(TABLE) + "\n" +
+      "WHERE lemma_search = " + sqlStr(item.key) + "\n" +
+      "  AND match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND foot_start IS NOT NULL\n" +
+      "ORDER BY work, CAST(book AS INTEGER), v;");
+    if (m && m.tot) {
+      let best = 0;
+      for (let i = 1; i < 6; i++) if (m.start[i] > m.start[best]) best = i;
+      html += '<p class="small-muted" style="margin:.6rem 0 .25rem;"><strong>Metrical positions</strong>: most often begins in foot ' +
+        (best + 1) + " (" + Math.round(100 * m.start[best] / m.tot) + "% of placements); " +
+        Math.round(100 * m.end6 / m.tot) + "% of placements run to the line end.</p>";
+      html += '<div id="mtCmpDetChart" style="margin:.2rem 0 .4rem;"></div>';
+      // every distinct placement the compound takes in the verse, each with
+      // the lines it occurs at (grouped by work; long lists are capped)
+      const placeMap = new Map();
+      formToks.forEach((fr) => {
+        const posLab = String(fr.fsp) === "1" ? "on the princeps" : "in the biceps";
+        const k2 = fr.form + "|" + fr.shp + "|" + fr.ft + "|" + fr.fe + "|" + posLab;
+        let p2 = placeMap.get(k2);
+        if (!p2) { p2 = { form: fr.form, shp: fr.shp, ft: fr.ft, fe: fr.fe, posLab: posLab, refs: [] }; placeMap.set(k2, p2); }
+        p2.refs.push({ w: fr.w, b: fr.b, v: fr.v });
+      });
+      const REF_CAP = 6;
+      const refCell = (refs) => {
+        const shown = refs.slice(0, REF_CAP);
+        const byWork = new Map();
+        shown.forEach((o) => {
+          if (!byWork.has(o.w)) byWork.set(o.w, []);
+          byWork.get(o.w).push(o.b + "." + o.v);
+        });
+        let s2 = [...byWork.entries()].map(([w2, ls]) => w2 + " " + ls.join(", ")).join("; ");
+        if (refs.length > REF_CAP) s2 += " (+" + (refs.length - REF_CAP) + " more)";
+        return s2;
+      };
+      const places = [...placeMap.values()];
+      places.sort((a2, b2) => Number(a2.ft) - Number(b2.ft) || a2.form.localeCompare(b2.form, "el"));
+      html += '<table class="paradigm-table"><thead><tr><th>Form</th><th>Metrical shape</th><th>Feet</th><th>Begins</th><th>Lines</th></tr></thead><tbody>' +
+        places.map((p2) =>
+          "<tr><td>" + wlink(p2.form) + "</td>" +
+          '<td><span class="scan-marks">' + shapeMarks(p2.shp) + "</span></td>" +
+          "<td>" + UI.esc(p2.fe && p2.fe !== p2.ft ? p2.ft + "\u2013" + p2.fe : String(p2.ft)) + "</td>" +
+          "<td>" + UI.esc(p2.posLab) + "</td>" +
+          "<td>" + UI.esc(refCell(p2.refs)) + "</td></tr>").join("") +
+        "</tbody></table>";
+    } else {
+      html += '<p class="small-muted" style="margin-top:.5rem;">No metrically aligned tokens of this compound in the corpus, so no metrical record to show.</p>';
     }
 
     el.cmpDetail.innerHTML = html;
@@ -830,11 +863,11 @@
   function buildInfinitiveData() {
     if (infinitiveItems) return;
     const rows = SQL.objects(
-      "SELECT lemma, lemma_search, lemma_beta, count(*) AS n\n" +
+      "SELECT lemma, lemma_search, count(*) AS n\n" +
       "FROM " + q(TABLE) + "\n" +
       "WHERE pos = 'v' AND mood = 'n' AND lemma IS NOT NULL AND lemma <> ''\n" +
-      "GROUP BY lemma, lemma_search, lemma_beta ORDER BY n DESC;");
-    infinitiveItems = rows.map((r) => ({ key: r.lemma_search, display: r.lemma, beta: r.lemma_beta, meta: r.n + "\u00d7", lemma: r.lemma }));
+      "GROUP BY lemma, lemma_search ORDER BY n DESC;");
+    infinitiveItems = rows.map((r) => ({ key: r.lemma_search, display: r.lemma, beta: betaOf(r.lemma), meta: r.n + "\u00d7", lemma: r.lemma }));
   }
 
   function renderInfinitiveDetail(item) {
@@ -914,7 +947,27 @@
       };
       catSelect(el.cmpM1Cat, [...new Set(compoundRows.map((r) => r.member1_category).filter(Boolean))].sort((a, b) => catLabel(a).localeCompare(catLabel(b))));
       catSelect(el.cmpM2Cat, [...new Set(compoundRows.map((r) => r.member2_category).filter(Boolean))].sort((a, b) => catLabel(a).localeCompare(catLabel(b))));
-      [el.cmpWork, el.cmpM1Cat, el.cmpM2Cat].forEach((c) => c.addEventListener("change", renderCompoundPanel));
+      // Subcategories (stem classes: s-stem, thematic, and so on) exist only
+      // where the analysis records one; each list adapts to the chosen
+      // category, keeps a still-valid selection, and disables when the chosen
+      // category carries no subcategories at all.
+      const refreshSubcats = () => {
+        const fill = (sel, field, catField, cat) => {
+          if (!sel) return;
+          const keep = sel.value;
+          const values = [...new Set(compoundRows
+            .filter((r) => (!cat || r[catField] === cat) && r[field])
+            .map((r) => r[field]))].sort((a, b) => a.localeCompare(b));
+          UI.fillSelect(sel, values, { head: "(any subcategory)" });
+          if ([...sel.options].some((o) => o.value === keep)) sel.value = keep;
+          sel.disabled = !values.length;
+        };
+        fill(el.cmpM1Sub, "member1_subcategory", "member1_category", el.cmpM1Cat.value);
+        fill(el.cmpM2Sub, "member2_subcategory", "member2_category", el.cmpM2Cat.value);
+      };
+      refreshSubcats();
+      [el.cmpWork, el.cmpM1Sub, el.cmpM2Sub].forEach((c) => { if (c) c.addEventListener("change", renderCompoundPanel); });
+      [el.cmpM1Cat, el.cmpM2Cat].forEach((c) => c.addEventListener("change", () => { refreshSubcats(); renderCompoundPanel(); }));
       // one adaptive combo per member slot, fed by the members actually
       // attested in that slot (with their category and compound count)
       const memberItems = (field, catField) => {
