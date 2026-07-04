@@ -34,7 +34,7 @@
 
   <section class="panel">
     <button class="panel-head" type="button" aria-expanded="false">
-      <span class="panel-title">Word Search</span>
+      <span class="panel-title">Part of Speech and Morphology Search</span>
       <span class="panel-toggle">&rsaquo; Expand</span>
     </button>
     <div class="panel-body" hidden>
@@ -75,9 +75,31 @@
 
       <div id="qfResults" style="margin-top:.7rem;"></div>
     </div>
+    </div>
+  </section>
 
+  <section class="panel">
+    <button class="panel-head" type="button" aria-expanded="false">
+      <span class="panel-title">Part of Speech and Morphology Distributions</span>
+      <span class="panel-toggle">&rsaquo; Expand</span>
+    </button>
+    <div class="panel-body" hidden>
+    <div class="panel-info">
+      <div class="tab-meta-row">
+      <button class="info-btn" data-info="morphInfo">What is this?</button>
+    </div>
+    <div id="morphInfo" class="info-panel" hidden>
+      <h4>Morphology tab</h4>
+      <p>There are three ways to explore the corpus:</p>
+      <ul>
+        <li><strong>Filter</strong>: pick a part of speech and MOPSOS shows only the grammatical features that actually apply to it.</li>
+        <li><strong>Custom queries</strong>: tucked inside the Filter card, for writing your own read-only queries by hand. Press <kbd>Enter</kbd> to run.</li>
+        <li><strong>Distribution Charts</strong>: count tokens by any dimension (book, lemma, case…), optionally broken down by a second dimension, under any filter. For example: which books have the most aorist optatives, or how noun number and case combine.</li>
+      </ul>
+    </div>
+    </div>
     <div class="card">
-      <h2>2. Distribution Charts</h2>
+      <h2>1. Distribution Charts</h2>
       <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, cross-tabulate two of them, or draw a co-occurrence network of words that share a sentence. Add filters to focus. For example, set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
       <div class="grid-3">
         <div class="field">
@@ -341,7 +363,7 @@
     </div>
   </section>
 
-<section class="panel">
+<section class="panel" hidden>
   <button class="panel-head" type="button" aria-expanded="false">
     <span class="panel-title">Style Search</span>
     <span class="panel-toggle">&rsaquo; Expand</span>
