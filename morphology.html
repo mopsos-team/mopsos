@@ -100,9 +100,9 @@
     </div>
     <div class="card">
       <h2>1. Distribution Charts</h2>
-      <p class="help" style="margin-top:-.35rem;">Count tokens by a dimension, cross-tabulate two of them, or draw a co-occurrence network of words that share a sentence. Add filters to focus. For example, set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, then count by Book.</p>
+      <p class="help" style="margin-top:-.35rem;">Group words by a particular feature then count them. For example, set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, and count by <em>Book / work</em> to show how many instances there are of aorist verbs in the optative within the works in the corpus.</p>
       <div class="grid-3">
-        <div class="field">
+        <div class="field" hidden>
           <label for="exChartType"><strong>Chart</strong></label>
           <select id="exChartType">
             <option value="bars" selected>Bar chart</option>
@@ -153,35 +153,33 @@
         </div>
         <p class="help" id="exSemanticNote" style="margin:.25rem 0 0;">Greek and Beta Code match the corpus lemma list directly (accent-insensitive). The network shows the words that actually share a sentence with the chosen lemma, counted live from the corpus.</p>
       </div>
-      <details style="margin:.2rem 0 .5rem;">
-        <summary class="help" style="cursor:pointer;">Limit by (optional)</summary>
-        <div class="grid-2" style="margin-top:.5rem;">
-          <div class="field">
-            <label for="exLimitWork"><strong>Limit to work</strong></label>
-            <select id="exLimitWork"><option value="">(all works)</option></select>
-          </div>
-          <div class="field">
-            <label for="exLimitAuthor"><strong>Limit to author</strong></label>
-            <select id="exLimitAuthor"><option value="">(all authors)</option></select>
-          </div>
+      <hr />
+      <div class="grid-2" style="margin-top:1rem;">
+        <div class="field">
+          <label for="exLimitWork"><strong>Book / work</strong></label>
+          <select id="exLimitWork"><option value="">(all works)</option></select>
         </div>
-        <label style="display:block;margin:.2rem 0 .3rem;"><strong>Limit to grammar</strong></label>
-        <div id="exGroup" class="filter-group"></div>
-      </details>
+        <div class="field">
+          <label for="exLimitAuthor"><strong>Author</strong></label>
+          <select id="exLimitAuthor"><option value="">(all authors)</option></select>
+        </div>
+      </div>
+      <div id="exGroup" class="filter-group" style="margin-top:.5rem;"></div>
       <div class="btn-row">
-        <button id="btnExRun" class="btn btn-primary" disabled>Draw chart</button>
+        <button id="btnExRun" class="btn btn-primary" disabled>Apply filter</button>
         <button id="btnExReset" class="btn">Reset filters</button>
       </div>
       <h3 id="exTitle" style="margin:.8rem 0 .15rem;"></h3>
       <p id="exDesc" class="small-muted" style="margin:0 0 .4rem;"></p>
-      <div id="exChart" class="viz-wrap"></div>
+      <div id="exChart" class="viz-wrap fig-full"></div>
+      <div id="exTable" style="margin-top:.6rem;"></div>
     </div>
     </div>
   </section>
 
   <section class="panel">
     <button class="panel-head" type="button" aria-expanded="false">
-      <span class="panel-title">Compound Search</span>
+      <span class="panel-title">Nominal Compound Search</span>
       <span class="panel-toggle">&rsaquo; Expand</span>
     </button>
     <div class="panel-body" hidden>

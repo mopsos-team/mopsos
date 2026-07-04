@@ -306,6 +306,7 @@ function runCustomSql() {
     const semQuery = ($("exSemantic").value || "").trim();
     const chart = $("exChart"), title = $("exTitle"), desc = $("exDesc");
     const filterText = filterTextOf(filters);
+    $("exTable").innerHTML = "";
 
     try {
       if (semQuery) {
@@ -371,6 +372,7 @@ function runCustomSql() {
     const desc = $("exDesc");
     const chart = $("exChart");
     const filterText = filterTextOf(filters);
+    $("exTable").innerHTML = "";
 
     try {
       if (type === "heatmap" || type === "grouped" || type === "proportion") {
@@ -489,13 +491,13 @@ function runCustomSql() {
           sortedVals(f1).forEach((v) => { html += "<tr><th>" + UI.esc(displayName(f1, v)) + "</th><td>" + formCell(cell[v]) + "</td></tr>"; });
           html += "</tbody></table>";
         } else if (varying.length === 0) {
-          html += '<table class="data-table paradigm-table"><thead><tr><th>Form</th><th>Tokens</th></tr></thead><tbody>' +
+          html += '<table class="data-table paradigm-table"><thead><tr><th>Form</th><th>Words</th></tr></thead><tbody>' +
             rows.slice().sort((a, b) => b.n - a.n).map((r) => '<tr><td><span class="pdg-form wlink" data-word="' + UI.esc(r.form) + '">' + UI.esc(r.form) + "</span></td><td>" + r.n + "</td></tr>").join("") + "</tbody></table>";
         } else {
           // three or more distinguishing dimensions (verbs, 3-termination adjectives): flat inventory
           html += '<table class="data-table paradigm-table"><thead><tr>';
           varying.forEach((f) => { html += "<th>" + UI.esc(UI.fieldTitle(f)) + "</th>"; });
-          html += "<th>Form</th><th>Tokens</th></tr></thead><tbody>";
+          html += "<th>Form</th><th>Words</th></tr></thead><tbody>";
           rows.slice().sort((a, b) => {
             for (const f of varying) { const d = rank(f, a[KEY[f]]) - rank(f, b[KEY[f]]); if (d) return d; }
             return b.n - a.n;
@@ -512,11 +514,12 @@ function runCustomSql() {
           " WHERE " + naGuard(dim1) + (w ? " AND " + w : "") +
           " GROUP BY k ORDER BY c DESC LIMIT " + topN + ";";
         const rows = SQL.objects(sql);
-        title.textContent = "Token count by " + UI.fieldTitle(dim1);
+        title.textContent = "Word count by " + UI.fieldTitle(dim1);
         desc.textContent = "Top " + rows.length + " values" + filterText + ".";
         Chart.bars(chart, rows.map((r) => ({ label: displayName(dim1, r.k), value: r.c })),
-          { valueLabel: "tokens", emptyMsg: "No tokens match.",
-            title: "Token count by " + UI.fieldTitle(dim1) + filterText });
+          { valueLabel: "count", emptyMsg: "No words match.",
+            title: "Word count by " + UI.fieldTitle(dim1) + filterText });
+        $("exTable").innerHTML = renderTable([dim1, "count"], rows.map((r) => [r.k, r.c]));
       }
     } catch (e) {
       chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Chart error: ' + UI.esc(e.message) + "</div>";
