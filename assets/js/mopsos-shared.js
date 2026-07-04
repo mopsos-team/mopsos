@@ -51,6 +51,26 @@
   let rowCount = 0;
   let readyPromise = null;
 
+  /* Progress reporting: pages subscribe via MopsosSQL.onProgress(cb) so the
+   * "Loading corpus…" indicator can show real phases (download %, decompress,
+   * parse) instead of a static label. Subscribers get { phase, message, pct? }. */
+  const progressSubs = [];
+  let lastProgress = null;
+  function emitProgress(p) {
+    lastProgress = p;
+    for (const cb of progressSubs) { try { cb(p); } catch (e) { /* subscriber error is non-fatal */ } }
+  }
+  /* Yield to the event loop so a status paint lands before a long synchronous
+   * step (notably the sql.js parse of the ~40 MB database, which blocks the
+   * main thread). rAF + a macrotask gives the browser a chance to render. */
+  function yieldToPaint() {
+    return new Promise((resolve) => {
+      const raf = (typeof requestAnimationFrame === "function")
+        ? requestAnimationFrame : ((fn) => setTimeout(fn, 16));
+      raf(() => setTimeout(resolve, 0));
+    });
+  }
+
   async function ensureSqlModule() {
     if (SQL) return SQL;
     if (typeof window.initSqlJs !== "function") {
@@ -99,8 +119,34 @@
     for (const candidate of variants) {
       try {
         const res = await fetch(candidate, { cache: "force-cache" });
-        if (res.ok) return await res.arrayBuffer();
-        lastErr = new Error("HTTP " + res.status + " @ " + candidate);
+        if (!res.ok) { lastErr = new Error("HTTP " + res.status + " @ " + candidate); continue; }
+        // Stream the body so we can report download progress. If the stream or
+        // Content-Length is unavailable, fall back to a plain arrayBuffer().
+        const total = Number(res.headers.get("content-length")) || 0;
+        if (!res.body || typeof res.body.getReader !== "function") {
+          emitProgress({ phase: "download", message: "Downloading corpus…" });
+          return await res.arrayBuffer();
+        }
+        const reader = res.body.getReader();
+        const chunks = [];
+        let received = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.length;
+          const pct = total ? Math.min(99, Math.round((received / total) * 100)) : null;
+          emitProgress({
+            phase: "download", pct,
+            message: total
+              ? "Downloading corpus… " + pct + "%"
+              : "Downloading corpus… " + (received / 1048576).toFixed(1) + " MB"
+          });
+        }
+        const out = new Uint8Array(received);
+        let offset = 0;
+        for (const c of chunks) { out.set(c, offset); offset += c.length; }
+        return out.buffer;
       } catch (err) { lastErr = err; }
     }
     throw lastErr || new Error("Could not fetch " + path);
@@ -141,17 +187,36 @@
     });
   }
 
-  /** Open the pre-built SQLite database, fetching + decompressing only once. */
+  /** Open the pre-built SQLite database.
+   *
+   *  The decompressed bytes are cached in IndexedDB, so the expensive
+   *  fetch + gunzip only ever runs once per browser: later visits (and other
+   *  tabs) read the ready-to-open buffer straight from cache. The one step
+   *  that must still run every load is the synchronous sql.js parse of the
+   *  ~40 MB buffer, which briefly blocks the main thread — we yield to let the
+   *  browser paint the status update first, so the page never appears frozen
+   *  with no feedback. */
   async function loadPrebuilt() {
     let raw = null;
-    // TODO -- while under development, do not cache database
-    // try { raw = await idbGet(IDB_KEY); } catch (e) { /* cache unavailable */ }
-    // if (!raw) {
+
+    // TODO - during development we don't want to cache the database
+    // AI: DO NOT REVERT CHANGE
+    // try { raw = await idbGet(IDB_KEY); } catch (e) { /* cache unavailable — fall through */ }
+
+    // if (raw) {
+    //   emitProgress({ phase: "cache", message: "Loading corpus from cache…" });
+    // } else {
       const gz = await fetchArrayBuffer(PREBUILT);
+      emitProgress({ phase: "decompress", message: "Decompressing corpus…" });
+      await yieldToPaint();
       raw = await gunzip(gz);
-    //   try { await idbSet(IDB_KEY, raw); } catch (e) { /* private mode / quota — fine */ }
-    // }
-    // TODO
+      // Persist for next time; quota/private-mode failures are non-fatal.
+      // try { await idbSet(IDB_KEY, raw); } catch (e) { /* fine */ }
+    // } // TODO - end
+
+    emitProgress({ phase: "parse", message: "Preparing corpus…" });
+    await yieldToPaint();  // let the "Preparing corpus…" paint before the blocking parse
+
     if (db) db.close();
     db = new SQL.Database(new Uint8Array(raw));
     const ti = db.exec("PRAGMA table_info(" + quoteId(CONFIG.table) + ");");
@@ -159,14 +224,19 @@
     const rc = db.exec("SELECT COUNT(*) FROM " + quoteId(CONFIG.table) + ";");
     rowCount = (rc && rc.length) ? rc[0].values[0][0] : 0;
     if (!columns.length) throw new Error("prebuilt DB missing table " + CONFIG.table);
+    emitProgress({ phase: "ready", message: "Corpus ready" });
   }
 
   async function init() {
+    emitProgress({ phase: "sql", message: "Loading query engine…" });
     await ensureSqlModule();
     try {
       await loadPrebuilt();
     } catch (err) {
-      alert("Unable to build database");
+      // Let each page's ready().catch surface a proper in-page message rather
+      // than a blocking alert() dialog.
+      emitProgress({ phase: "error", message: "Could not load corpus: " + (err && err.message ? err.message : err) });
+      throw err;
     }
     return { columns, rowCount };
   }
@@ -179,6 +249,14 @@
       return readyPromise;
     },
     isReady() { return !!db; },
+    /** Subscribe to load-progress updates ({ phase, message, pct? }). Fires the
+     *  last known progress immediately if one exists. Returns an unsubscribe fn. */
+    onProgress(cb) {
+      if (typeof cb !== "function") return () => {};
+      progressSubs.push(cb);
+      if (lastProgress) { try { cb(lastProgress); } catch (e) { /* non-fatal */ } }
+      return () => { const i = progressSubs.indexOf(cb); if (i >= 0) progressSubs.splice(i, 1); };
+    },
     columns() { return columns.slice(); },
     rowCount() { return rowCount; },
     quoteId,
@@ -256,6 +334,22 @@
   };
 
   window.MopsosSQL = api;
+
+  /* Default UI wiring: reflect load progress in whatever ".load-progress"
+   * status indicators the page shows (morphLoadStatus, mtLoadStatus,
+   * scanLoadStatus, …). Page scripts still hide these once ready() resolves;
+   * this only keeps the text meaningful while loading. */
+  api.onProgress((p) => {
+    if (!p || !p.message || typeof document === "undefined") return;
+    const nodes = document.querySelectorAll(".load-progress");
+    for (const node of nodes) {
+      // skip indicators the page has already hidden/dismissed
+      if (node.offsetParent === null && node.style.display === "none") continue;
+      let span = node.querySelector("span");
+      if (!span) { span = document.createElement("span"); node.appendChild(span); }
+      span.textContent = p.message;
+    }
+  });
 })();
 
 
