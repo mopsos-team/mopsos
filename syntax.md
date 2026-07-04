@@ -6,7 +6,7 @@ section: syntax
 
 <div id="syntaxLoadStatus" class="load-progress"><span>Loading the corpus…</span></div>
 
-<section class="panel" data-open="true">
+<section class="panel">
   <button class="panel-head" type="button" aria-expanded="false">
     <span class="panel-title">Syntax Search</span>
     <span class="panel-toggle">&rsaquo; Expand</span>
@@ -18,14 +18,14 @@ section: syntax
     <h4>Syntax tab</h4>
     <p>Every token in the corpus carries a signed dependency distance to its head (distance = position of the word minus position of its head; 0 marks the root). The workbench recovers each word’s head from that record and draws the sentence’s dependency tree; the trees are unlabelled, because the corpus stores the attachment but not the relation name.</p>
     <ul>
-      <li><strong>Pick a sentence</strong>: choose a work, book, and line number; the tree, a phrase-structure sketch, and a token table are drawn for the sentence containing that line (with a selector when two sentences share the line). A manual TSV mode remains for pasting external trees.</li>
-      <li><strong>Syntax meets the metre</strong>: because the same tokens carry their metrical record, the tab measures the syntax-metre interface directly from the corpus: where sentence boundaries fall in the verse (line end, the caesura points, the bucolic diaeresis), how many lines are enjambed, how many dependency arcs cross a line boundary, plus head direction and dependency length by part of speech.</li>
+      <li><strong>Pick a sentence</strong>: choose a work, book, and line number; the dependency tree (renderable horizontally, vertically, or as bracketed text) and a token table are drawn for the sentence containing that line (with a selector when two sentences share the line). A manual TSV mode remains for pasting external trees.</li>
+      <li><strong>Syntax-Meter Interface Search</strong>: because the same tokens carry their metrical record, the tab measures the syntax-metre interface directly from the corpus: where sentence boundaries fall in the verse (line end, the caesura points, the bucolic diaeresis), how many lines are enjambed, how many dependency arcs cross a line boundary, plus head direction and dependency length by part of speech.</li>
     </ul>
   </div>
   </div>
 
 <div class="card">
-  <h2>Pick a sentence from the corpus</h2>
+  <h2>1. Pick a sentence from the corpus</h2>
   <p class="help" style="margin-top:-.3rem;">Choose a line; the whole sentence containing it is drawn (Homeric sentences often span several lines).</p>
   <div class="grid-3">
     <div class="field"><label for="syntaxWork"><strong>Work</strong></label><select id="syntaxWork" disabled></select></div>
@@ -57,27 +57,41 @@ section: syntax
 </div>
 
 <div class="card">
-  <h2>Sentence structure</h2>
-  <p id="syntaxPicked" class="help" style="margin-top:-.3rem;"></p>
+  <h2>2. Sentence structure</h2>
   <div id="syntaxSummary" class="analysis-wrap"></div>
-  <div class="grid-2">
-    <div class="viz-wrap">
-      <h3>Dependency tree</h3>
-      <svg id="syntaxDepSvg" class="cluster-svg" viewBox="0 0 1100 460"></svg>
+  <div class="grid-3">
+    <div class="field">
+      <label for="syntaxTreeMode"><strong>Render as</strong></label>
+      <select id="syntaxTreeMode">
+        <option value="h" selected>Horizontal tree</option>
+        <option value="v">Vertical tree</option>
+        <option value="t">Text (brackets)</option>
+      </select>
     </div>
-    <div class="viz-wrap">
-      <h3>Phrase-structure sketch</h3>
-      <pre id="syntaxPhrase" class="status" style="min-height:280px;"></pre>
-    </div>
+  </div>
+  <div class="viz-wrap" style="margin-top:.5rem;">
+    <h3>Dependency Tree</h3>
+    <div id="syntaxTree"></div>
+    <pre id="syntaxPhrase" class="status" hidden style="min-height:200px;"></pre>
   </div>
   <div id="syntaxTable" style="margin-top:.8rem;"></div>
 </div>
 
+  </div>
+</section>
+
+<section class="panel">
+  <button class="panel-head" type="button" aria-expanded="false">
+    <span class="panel-title">Syntax-Meter Interface Search</span>
+    <span class="panel-toggle">&rsaquo; Expand</span>
+  </button>
+  <div class="panel-body" hidden>
+
 <div class="card">
-  <h2>Syntax meets the metre</h2>
   <p class="help" style="margin-top:-.3rem;">Corpus-wide measurements of the syntax-metre interface, computed live from the merged record: sentence boundaries located by the metrical position of their final word, enjambment, arcs across the line boundary, and dependency profiles.</p>
   <div class="grid-3">
     <div class="field"><label for="syntaxMetreWork"><strong>Scope</strong></label><select id="syntaxMetreWork" disabled><option value="">(both poems)</option></select></div>
+    <div class="field"><label for="syntaxMetreBook"><strong>Book</strong></label><select id="syntaxMetreBook" disabled><option value="">(all books)</option></select></div>
     <div class="field" style="align-self:end;"><button id="btnSyntaxMetre" class="btn" disabled>Compute</button></div>
   </div>
   <div id="syntaxMetreSummary" class="analysis-wrap" style="margin-top:.6rem;"></div>

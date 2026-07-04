@@ -741,8 +741,8 @@
    * Collapsible page panels: every top-level section on a tab renders as a
    * contracted bar (title + "Expand"); clicking the bar reveals the body.
    * Markup: <section class="panel"><button class="panel-head">...
-   * <div class="panel-body" hidden>...</div></section>. A panel with
-   * data-open="true" starts expanded (used on How to Cite).
+   * <div class="panel-body" hidden>...</div></section>. Every panel starts
+   * collapsed; data-open="true" remains available to start one expanded.
    * ------------------------------------------------------------------------ */
   api.wirePanels = function () {
     document.querySelectorAll(".panel").forEach((panel) => {
@@ -910,6 +910,8 @@
   const api = {
     PALETTE,
     color(i) { return PALETTE[((i % PALETTE.length) + PALETTE.length) % PALETTE.length]; },
+    // for hand-built SVGs (e.g. the syntax tree) to get downloads + enlarge
+    addToolbar(container) { addDownloadToolbar(container); },
 
     /**
      * Horizontal bar chart.

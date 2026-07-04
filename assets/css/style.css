@@ -1060,3 +1060,62 @@ body.page-prosody .nav-logo .lp-scan .lp-quad { opacity: .6; }
   .landing-logo { width: 140px; display: flex; justify-content: center; }
   .landing-logo .mopsos-logo { width: 140px; height: 140px; }
 }
+
+/* ============================================================================
+ * PAGE-SCHEME CONSISTENCY: every page carries one accent palette (--acc /
+ * --acc2 / --pgbg / --acc-ink), but chrome from the two earlier themes (the
+ * brown original and the Aegean-teal "Mopsus" redesign) still leaked through:
+ * near-black status boxes, teal info/advanced toggles, cream panels, brown
+ * info-panel text, indigo kbd chips, teal cite headings. Appended last so
+ * these re-statements win and every element reads from the page palette.
+ * (Data-encoding colors are deliberately untouched: the Okabe-Ito chart
+ * palette and the clay/bronze caesura markers carry meaning, not chrome.)
+ * ========================================================================== */
+/* status / SQL boxes: page tint instead of the near-black terminal look */
+.status { background: var(--pgbg); color: #000; border: 1px solid var(--acc2); }
+.status.muted, .muted { background: transparent; border: 0; }
+.status.loading-note { color: #000; background: var(--pgbg); border-color: var(--acc2); }
+
+/* info button + panel: accent when open; body text in ink, chips on white */
+.info-btn.is-open,
+.panel-info .info-btn.is-open,
+.tab-meta-row .info-btn.is-open { background: var(--acc); color: var(--on-acc); border-color: transparent; }
+.info-panel { color: #000; }
+.info-panel code { background: #fff; }
+
+/* advanced toggles + panels: dashed accent outline, page-tint body */
+.adv-toggle { background: transparent; border: 1px dashed var(--acc); color: var(--acc-ink); }
+.adv-toggle:hover { background: var(--pgbg); color: var(--acc-ink); filter: none; }
+.adv-panel { border: 1px solid var(--acc2); background: var(--pgbg); }
+
+/* view picker box, loading bar, kbd chips, table header tints */
+.view-picker { border: 1px solid var(--acc2); background: #fff; }
+.load-progress { background: var(--pgbg); border: 1px solid var(--acc2); }
+.load-progress::after { background: linear-gradient(90deg, transparent, var(--acc), transparent); }
+kbd { background: #fff; border-color: var(--acc2); }
+table.preview th { background: var(--pgbg); }
+.mini-table th { background: var(--pgbg); }
+/* paradigm tables: the Aegean-teal column headers and gold/bronze row
+ * headers (e.g. Compound / Beta Code / Segmentation in the compound
+ * lookup) join the page palette */
+.paradigm-table thead th { background: var(--pgbg); color: #000; }
+.paradigm-table tbody th { background: var(--pgbg); color: #000; }
+.tab-desc { color: #000; }
+
+/* chart tooltip: white card with the page accent instead of slate black */
+.d3-tooltip { background: #fff; color: #000; border: 1.5px solid var(--acc); box-shadow: 0 8px 18px rgba(0,0,0,.18); }
+.d3-tooltip strong { color: var(--acc-ink); }
+
+/* warn-style buttons (e.g. the zoom Close) join the page palette too */
+.btn-warn { background: #fff; color: var(--acc-ink); border: 1px solid var(--acc2); }
+.btn-warn:hover { background: var(--pgbg); color: var(--acc-ink); filter: none; }
+
+/* How to Cite: headings in page ink (they were Aegean teal), the BibTeX
+ * heading gets the same highlighted band as every other section title even
+ * though it sits inside the .cite-bib-head flex row, and the BibTeX block
+ * itself borders in the page accent. */
+.cite-page h2 { color: #000; }
+.cite-pre { border-color: var(--acc2); background: #fff; }
+.panel-body > .card > .cite-bib-head > h2 { display: flex; align-items: center; gap: .5rem; background: var(--pgbg);
+  padding: .4rem .65rem; border-radius: 9px; }
+.panel-body > .card > .cite-bib-head > h2::before { content: ""; width: 5px; height: 1em; border-radius: 2.5px; background: var(--acc); flex: 0 0 auto; }

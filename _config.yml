@@ -3,4 +3,34 @@ description: Database of Ancient Greek Morphology, Prosody, Syntax, and Scansion
 markdown: kramdown
 theme: null
 plugins: []
-exclude: [Gemfile, Gemfile.lock, vendor, scripts]
+# Keep the Pages artifact small: the app fetches only corpus.sqlite.gz and
+# lexicon_en2grc.json, so the raw build sources (corpus.sqlite, default.csv,
+# the scansion CSVs -- two of which are Git LFS pointers that GitHub Pages
+# cannot serve anyway) and the stray duplicate site nested under assets/ are
+# excluded from the built site. Oversized artifacts are what make
+# actions/deploy-pages fail with "Deployment failed, try again later".
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - scripts
+  # NB the bracket glob: Jekyll (3.x AND 4.x) also treats each exclude
+  # entry as a raw string PREFIX, so a plain "assets/data/corpus.sqlite"
+  # would swallow corpus.sqlite.gz too -- the one file the whole site
+  # fetches. "corpus.sqlit[e]" fnmatch-es only the raw file and is a
+  # string prefix of nothing. (The stale raw corpus.sqlite has been
+  # deleted from the repo; this entry stays as protection for any
+  # checkout that still carries it.)
+  - assets/data/corpus.sqlit[e]
+  - assets/data/default.csv
+  - assets/data/scansion
+  - assets/Gemfile
+  - assets/Gemfile.lock
+  - assets/_config.yml
+  - assets/index.html
+  - assets/cite.md
+  - assets/clustering.md
+  - assets/morphotactics.md
+  - assets/phonology.md
+  - assets/prosody.md
+  - assets/syntax.md

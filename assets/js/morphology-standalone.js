@@ -212,12 +212,12 @@
   function buildLemmaItems() {
     if (lemmaItems) return lemmaItems;
     const T = window.MopsosText;
-    const rows = SQL.objects("SELECT lemma l, lemma_search k, lemma_beta b, COUNT(*) c FROM " + q(TABLE) +
-      " WHERE lemma NOT IN ('','-') GROUP BY l, k, b ORDER BY c DESC;");
+    const rows = SQL.objects("SELECT lemma l, lemma_search k, COUNT(*) c FROM " + q(TABLE) +
+      " WHERE lemma NOT IN ('','-') GROUP BY l, k ORDER BY c DESC;");
     lemmaByStrip = new Map();
     lemmaItems = rows.map((r) => {
       const key = r.k || (T ? T.stripDiacritics(r.l) : r.l);
-      const it = { key: key, display: r.l, beta: r.b || (T ? T.toBetaCode(r.l) : ""), meta: r.c + "\u00d7", c: r.c };
+      const it = { key: key, display: r.l, beta: (T ? T.toBetaCode(r.l) : ""), meta: r.c + "\u00d7", c: r.c };
       if (!lemmaByStrip.has(key)) lemmaByStrip.set(key, r.l);
       return it;
     });

@@ -1,0 +1,88 @@
+# Explicit GitHub Pages deployment, replacing the opaque managed
+# "pages build and deployment" workflow.
+#
+# BEFORE this takes effect: repo Settings -> Pages -> Build and deployment ->
+# Source must be switched from "Deploy from a branch" to "GitHub Actions".
+# (Until the source is switched, the deploy step of this workflow will fail
+# and the old managed workflow keeps running instead.)
+#
+# What this buys over the managed pipeline:
+#   * builds with the repo's own Jekyll (~4.3), matching local `jekyll serve`
+#     instead of GitHub's pinned Jekyll 3.10 github-pages gem;
+#   * prints the built site's size and biggest files into the log, so if a
+#     deployment ever fails again the artifact contents are right there;
+#   * gives actions/deploy-pages a longer status-polling budget and a higher
+#     tolerated error count, riding out the transient service blips that
+#     surface as "Deployment failed, try again later".
+name: Deploy Jekyll site to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Install Jekyll
+        run: gem install jekyll --no-document
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build with Jekyll
+        run: jekyll build --baseurl "${{ steps.pages.outputs.base_path }}" --trace
+        env:
+          JEKYLL_ENV: production
+
+      - name: Report artifact contents (diagnostics)
+        run: |
+          echo "== built site size =="
+          du -sh _site
+          echo "== file count =="
+          find _site -type f | wc -l
+          echo "== files over 5 MB =="
+          find _site -type f -size +5M -exec ls -lh {} \; || true
+          echo "== corpus database present? =="
+          ls -lh _site/assets/data/corpus.sqlite.gz
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          # tolerate transient status-API errors for longer than the defaults
+          # (default: timeout 600000 ms, error_count 10)
+          timeout: 900000
+          error_count: 20
+          reporting_interval: 10000
