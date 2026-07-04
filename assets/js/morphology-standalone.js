@@ -112,7 +112,7 @@
   function buildQuickSql(filters) {
     const cols = PREVIEW_COLS.filter((c) => SQL.columns().includes(c));
     let sql = "SELECT " + cols.map(niceId).join(", ") + "\nFROM " + niceId(TABLE);
-    const conds = ["match_status <> \"CONFLICT_NO_MATCH\""];
+    const conds = ["match_status <> \"CONFLICT_NO_MATCH\"", "is_valid = 1"];
     for (const k in filters) if (filters[k]) conds.push(niceId(k) + " = " + sqlStr(filters[k]));
     const wk = $("qfLimitWork").value; if (wk) conds.push(niceId("work") + " = " + sqlStr(wk));
     const bk = $("qfLimitBook").value; if (bk) conds.push(niceId("book") + " = " + sqlStr(bk));
