@@ -402,6 +402,9 @@
       '<div class="scan-wordscan">' + out.join(" ") + "</div></div>";
   }
   function catLabel(c) { return CATLABEL[c] || UI.label("pos", c); }
+  // Label for a stem subcategory value (s-stem, thematic, …). Empty/missing
+  // subcategory (categories like d, m, r carry none) reads "(no subcategory)".
+  function subLabel(s) { return s ? s : "(no subcategory)"; }
   // H = heavy/long, L = light/short -> metrical marks (\u00af long, \u02d8 short,
   // both sitting on the same vertical level).
   function shapeMarks(shp) {
@@ -514,28 +517,50 @@
       "GROUP BY m.lemma_search, m.foot_start, m.foot_end;" +
       (label ? "\n-- filtered in-browser to compounds " + label : "");
 
-    /* category-pairing heatmap over the filtered compounds */
+    /* Category-pairing heatmap over the filtered compounds.
+     *
+     * By default each axis is keyed by member category (member1 on y, member2
+     * on x). When a slot's category is pinned but its subcategory is left open
+     * ("any subcategory"), that axis would otherwise collapse to a single row
+     * or column, so we break it down by that slot's stem subcategory instead
+     * (verb -> thematic / athematic / ?, and so on). Either axis can switch
+     * independently, so a fully pinned pair can show subcategory x subcategory. */
+    const m1BySub = !!(f.m1cat && !f.m1sub);
+    const m2BySub = !!(f.m2cat && !f.m2sub);
+    const rowField = m1BySub ? "member1_subcategory" : "member1_category";
+    const colField = m2BySub ? "member2_subcategory" : "member2_category";
+    const rowLbl = m1BySub ? subLabel : catLabel;
+    const colLbl = m2BySub ? subLabel : catLabel;
+    const rowHead = m1BySub ? "First-member subcategory" : "First member";
+    const colHead = m2BySub ? "Second-member subcategory" : "Second member";
+    // A row still needs both member categories to be placed on the matrix; the
+    // subcategory switch only changes how a category-pinned axis is bucketed,
+    // and empty subcategories fall under "(no subcategory)" rather than dropping.
     const hm = rows.filter((r) => r.member1_category && r.member2_category);
     if (!hm.length) { Chart.heatmap(el.cmpChart, [], [], []); el.cmpTable.innerHTML = ""; }
     else {
-      const av = [...new Set(hm.map((r) => r.member1_category))].sort((x, y) => catLabel(x).localeCompare(catLabel(y)));
-      const bv = [...new Set(hm.map((r) => r.member2_category))].sort((x, y) => catLabel(x).localeCompare(catLabel(y)));
+      const av = [...new Set(hm.map((r) => r[rowField] || ""))].sort((x, y) => rowLbl(x).localeCompare(rowLbl(y)));
+      const bv = [...new Set(hm.map((r) => r[colField] || ""))].sort((x, y) => colLbl(x).localeCompare(colLbl(y)));
       const ai = new Map(av.map((v, i) => [v, i])), bi = new Map(bv.map((v, i) => [v, i]));
       const matrix = av.map(() => bv.map(() => 0));
-      for (const r of hm) matrix[ai.get(r.member1_category)][bi.get(r.member2_category)] += 1;
+      for (const r of hm) matrix[ai.get(r[rowField] || "")][bi.get(r[colField] || "")] += 1;
       Chart.heatmap(el.cmpChart, matrix,
-        av.map(catLabel), bv.map(catLabel),
+        av.map(rowLbl), bv.map(colLbl),
         { valueLabel: "Compounds", showValues: av.length * bv.length <= 64,
-          title: "Compound member categories" + (label ? " (" + label + ")" : ""),
-          yLabel: "first member", xLabel: "second member" });
+          title: "Compound member " + (m1BySub || m2BySub ? "breakdown" : "categories") + (label ? " (" + label + ")" : ""),
+          yLabel: m1BySub ? "first-member subcategory" : "first member",
+          xLabel: m2BySub ? "second-member subcategory" : "second member" });
       const tbl = [];
-      av.forEach((a, i) => bv.forEach((b, j) => { if (matrix[i][j]) tbl.push([catLabel(a), catLabel(b), matrix[i][j]]); }));
+      av.forEach((a, i) => bv.forEach((b, j) => { if (matrix[i][j]) tbl.push([rowLbl(a), colLbl(b), matrix[i][j]]); }));
       tbl.sort((x, y) => y[2] - x[2]);
-      UI.renderTable(el.cmpTable, ["First member", "Second member", "Compounds"], tbl, { paginate: false });
+      UI.renderTable(el.cmpTable, [rowHead, colHead, "Compounds"], tbl, { paginate: false });
     }
-    el.cmpDesc.textContent = "How often each (first-member category, second-member category) pairing occurs among the " +
+    const rowAxisName = m1BySub ? "first-member subcategory" : "first-member category";
+    const colAxisName = m2BySub ? "second-member subcategory" : "second-member category";
+    el.cmpDesc.textContent = "How often each (" + rowAxisName + ", " + colAxisName + ") pairing occurs among the " +
       (label ? "matching" : "analyzed") + " compounds" + (label ? " (" + label + ")" : "") +
-      ". Categories reuse the part-of-speech codes; a \u201c?\u201d marks an uncertain member analysis in the source data.";
+      ". Categories reuse the part-of-speech codes; a \u201c?\u201d marks an uncertain member analysis in the source data" +
+      ((m1BySub || m2BySub) ? ", and a pinned category with its subcategory left open is broken down by stem subcategory" : "") + ".";
 
     /* section visibility: the member charts vanish for a slot whose member
      * is already fixed (every match trivially shares it), and entirely while
