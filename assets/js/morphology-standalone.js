@@ -15,6 +15,7 @@
   const SQL = window.MopsosSQL;
   const UI = window.MopsosUI;
   const Chart = window.MopsosChart;
+  const Search = window.MopsosSearch;
   const q = SQL.quoteId;
   const sqlStr = (s) => "'" + String(s).replace(/'/g, "''") + "'";
 
@@ -39,275 +40,22 @@
   const naGuard = (c) => q(c) + " IS NOT NULL AND " + q(c) + " NOT IN ('','-')";
   const displayName = (field, code) => (UI.LABELS[field] ? UI.label(field, code) : String(code));
 
-  // Normalize word-search input to match the lowercase, diacritic-free
-  // lemma_search / form_search columns. Latin input is first converted to
-  // Greek via the bundled beta-code-js library (window.BetaCode); from there
-  // both paths are identical: strip diacritics, lowercase, fold final sigma.
-  function searchKeyOf(input) {
-    const T = window.MopsosText;
-    const raw = String(input == null ? "" : input).trim();
-    if (!raw) return "";
-    const hasGreek = T && T.hasGreek ? T.hasGreek(raw) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
-    const greek = (hasGreek || !window.BetaCode) ? raw : window.BetaCode.betaCodeToGreek(raw);
-    return (T ? T.stripDiacritics(greek) : greek).toLowerCase().replace(/\u03c2/g, "\u03c3");
-  }
 
-  // Quote an identifier only when it needs it, for legible generated SQL.
-  const RESERVED = new Set(["case", "order", "group", "by", "select", "from", "where",
-    "table", "index", "default", "check", "references", "limit", "offset", "having",
-    "join", "on", "in", "is", "not", "null", "and", "or", "as", "distinct", "values",
-    "primary", "foreign", "unique", "collate", "union", "desc", "asc", "between", "like"]);
-  const niceId = (c) => (/^[a-z_][a-z0-9_]*$/i.test(c) && !RESERVED.has(String(c).toLowerCase())) ? c : q(c);
-
-  /* ----- Quick filter ----------------------------------------------------- */
+  /* ----- Quick filter ------------------------------------------------------
+   * The card itself — scope drop-downs, word searches, the read-only SQL
+   * console that IS the query, and SQL-paged results — is the shared
+   * MopsosSearch card (mopsos-shared.js). This page only adds the
+   * part-of-speech feature drop-downs to it, through the hooks passed to
+   * Search.card() in init() below. */
 
   let qf = null;
-  let manualSql = false;            // true once the user hand-edits the SQL; dropdowns then disabled
-  const PAGE_SIZE = 13;
-
-  // Scope + word-search controls that extend the quick filter (they sit
-  // outside #qfGroup, so lock/reset must name them explicitly).
-  const QF_EXTRA_IDS = ["qfLimitWork", "qfLimitBook", "qfVerseRange",
-    "qfLemmaLike", "qfFormLike", "qfLemmaExact"];
-
-  // Disable/enable the dropdown query-builder when the SQL is taken over by hand.
-  // The quick-filter Reset button is deliberately left enabled — it is how the
-  // user gets back out of manual mode.
-  function setQuickControlsEnabled(on) {
-    const g = $("qfGroup");
-    if (g) g.querySelectorAll("select, input").forEach((c) => { c.disabled = !on; });
-    QF_EXTRA_IDS.forEach((id) => { const c = $(id); if (c) c.disabled = !on; });
-    if ($("btnApplyFilter")) $("btnApplyFilter").disabled = !on;
-  }
-
-  function enterManualMode() {
-    if (manualSql) return;
-    manualSql = true;
-    setQuickControlsEnabled(false);
-  }
-
-  // Book number and verse range only make sense within one work, so both
-  // controls stay hidden (and their values cleared) until a work is chosen;
-  // the book list is rebuilt from the books actually attested in that work,
-  // keeping the current selection when it survives the rebuild.
-  function refreshQfBooks() {
-    const wk = $("qfLimitWork").value;
-    $("qfLimitBookWrap").hidden = !wk;
-    $("qfVerseWrap").hidden = !wk;
-    if (!wk) { $("qfLimitBook").value = ""; $("qfVerseRange").value = ""; return; }
-    const keep = $("qfLimitBook").value;
-    const books = SQL.objects("SELECT DISTINCT book AS b FROM " + q(TABLE) +
-      " WHERE " + q("work") + " = " + sqlStr(wk) +
-      " AND book IS NOT NULL AND book <> '' ORDER BY CAST(book AS INTEGER), book;")
-      .map((r) => String(r.b));
-    UI.fillSelect($("qfLimitBook"), books, { head: "(all books)" });
-    if (books.indexOf(keep) >= 0) $("qfLimitBook").value = keep;
-  }
-
-  // No persistence: nothing is written to localStorage / cookies. State lives
-  // only for the current page view and is gone on refresh, by design.
-
-  // Build the dropdown query — nicely formatted, and WITHOUT a row cap (paging
-  // adds LIMIT/OFFSET). This text is what lands in the editor and is executed.
-  function buildQuickSql(filters) {
-    const cols = PREVIEW_COLS.filter((c) => SQL.columns().includes(c));
-    let sql = "SELECT " + cols.map(niceId).join(", ") + "\nFROM " + niceId(TABLE);
-    const conds = ["match_status <> \"CONFLICT_NO_MATCH\"", "is_valid = 1"];
-    for (const k in filters) if (filters[k]) conds.push(niceId(k) + " = " + sqlStr(filters[k]));
-    const wk = $("qfLimitWork").value; if (wk) conds.push(niceId("work") + " = " + sqlStr(wk));
-    const bk = $("qfLimitBook").value; if (bk) conds.push(niceId("book") + " = " + sqlStr(bk));
-    const vm = ($("qfVerseRange").value || "").trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-    if (vm) conds.push(vm[2]
-      ? "CAST(verse AS INTEGER) BETWEEN " + parseInt(vm[1], 10) + " AND " + parseInt(vm[2], 10)
-      : "CAST(verse AS INTEGER) = " + parseInt(vm[1], 10));
-    const lk = searchKeyOf($("qfLemmaLike").value);
-    if (lk) conds.push(niceId("lemma_search") + " LIKE " + sqlStr("%" + lk + "%"));
-    const fk = searchKeyOf($("qfFormLike").value);
-    if (fk) conds.push(niceId("form_search") + " LIKE " + sqlStr("%" + fk + "%"));
-    const exRaw = ($("qfLemmaExact").value || "").trim();
-    if (exRaw) {
-      // Greek (accents optional) or Beta Code, resolved to the accented
-      // corpus lemma; unresolvable input is passed through verbatim so the
-      // generated SQL still shows exactly what was asked (and matches nothing).
-      const seeds = resolveSeeds(exRaw);
-      conds.push(niceId("lemma") + " = " + sqlStr(seeds.length ? seeds[0] : exRaw));
-    }
-    if (conds.length) sql += "\nWHERE " + conds.join("\n  AND ");
-    sql += "\nORDER BY " + niceId("work") + ", " + "book, verse";
-    sql += "\nLIMIT " + PAGE_SIZE + " OFFSET 0;";
-    return sql;
-  }
-
-  // The dropdowns ARE the query: regenerate it, mirror into the editor, run it.
-  function applyQuickFilter() {
-    $("qfSqlInput").value = buildQuickSql(qf.read());
-    runCustomSql();
-  }
-
-  /* ----- Result table + LIMIT/OFFSET paging on the single query ----------- */
-
-  // The trailing "LIMIT n [OFFSET m]" of the query, or null if it has none.
-  const LIMIT_RE = /\bLIMIT\s+(\d+)(?:\s+OFFSET\s+(\d+))?\s*;?\s*$/i;
-  function readLimitOffset(sql) {
-    const m = sql.match(LIMIT_RE);
-    return m ? { limit: parseInt(m[1], 10), offset: m[2] ? parseInt(m[2], 10) : 0 } : null;
-  }
-  // Same query with a new OFFSET (keeps the existing LIMIT).
-  function setOffset(sql, offset) {
-    const lo = readLimitOffset(sql);
-    return lo ? sql.replace(LIMIT_RE, "LIMIT " + lo.limit + " OFFSET " + offset + ";") : sql;
-  }
-  // Total row count of the query with its trailing LIMIT/OFFSET stripped
-  // (COUNT(*) over it as a subquery), or null if it cannot be determined.
-  function countRows(sql) {
-    const inner = sql.replace(LIMIT_RE, "").trim();
-    try {
-      const r = SQL.query("SELECT COUNT(*) FROM (" + inner + ");");
-      return (r.values && r.values.length) ? Number(r.values[0][0]) : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Render the result: same columns and rows the query returns, with coded
-  // values shown as human-readable labels (e.g. 'g' -> 'Genitive').
-  function renderTable(columns, values) {
-    // Internal alignment keys are never shown, even when a hand-written
-    // SELECT * returns them.
-    const HIDE = new Set(["section_id", "sentence_id"]);
-    const keep = columns.map((c, i) => (HIDE.has(String(c).toLowerCase()) ? -1 : i)).filter((i) => i >= 0);
-    if (keep.length && keep.length < columns.length) {
-      columns = keep.map((i) => columns[i]);
-      values = values.map((row) => keep.map((i) => row[i]));
-    }
-    if (!columns.length || !values.length) {
-      return '<div class="small-muted" style="padding:.7rem;">No rows.</div>';
-    }
-    let html = '<div class="table-wrap"><table class="preview"><thead><tr>';
-    for (const c of columns) html += "<th>" + UI.esc(UI.fieldTitle(c)) + "</th>";
-    html += "</tr></thead><tbody>";
-    for (const row of values) {
-      html += "<tr>";
-      row.forEach((v, i) => { html += "<td>" + (v == null ? "" : UI.esc(displayName(columns[i], v))) + "</td>"; });
-      html += "</tr>";
-    }
-    html += "</tbody></table></div>";
-    return html;
-  }
-
-  // Runs whatever is in the editor, exactly as written, into #qfResults.
-  // If the query ends in LIMIT/OFFSET, Prev/Next rewrite the OFFSET in the
-  // editor and re-run — so the query shown is always the query that ran.
-function runCustomSql() {
-    const sql = $("qfSqlInput").value;
-    const status = $("qfSqlStatus");
-    if (!SQL.isReadOnly(sql)) {
-      status.textContent = "Read-only: only SELECT / WITH / EXPLAIN / PRAGMA are allowed.";
-      return;
-    }
-    let res;
-    try {
-      res = SQL.query(sql);
-    } catch (e) {
-      status.textContent = "SQL error: " + e.message;
-      $("qfResults").innerHTML = '<div class="small-muted" style="padding:.7rem;">Query error: ' + UI.esc(e.message) + "</div>";
-      return;
-    }
-    const columns = res.columns || [], values = res.values || [];
-    const lo = manualSql ? null : readLimitOffset(sql);
-    const total = lo ? countRows(sql) : null;
-    const canPage = !!(lo && total != null && lo.limit > 0);
-
-    const pages = canPage ? Math.max(1, Math.ceil(total / lo.limit)) : 0;
-    const page = canPage ? Math.floor(lo.offset / lo.limit) + 1 : 0;
-    const lastOff = canPage ? (pages - 1) * lo.limit : 0;
-    const atStart = !canPage || lo.offset === 0;
-    const atEnd = !canPage || lo.offset >= lastOff;
-    // Enabled buttons carry the OFFSET they jump to; disabled ones carry nothing.
-    const btn = (label, off, dis) =>
-      '<button class="btn btn-sm"' + (dis ? " disabled" : ' data-off="' + off + '"') + ">" + label + "</button>";
-
-    let html = '<div class="pager"><span class="pager-controls">';
-    html += btn("\u00ab First", 0, atStart);
-    html += btn("\u2039 Prev", canPage ? Math.max(0, lo.offset - lo.limit) : 0, atStart);
-    html += btn("Next \u203a", canPage ? lo.offset + lo.limit : 0, atEnd);
-    html += btn("Last \u00bb", lastOff, atEnd);
-    html += "</span>";
-    if (canPage) html += '<span class="small-muted" style="margin-left:.6rem;">Rows ' +
-      Math.min(lo.offset + 1, total) + "\u2013" + Math.min(lo.offset + values.length, total) +
-      " of " + total + " \u00b7 page " + page + " of " + pages + "</span>";
-    html += "</div>";
-    html += renderTable(columns, values);
-    const container = $("qfResults");
-    container.innerHTML = html;
-
-    container.querySelectorAll("[data-off]").forEach((b) => {
-      b.addEventListener("click", () => {
-        $("qfSqlInput").value = setOffset(sql, parseInt(b.dataset.off, 10));
-        runCustomSql();
-      });
-    });
-
-    status.textContent = "OK: " + values.length + " row" + (values.length === 1 ? "" : "s") + ".";
-  }
-
-  function wireCustomSql() {
-    $("qfSqlRun").addEventListener("click", runCustomSql);
-    // A manual edit hands ownership of the query to the textarea; lock the dropdowns.
-    $("qfSqlInput").addEventListener("input", enterManualMode);
-  }
 
   /* ----- Explore & visualize --------------------------------------------- */
 
   let ex = null;
 
-  /* ----- adaptive lemma search (Greek, accents optional; Beta Code; English)
-   * One lemma list serves both word boxes: the paradigm lookup and the
-   * meaning search. Greek and Beta Code matching is MopsosUI.greekCombo's
-   * usual behaviour; English goes through the MopsosSemantics LSJ bridge. */
-  let lemmaItems = null, lemmaByStrip = null;
-  function buildLemmaItems() {
-    if (lemmaItems) return lemmaItems;
-    const T = window.MopsosText;
-    const rows = SQL.objects("SELECT lemma l, lemma_search k, COUNT(*) c FROM " + q(TABLE) +
-      " WHERE lemma NOT IN ('','-') GROUP BY l, k ORDER BY c DESC;");
-    lemmaByStrip = new Map();
-    lemmaItems = rows.map((r) => {
-      const key = r.k || (T ? T.stripDiacritics(r.l) : r.l);
-      const it = { key: key, display: r.l, beta: (T ? T.toBetaCode(r.l) : ""), meta: r.c + "\u00d7", c: r.c };
-      if (!lemmaByStrip.has(key)) lemmaByStrip.set(key, r.l);
-      return it;
-    });
-    return lemmaItems;
-  }
-  // Resolve free-typed input to corpus lemmata: exact Greek, accent-stripped
-  // Greek, or Beta Code, always against the corpus lemma list itself.
-  function resolveSeeds(input) {
-    const T = window.MopsosText;
-    buildLemmaItems();
-    const raw = String(input || "").trim();
-    if (!raw) return [];
-    const hasGreek = T && T.hasGreek ? T.hasGreek(raw) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
-    if (hasGreek) {
-      const exact = lemmaItems.find((it) => it.display === raw);
-      if (exact) return [exact.display];
-      const k = T ? T.stripDiacritics(raw) : raw;
-      const hit = lemmaByStrip.get(k);
-      if (hit) return [hit];
-      const pre = lemmaItems.filter((it) => it.key.indexOf(k) === 0).slice(0, 3).map((it) => it.display);
-      return pre;
-    }
-    // Latin letters: Beta Code against the lemma list (exact, then prefix)
-    if (T) {
-      const nb = T.looseBetaKey(raw);
-      if (nb) {
-        const exactB = lemmaItems.filter((it) => it.beta && T.looseBetaKey(it.beta) === nb).map((it) => it.display);
-        if (exactB.length) return exactB.slice(0, 3);
-        return lemmaItems.filter((it) => it.beta && T.looseBetaKey(it.beta).indexOf(nb) === 0).slice(0, 3).map((it) => it.display);
-      }
-    }
-    return [];
-  }
+  /* The adaptive lemma search (Greek, accents optional; Beta Code) now rides
+   * on the shared corpus lemma list: MopsosSearch.lemmaItems / .resolveLemmata. */
 
   function explorerFilters() {
     const all = Object.assign({}, ex.read());
@@ -368,7 +116,7 @@ function runCustomSql() {
         const unit = "lemma"; // meaning search is lemma-based
         const proceed = () => {
           try {
-            const seeds = resolveSeeds(semQuery);
+            const seeds = Search.resolveLemmata(semQuery);
             if (!seeds.length) {
               chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No corpus lemma matches \u201C' + UI.esc(semQuery) +
                 '\u201D. Type a Greek lemma (accents optional) or Beta Code (e.g. mhnis), or click the box to browse the lemma list.</div>';
@@ -481,7 +229,7 @@ function runCustomSql() {
           title.textContent = ""; desc.textContent = ""; return;
         }
         // exact Greek, accent-insensitive Greek, Beta Code, or English all resolve
-        const seeds = resolveSeeds(input);
+        const seeds = Search.resolveLemmata(input);
         let lemma = seeds.length ? seeds[0] : null;
         if (!lemma) {
           chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No lemma \u201c' + UI.esc(input) + '\u201d found in the corpus.</div>';
@@ -574,7 +322,7 @@ function runCustomSql() {
         Chart.bars(chart, rows.map((r) => ({ label: displayName(dim1, r.k), value: r.c })),
           { valueLabel: "count", emptyMsg: "No words match.",
             title: "Word count by " + UI.fieldTitle(dim1) + filterText });
-        $("exTable").innerHTML = renderTable([dim1, "count"], rows.map((r) => [r.k, r.c]));
+        $("exTable").innerHTML = Search.renderTable([dim1, "count"], rows.map((r) => [r.k, r.c]));
       }
     } catch (e) {
       chart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Chart error: ' + UI.esc(e.message) + "</div>";
@@ -584,7 +332,6 @@ function runCustomSql() {
   /* ----- init ------------------------------------------------------------- */
 
   async function init() {
-    wireCustomSql();
     UI.wireInfoButtons();
     UI.wireAdvancedToggles();
     try {
@@ -598,32 +345,26 @@ function runCustomSql() {
     qf = UI.featureFilterGroup($("qfGroup"), {});
     ex = UI.featureFilterGroup($("exGroup"), {});
 
-    $("btnApplyFilter").disabled = false;
-    $("btnApplyFilter").addEventListener("click", applyQuickFilter);
-    // The quick-filter Reset is the single reset: it clears manual mode, restores
-    // the dropdowns, and regenerates the SQL from them (erasing any custom query).
-    $("btnResetFilter").addEventListener("click", () => {
-      manualSql = false;
-      setQuickControlsEnabled(true);
-      qf.reset();
-      QF_EXTRA_IDS.forEach((id) => { $(id).value = ""; });
-      refreshQfBooks();
-      applyQuickFilter();
-    });
-
-    // Quick-filter scope limiters and word searches. The selects and text
-    // boxes feed buildQuickSql when Apply runs; Enter in a text box applies
-    // directly, matching the SQL console's Enter-runs convention.
-    UI.fillSelect($("qfLimitWork"), SQL.distinct("work"), { head: "(all works)" });
-    $("qfLimitWork").addEventListener("change", refreshQfBooks);
-    refreshQfBooks();
-    ["qfVerseRange", "qfLemmaLike", "qfFormLike", "qfLemmaExact"].forEach((id) => {
-      $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); applyQuickFilter(); } });
-    });
-    // Same adaptive browse as the compound lookup, over the corpus lemma list.
-    if ($("qfLemmaExactMenu")) UI.greekCombo($("qfLemmaExact"), $("qfLemmaExactMenu"), {
-      items: buildLemmaItems,
-      onSelect(it) { $("qfLemmaExact").value = it.display; applyQuickFilter(); }
+    // The quick-filter card is the shared MopsosSearch card; the three hooks
+    // graft this page's part-of-speech feature drop-downs onto it, so their
+    // conditions ride in the same generated query, lock with the same manual
+    // mode, and clear with the same Reset.
+    Search.card({
+      prefix: "qf",
+      applyBtn: "btnApplyFilter",
+      resetBtn: "btnResetFilter",
+      previewCols: PREVIEW_COLS,
+      baseConds: ["match_status <> \"CONFLICT_NO_MATCH\"", "is_valid = 1"],
+      extraConds() {
+        const f = qf.read(), out = [];
+        for (const k in f) if (f[k]) out.push(Search.niceId(k) + " = " + Search.sqlStr(f[k]));
+        return out;
+      },
+      onLock(on) {
+        const g = $("qfGroup");
+        if (g) g.querySelectorAll("select, input").forEach((c) => { c.disabled = !on; });
+      },
+      onReset() { qf.reset(); }
     });
 
     UI.fillSelect($("exDim1"), DIMENSIONS.map((d) => d[0]), { head: null });
@@ -647,11 +388,11 @@ function runCustomSql() {
     $("exLemma").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runExplorer(); } });
     // adaptive search on both word boxes: Greek (accents optional) or Beta Code
     if ($("exLemmaMenu")) UI.greekCombo($("exLemma"), $("exLemmaMenu"), {
-      items: buildLemmaItems,
+      items: Search.lemmaItems,
       onSelect(it) { $("exLemma").value = it.display; runExplorer(); }
     });
     if ($("exSemanticMenu")) UI.greekCombo($("exSemantic"), $("exSemanticMenu"), {
-      items: buildLemmaItems,
+      items: Search.lemmaItems,
       onSelect(it) { $("exSemantic").value = it.display; runExplorer(); }
     });
     $("btnExRun").addEventListener("click", runExplorer);
@@ -659,10 +400,10 @@ function runCustomSql() {
       ex.reset(); $("exSemantic").value = ""; $("exLimitWork").value = ""; $("exLimitAuthor").value = ""; runExplorer();
     });
 
-    // No saved state is read: every load starts fresh. The dropdowns build the
-    // default query, fill the editor, and render; the explorer draws its default.
+    // No saved state is read: every load starts fresh. The search card built
+    // and ran its default query when it was created above; the explorer draws
+    // its default here.
     syncExplorerControls();
-    applyQuickFilter();
     runExplorer();
   }
 

@@ -8,25 +8,25 @@ section: prosody
 
 <section class="panel">
   <button class="panel-head" type="button" aria-expanded="false">
-    <span class="panel-title">Meter Search</span>
+    <span class="panel-title">Scanned Line Display</span>
     <span class="panel-toggle">&rsaquo; Expand</span>
   </button>
   <div class="panel-body" hidden>
   <div class="panel-info">
     <button class="info-btn" data-info="prosodyInfo">What is this?</button>
   <div id="prosodyInfo" class="info-panel" hidden>
-    <h4>Scansion tab</h4>
-    <p>Scansion marks each syllable of a line as long or short and groups the syllables into feet, each a dactyl (¯ ˘ ˘) or a spondee (¯ ¯). Every word in the corpus carries its own metrical record: its syllable shape and the feet it occupies in the line. All of the views here are computed from that record.</p>
+    <h4>Scansion card</h4>
+    <p>Scansion marks each syllable of a line as long or short and groups the syllables into feet, each a dactyl (¯ ˘ ˘) or a spondee (¯ ¯). Every word in the corpus carries its own metrical record: its syllable shape and the feet it occupies in the line.</p>
     <ul>
-      <li><strong>Pick one view at a time</strong> from the drop-down: individual lines word by word, the commonest foot patterns, the dactyl/spondee balance by position, where a word or grammatical category falls in the verse, the commonest words at each foot, and the length profiles. The word box accepts Greek or English and suggests matching forms as you type.</li>
-      <li><strong>Limit the scope</strong> to the <em>Iliad</em>, the <em>Odyssey</em>, or a single book before running.</li>
+      <li><strong>Scan lines word by word</strong>: each word appears under its own metrical marks (¯ long, ˘ short), with the feet it occupies and the line's derived foot pattern. Pick a scope and click <em>Show view</em>.</li>
+      <li><strong>Limit the scope</strong> to a single work, a book within it, and a verse or verse range (e.g. 1-5) before running.</li>
     </ul>
   </div>
   </div>
 
 <div class="card">
   <div class="view-picker">
-    <div class="field">
+    <div class="field" hidden>
       <label for="scanView"><strong>View</strong></label>
       <select id="scanView">
         <option value="line_scan" selected>Scan individual lines</option>
@@ -44,23 +44,15 @@ section: prosody
     </div>
     <div class="field">
       <label for="scanWork"><strong>Work</strong></label>
-      <select id="scanWork">
-        <option value="" selected>Both poems</option>
-        <option value="iliad">Iliad</option>
-        <option value="odyssey">Odyssey</option>
-      </select>
+      <select id="scanWork"><option value="" selected>(all works)</option></select>
     </div>
-    <div class="field">
+    <div class="field" id="scanBookWrap" hidden>
       <label for="scanBook"><strong>Book</strong></label>
-      <select id="scanBook" disabled><option value="">(all books)</option></select>
+      <select id="scanBook"><option value="">(all books)</option></select>
     </div>
-    <div class="field" style="max-width:140px;">
-      <label for="scanTopN"><strong>Top N</strong></label>
-      <input id="scanTopN" type="text" value="15" />
-    </div>
-    <div class="field" id="scanLineWrap" style="max-width:150px;" hidden>
-      <label for="scanLineFrom"><strong>From line</strong></label>
-      <input id="scanLineFrom" type="text" value="1" />
+    <div class="field" id="scanVerseWrap" style="max-width:150px;" hidden>
+      <label for="scanVerse"><strong>Verse(s)</strong></label>
+      <input id="scanVerse" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 212 or 212-415" />
     </div>
     <div class="field" id="scanWordWrap" hidden>
       <label for="scanWord"><strong>Word form</strong></label>
@@ -101,9 +93,110 @@ section: prosody
     <p class="help" style="margin:.35rem 0 0;">In <em>Where a word falls</em>, leave the word box empty and set a category to see the metrical position of that whole category. Grammar is read off each token's own analysis in the corpus.</p>
   </details>
   <p id="scanViewDesc" class="help" style="margin-top:.2rem;"></p>
-  <div id="scanSummary" class="analysis-wrap" style="margin-top:.4rem;"></div>
   <div class="viz-wrap" style="margin-top:.7rem;"><div id="scanChart"></div></div>
   <div id="scanTable" style="margin-top:.7rem;"></div>
+</div>
+
+  </div>
+</section>
+
+<section class="panel">
+  <button class="panel-head" type="button" aria-expanded="false">
+    <span class="panel-title">Metrical Shape Search</span>
+    <span class="panel-toggle">&rsaquo; Expand</span>
+  </button>
+  <div class="panel-body" hidden>
+  <div class="panel-info">
+    <button class="info-btn" data-info="psInfo">What is this?</button>
+  <div id="psInfo" class="info-panel" hidden>
+    <h4>Word search card</h4>
+    <p>Every scanned token carries its own metrical record: its shape (H = heavy/long, L = light/short, one letter per syllable, so μῆνιν is HL), the foot it begins and ends in (1–6), and its position within those feet (1 = the princeps). This panel searches those records token by token and lists each match with all of them.</p>
+    <ul>
+      <li><strong>Scope</strong>: pick a work to reveal its books and a verse box that takes a single verse (212) or a range (212-415).</li>
+      <li><strong>Metrical filters</strong>: type a shape (the menu narrows the attested shapes as you type, or click to browse), and pin the starting or ending foot and the position within it.</li>
+      <li><strong>Word searches</strong>: <em>Lemma contains</em> and <em>Form contains</em> find parts of the word, accent-insensitively; <em>Exact lemma</em> pins down one dictionary form and offers the corpus lemma list as you type. All three accept Greek (accents optional) or Beta Code.</li>
+      <li><strong>SQL</strong>: the controls write an ordinary read-only query you can inspect and edit by hand.</li>
+    </ul>
+  </div>
+  </div>
+<div class="card">
+  <h2>1. Filter</h2>
+  <p class="help" style="margin-top:-.35rem;">Find scanned words by scope, metrical record, lemma, or form. Choose any values and Apply; results are paginated.</p>
+  <div class="grid-3">
+    <div class="field">
+      <label for="psLimitWork"><strong>Book / work</strong></label>
+      <select id="psLimitWork"><option value="">(all works)</option></select>
+    </div>
+    <div class="field" id="psLimitBookWrap" hidden>
+      <label for="psLimitBook"><strong>Book number</strong></label>
+      <select id="psLimitBook"><option value="">(all books)</option></select>
+    </div>
+    <div class="field" id="psVerseWrap" hidden>
+      <label for="psVerseRange"><strong>Verse(s)</strong></label>
+      <input type="text" id="psVerseRange" autocomplete="off" spellcheck="false" placeholder="e.g. 212 or 212-415">
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="field">
+      <label for="psShape"><strong>Metrical shape</strong></label>
+      <div class="combo">
+        <input type="text" id="psShape" autocomplete="off" spellcheck="false" placeholder="e.g. HLL; type to filter the attested shapes, or click to browse">
+        <div id="psShapeMenu" class="combo-menu" hidden></div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="psFootStart"><strong>Foot start</strong></label>
+      <select id="psFootStart"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="psFootStartPos"><strong>Foot start position</strong></label>
+      <select id="psFootStartPos"><option value="">(any)</option></select>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="field">
+      <label for="psFootEnd"><strong>Foot end</strong></label>
+      <select id="psFootEnd"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="psFootEndPos"><strong>Foot end position</strong></label>
+      <select id="psFootEndPos"><option value="">(any)</option></select>
+    </div>
+  </div>
+  <hr />
+  <div class="grid-3" style="margin-top:1rem;">
+    <div class="field">
+      <label for="psFormLike"><strong>Form contains</strong></label>
+      <input type="text" id="psFormLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. οιο or oio">
+    </div>
+    <div class="field">
+      <label for="psLemmaLike"><strong>Lemma contains</strong></label>
+      <input type="text" id="psLemmaLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul">
+    </div>
+    <div class="field">
+      <label for="psLemmaExact"><strong>Lemma matches exactly</strong></label>
+      <div class="combo">
+        <input type="text" id="psLemmaExact" autocomplete="off" spellcheck="false" placeholder="e.g. ῥοδοδάκτυλος or Beta Code like rododaktulos; click to browse">
+        <div id="psLemmaExactMenu" class="combo-menu" hidden></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button id="btnPsApply" class="btn btn-primary" disabled>Apply filter</button>
+    <button id="btnPsReset" class="btn">Reset</button>
+    <button class="adv-toggle btn" data-adv="psSqlPanel">🐉 SQL (for advanced users) ▾</button>
+  </div>
+
+  <div id="psSqlPanel" class="adv-panel" hidden>
+    <p class="help">Read-only SQL over table <code>morphology</code>. Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>.</p>
+    <textarea class="sqlInput" id="psSqlInput" spellcheck="false"></textarea>
+    <div class="btn-row" style="margin-top:.5rem;">
+      <button id="psSqlRun" class="btn btn-primary">Run</button>
+    </div>
+    <pre id="psSqlStatus" class="status" style="margin-top:.55rem;">Ready: write SQL and press Enter.</pre>
+  </div>
+
+  <div id="psResults" style="margin-top:.7rem;"></div>
 </div>
 
   </div>

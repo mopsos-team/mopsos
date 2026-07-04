@@ -623,7 +623,7 @@ textarea.big-textarea:focus {
 .nav-dropdown-menu .nav-link { white-space: nowrap; }
 
 /* --- custom-SQL textarea inside the Quick filter --- */
-#qfSqlInput, #phonSql {
+.sqlInput {
   width: 100%;
   min-height: 130px;
   resize: vertical;

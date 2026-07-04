@@ -1,10 +1,12 @@
 /* ============================================================================
  *  MOPSOS SHARED FOUNDATION
- *  Three globals used by every analysis tab:
- *    - window.MopsosSQL   : one in-browser SQLite database over the corpus
- *    - window.MopsosUI    : label dictionaries, pagination, info buttons, tables
- *    - window.MopsosChart : D3 chart helpers (bars / grouped / stacked / heatmap
- *                           / scatter / histogram / force-network)
+ *  Four globals used by every analysis tab:
+ *    - window.MopsosSQL    : one in-browser SQLite database over the corpus
+ *    - window.MopsosUI     : label dictionaries, pagination, info buttons, tables
+ *    - window.MopsosSearch : the corpus word-search card (scope drop-downs,
+ *                            lemma/form searches, SQL console, paged results)
+ *    - window.MopsosChart  : D3 chart helpers (bars / grouped / stacked / heatmap
+ *                            / scatter / histogram / force-network)
  *
  *  Load order (in <head> or before page scripts):
  *    papaparse  ->  sql-wasm.js  ->  d3.min.js  ->  mopsos-shared.js  ->  page.js
@@ -370,6 +372,11 @@
   };
   const TITLES = {
     pos: "Part of speech",
+    "metrical shape": "Metrical shape",
+    "foot start": "Foot start",
+    "foot end": "Foot end",
+    "foot start pos": "Foot start position",
+    "foot end pos": "Foot end position",
   };
 
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
@@ -868,6 +875,343 @@
   }
 
   window.MopsosUI = api;
+})();
+
+
+/* ----------------------------------------------------------------------------
+ *  MopsosSearch — the shared corpus word-search card.
+ *  One card = scope drop-downs (a work, then the books attested in it, then a
+ *  verse or verse range), lemma/form substring searches against the lowercase
+ *  diacritic-free *_search columns, an exact-lemma box with the usual adaptive
+ *  browse, and a read-only SQL console that IS the query: the controls
+ *  regenerate it, hand-editing it locks them (Reset unlocks), and the result
+ *  table pages in SQL (LIMIT/OFFSET), so each page is a fresh query and only
+ *  one page of rows is ever held in the DOM.
+ *
+ *  Element ids derive from a prefix P (the markup mirrors morphology.html's
+ *  quick-filter card): P+LimitWork, P+LimitBookWrap, P+LimitBook, P+VerseWrap,
+ *  P+VerseRange, P+LemmaLike, P+FormLike, P+LemmaExact, P+LemmaExactMenu,
+ *  P+SqlInput, P+SqlRun, P+SqlStatus, P+Results, plus the two buttons named in
+ *  the config. Create the card only after MopsosSQL.ready() resolves. Nothing
+ *  is persisted: state lives only for the current page view, by design.
+ *
+ *  MopsosSearch.card(config):
+ *    prefix       — element id prefix, e.g. "qf"
+ *    applyBtn     — id of the Apply button (the card enables it)
+ *    resetBtn     — id of the Reset button
+ *    previewCols  — columns to SELECT (silently dropped when not in the DB)
+ *    baseConds    — WHERE conditions every query carries, as raw SQL strings
+ *    extraConds() — optional; further conditions read from controls the page
+ *                   owns (the morphology feature drop-downs come in here)
+ *    onLock(on)   — optional; enable/disable those page-owned controls
+ *    onReset()    — optional; reset them
+ *    worksWhere   — optional condition restricting which works are offered
+ *    pageSize     — rows per page (default 13)
+ *  Returns { apply(), run() }.
+ * ------------------------------------------------------------------------- */
+(function () {
+  const sqlStr = (v) => "'" + String(v).replace(/'/g, "''") + "'";
+
+  // Quote an identifier only when it needs it, for legible generated SQL.
+  const RESERVED = new Set(["case", "order", "group", "by", "select", "from", "where",
+    "table", "index", "default", "check", "references", "limit", "offset", "having",
+    "join", "on", "in", "is", "not", "null", "and", "or", "as", "distinct", "values",
+    "primary", "foreign", "unique", "collate", "union", "desc", "asc", "between", "like"]);
+  const niceId = (c) => (/^[a-z_][a-z0-9_]*$/i.test(c) && !RESERVED.has(String(c).toLowerCase()))
+    ? c : '"' + String(c).replace(/"/g, '""') + '"';
+
+  // Normalize word-search input to match the lowercase, diacritic-free
+  // lemma_search / form_search columns. Latin input is first converted to
+  // Greek via the bundled beta-code-js library (window.BetaCode); from there
+  // both paths are identical: strip diacritics, lowercase, fold final sigma.
+  function searchKey(input) {
+    const T = window.MopsosText;
+    const raw = String(input == null ? "" : input).trim();
+    if (!raw) return "";
+    const hasGreek = T && T.hasGreek ? T.hasGreek(raw) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
+    const greek = (hasGreek || !window.BetaCode) ? raw : window.BetaCode.betaCodeToGreek(raw);
+    return (T ? T.stripDiacritics(greek) : greek).toLowerCase().replace(/\u03c2/g, "\u03c3");
+  }
+
+  /* One corpus lemma list serves every card and page script: display form,
+   * search key, Beta Code, and token count, most frequent first. Built lazily
+   * on first use (i.e. after the database is ready) and then cached. */
+  let lemmaList = null, lemmaByStrip = null;
+  function lemmaItems() {
+    if (lemmaList) return lemmaList;
+    const SQL = window.MopsosSQL, T = window.MopsosText;
+    const rows = SQL.objects("SELECT lemma l, lemma_search k, COUNT(*) c FROM " + SQL.quoteId(SQL.table) +
+      " WHERE lemma NOT IN ('','-') GROUP BY l, k ORDER BY c DESC;");
+    lemmaByStrip = new Map();
+    lemmaList = rows.map((r) => {
+      const key = r.k || (T ? T.stripDiacritics(r.l) : r.l);
+      const it = { key: key, display: r.l, beta: (T ? T.toBetaCode(r.l) : ""), meta: r.c + "\u00d7", c: r.c };
+      if (!lemmaByStrip.has(key)) lemmaByStrip.set(key, r.l);
+      return it;
+    });
+    return lemmaList;
+  }
+
+  // Resolve free-typed input to corpus lemmata: exact Greek, accent-stripped
+  // Greek, or Beta Code, always against the corpus lemma list itself.
+  function resolveLemmata(input) {
+    const T = window.MopsosText;
+    const items = lemmaItems();
+    const raw = String(input || "").trim();
+    if (!raw) return [];
+    const hasGreek = T && T.hasGreek ? T.hasGreek(raw) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
+    if (hasGreek) {
+      const exact = items.find((it) => it.display === raw);
+      if (exact) return [exact.display];
+      const k = T ? T.stripDiacritics(raw) : raw;
+      const hit = lemmaByStrip.get(k);
+      if (hit) return [hit];
+      return items.filter((it) => it.key.indexOf(k) === 0).slice(0, 3).map((it) => it.display);
+    }
+    // Latin letters: Beta Code against the lemma list (exact, then prefix)
+    if (T) {
+      const nb = T.looseBetaKey(raw);
+      if (nb) {
+        const exactB = items.filter((it) => it.beta && T.looseBetaKey(it.beta) === nb).map((it) => it.display);
+        if (exactB.length) return exactB.slice(0, 3);
+        return items.filter((it) => it.beta && T.looseBetaKey(it.beta).indexOf(nb) === 0).slice(0, 3).map((it) => it.display);
+      }
+    }
+    return [];
+  }
+
+  /* ----- result table + LIMIT/OFFSET paging on the single query ----------- */
+
+  // The trailing "LIMIT n [OFFSET m]" of the query, or null if it has none.
+  const LIMIT_RE = /\bLIMIT\s+(\d+)(?:\s+OFFSET\s+(\d+))?\s*;?\s*$/i;
+  function readLimitOffset(sql) {
+    const m = sql.match(LIMIT_RE);
+    return m ? { limit: parseInt(m[1], 10), offset: m[2] ? parseInt(m[2], 10) : 0 } : null;
+  }
+  // Same query with a new OFFSET (keeps the existing LIMIT).
+  function setOffset(sql, offset) {
+    const lo = readLimitOffset(sql);
+    return lo ? sql.replace(LIMIT_RE, "LIMIT " + lo.limit + " OFFSET " + offset + ";") : sql;
+  }
+  // Total row count of the query with its trailing LIMIT/OFFSET stripped
+  // (COUNT(*) over it as a subquery), or null if it cannot be determined.
+  function countRows(sql) {
+    const inner = sql.replace(LIMIT_RE, "").trim();
+    try {
+      const r = window.MopsosSQL.query("SELECT COUNT(*) FROM (" + inner + ");");
+      return (r.values && r.values.length) ? Number(r.values[0][0]) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Render a result as an HTML string: the same columns and rows the query
+  // returns, with coded values shown as human-readable labels (e.g. 'g' ->
+  // 'Genitive'). Unlike MopsosUI.renderTable this does no paging of its own —
+  // the card pages in SQL — which is also why page scripts use it for small
+  // derived tables.
+  function renderTable(columns, values) {
+    const UI = window.MopsosUI;
+    // Internal alignment keys are never shown, even when a hand-written
+    // SELECT * returns them.
+    const HIDE = new Set(["section_id", "sentence_id"]);
+    const keep = columns.map((c, i) => (HIDE.has(String(c).toLowerCase()) ? -1 : i)).filter((i) => i >= 0);
+    if (keep.length && keep.length < columns.length) {
+      columns = keep.map((i) => columns[i]);
+      values = values.map((row) => keep.map((i) => row[i]));
+    }
+    if (!columns.length || !values.length) {
+      return '<div class="small-muted" style="padding:.7rem;">No rows.</div>';
+    }
+    let html = '<div class="table-wrap"><table class="preview"><thead><tr>';
+    for (const c of columns) html += "<th>" + UI.esc(UI.fieldTitle(c)) + "</th>";
+    html += "</tr></thead><tbody>";
+    for (const row of values) {
+      html += "<tr>";
+      row.forEach((v, i) => { html += "<td>" + (v == null ? "" : UI.esc(UI.label(columns[i], v))) + "</td>"; });
+      html += "</tr>";
+    }
+    html += "</tbody></table></div>";
+    return html;
+  }
+
+  /* ----- the card itself --------------------------------------------------- */
+
+  function card(cfg) {
+    const SQL = window.MopsosSQL, UI = window.MopsosUI;
+    const $ = (id) => document.getElementById(id);
+    const P = cfg.prefix;
+    const el = {
+      work: $(P + "LimitWork"), bookWrap: $(P + "LimitBookWrap"), book: $(P + "LimitBook"),
+      verseWrap: $(P + "VerseWrap"), verse: $(P + "VerseRange"),
+      lemmaLike: $(P + "LemmaLike"), formLike: $(P + "FormLike"),
+      lemmaExact: $(P + "LemmaExact"), lemmaExactMenu: $(P + "LemmaExactMenu"),
+      sqlInput: $(P + "SqlInput"), sqlRun: $(P + "SqlRun"), sqlStatus: $(P + "SqlStatus"),
+      results: $(P + "Results"),
+      apply: $(cfg.applyBtn), reset: $(cfg.resetBtn)
+    };
+    const pageSize = cfg.pageSize || 13;
+    const OWN = [el.work, el.book, el.verse, el.lemmaLike, el.formLike, el.lemmaExact];
+    let manualSql = false;      // true once the SQL is hand-edited; controls then locked
+
+    function setEnabled(on) {
+      OWN.forEach((c) => { if (c) c.disabled = !on; });
+      if (el.apply) el.apply.disabled = !on;
+      if (cfg.onLock) cfg.onLock(on);
+    }
+    // A manual edit hands ownership of the query to the textarea; Reset is
+    // deliberately left enabled — it is how the person gets back out.
+    function enterManualMode() {
+      if (manualSql) return;
+      manualSql = true;
+      setEnabled(false);
+    }
+
+    // Book number and verse range only make sense within one work, so both
+    // controls stay hidden (and their values cleared) until a work is chosen;
+    // the book list is rebuilt from the books actually attested in that work
+    // (fillSelect keeps the current selection when it survives the rebuild).
+    function refreshBooks() {
+      const wk = el.work.value;
+      if (el.bookWrap) el.bookWrap.hidden = !wk;
+      if (el.verseWrap) el.verseWrap.hidden = !wk;
+      if (!wk) { el.book.value = ""; el.verse.value = ""; return; }
+      const books = SQL.objects("SELECT DISTINCT book AS b FROM " + SQL.quoteId(SQL.table) +
+        " WHERE " + SQL.quoteId("work") + " = " + sqlStr(wk) +
+        " AND book IS NOT NULL AND book <> '' ORDER BY CAST(book AS INTEGER), book;")
+        .map((r) => String(r.b));
+      UI.fillSelect(el.book, books, { head: "(all books)" });
+    }
+
+    // Build the card's query — nicely formatted, and WITHOUT a row cap beyond
+    // the trailing LIMIT/OFFSET that paging rewrites. This text is what lands
+    // in the editor and is executed: the controls ARE the query.
+    function buildSql() {
+      const cols = (cfg.previewCols || []).filter((c) => SQL.columns().includes(c));
+      let sql = "SELECT " + cols.map(niceId).join(", ") + "\nFROM " + niceId(SQL.table);
+      const conds = (cfg.baseConds || []).slice();
+      if (cfg.extraConds) conds.push.apply(conds, cfg.extraConds() || []);
+      const wk = el.work.value; if (wk) conds.push(niceId("work") + " = " + sqlStr(wk));
+      const bk = el.book.value; if (bk) conds.push(niceId("book") + " = " + sqlStr(bk));
+      const vm = (el.verse.value || "").trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+      if (vm) conds.push(vm[2]
+        ? "CAST(verse AS INTEGER) BETWEEN " + parseInt(vm[1], 10) + " AND " + parseInt(vm[2], 10)
+        : "CAST(verse AS INTEGER) = " + parseInt(vm[1], 10));
+      const lk = searchKey(el.lemmaLike.value);
+      if (lk) conds.push(niceId("lemma_search") + " LIKE " + sqlStr("%" + lk + "%"));
+      const fk = searchKey(el.formLike.value);
+      if (fk) conds.push(niceId("form_search") + " LIKE " + sqlStr("%" + fk + "%"));
+      const exRaw = (el.lemmaExact.value || "").trim();
+      if (exRaw) {
+        // Greek (accents optional) or Beta Code, resolved to the accented
+        // corpus lemma; unresolvable input is passed through verbatim so the
+        // generated SQL still shows exactly what was asked (and matches nothing).
+        const seeds = resolveLemmata(exRaw);
+        conds.push(niceId("lemma") + " = " + sqlStr(seeds.length ? seeds[0] : exRaw));
+      }
+      if (conds.length) sql += "\nWHERE " + conds.join("\n  AND ");
+      sql += "\nORDER BY " + (cfg.orderBy || niceId("work") + ", book, verse");
+      sql += "\nLIMIT " + pageSize + " OFFSET 0;";
+      return sql;
+    }
+
+    // Runs whatever is in the editor, exactly as written, into the results
+    // element. If the query ends in LIMIT/OFFSET, the pager rewrites the
+    // OFFSET in the editor and re-runs — so the query shown is always the
+    // query that ran.
+    function run() {
+      const sql = el.sqlInput.value;
+      if (!SQL.isReadOnly(sql)) {
+        el.sqlStatus.textContent = "Read-only: only SELECT / WITH / EXPLAIN / PRAGMA are allowed.";
+        return;
+      }
+      let res;
+      try {
+        res = SQL.query(sql);
+      } catch (e) {
+        el.sqlStatus.textContent = "SQL error: " + e.message;
+        el.results.innerHTML = '<div class="small-muted" style="padding:.7rem;">Query error: ' + UI.esc(e.message) + "</div>";
+        return;
+      }
+      const columns = res.columns || [], values = res.values || [];
+      const lo = manualSql ? null : readLimitOffset(sql);
+      const total = lo ? countRows(sql) : null;
+      const canPage = !!(lo && total != null && lo.limit > 0);
+
+      const pages = canPage ? Math.max(1, Math.ceil(total / lo.limit)) : 0;
+      const page = canPage ? Math.floor(lo.offset / lo.limit) + 1 : 0;
+      const lastOff = canPage ? (pages - 1) * lo.limit : 0;
+      const atStart = !canPage || lo.offset === 0;
+      const atEnd = !canPage || lo.offset >= lastOff;
+      // Enabled buttons carry the OFFSET they jump to; disabled ones carry nothing.
+      const btn = (label, off, dis) =>
+        '<button class="btn btn-sm"' + (dis ? " disabled" : ' data-off="' + off + '"') + ">" + label + "</button>";
+
+      let html = '<div class="pager"><span class="pager-controls">';
+      html += btn("\u00ab First", 0, atStart);
+      html += btn("\u2039 Prev", canPage ? Math.max(0, lo.offset - lo.limit) : 0, atStart);
+      html += btn("Next \u203a", canPage ? lo.offset + lo.limit : 0, atEnd);
+      html += btn("Last \u00bb", lastOff, atEnd);
+      html += "</span>";
+      if (canPage) html += '<span class="small-muted" style="margin-left:.6rem;">Rows ' +
+        Math.min(lo.offset + 1, total) + "\u2013" + Math.min(lo.offset + values.length, total) +
+        " of " + total + " \u00b7 page " + page + " of " + pages + "</span>";
+      html += "</div>";
+      html += renderTable(columns, values);
+      el.results.innerHTML = html;
+
+      el.results.querySelectorAll("[data-off]").forEach((b) => {
+        b.addEventListener("click", () => {
+          el.sqlInput.value = setOffset(sql, parseInt(b.dataset.off, 10));
+          run();
+        });
+      });
+
+      el.sqlStatus.textContent = "OK: " + values.length + " row" + (values.length === 1 ? "" : "s") + ".";
+    }
+
+    // The controls ARE the query: regenerate it, mirror into the editor, run it.
+    function apply() {
+      el.sqlInput.value = buildSql();
+      run();
+    }
+
+    /* ----- wiring ----- */
+    UI.fillSelect(el.work, cfg.worksWhere
+      ? SQL.objects("SELECT DISTINCT " + SQL.quoteId("work") + " AS v FROM " + SQL.quoteId(SQL.table) +
+          " WHERE " + cfg.worksWhere + " AND " + SQL.quoteId("work") + " IS NOT NULL AND " +
+          SQL.quoteId("work") + " <> '' ORDER BY v;").map((r) => r.v)
+      : SQL.distinct("work"), { head: "(all works)" });
+    el.work.addEventListener("change", refreshBooks);
+    refreshBooks();
+    [el.verse, el.lemmaLike, el.formLike, el.lemmaExact].forEach((c) => {
+      if (c) c.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); apply(); } });
+    });
+    // The usual adaptive browse over the corpus lemma list. Picking a lemma
+    // only fills the box — like every other control, it changes nothing until
+    // Apply (or Enter in a text box) regenerates and runs the query.
+    if (el.lemmaExactMenu) UI.greekCombo(el.lemmaExact, el.lemmaExactMenu, {
+      items: lemmaItems,
+      onSelect(it) { el.lemmaExact.value = it.display; }
+    });
+    el.apply.disabled = false;
+    el.apply.addEventListener("click", apply);
+    el.reset.addEventListener("click", () => {
+      manualSql = false;
+      setEnabled(true);
+      if (cfg.onReset) cfg.onReset();
+      OWN.forEach((c) => { if (c) c.value = ""; });
+      refreshBooks();
+      apply();
+    });
+    el.sqlRun.addEventListener("click", run);
+    el.sqlInput.addEventListener("input", enterManualMode);
+
+    apply();
+    return { apply, run };
+  }
+
+  window.MopsosSearch = { card, searchKey, lemmaItems, resolveLemmata, renderTable, niceId, sqlStr };
 })();
 
 

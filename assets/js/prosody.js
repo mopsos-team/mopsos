@@ -17,34 +17,42 @@
   var el = {};
 
   function grab() {
-    ["scanLoadStatus", "scanView", "scanWork", "scanBook", "scanTopN", "btnRunScan",
+    ["scanLoadStatus", "scanView", "scanWork", "scanBookWrap", "scanBook", "scanVerseWrap", "scanVerse", "btnRunScan",
      "scanViewDesc", "scanSummary", "scanChart", "scanTable",
-     "scanLineWrap", "scanLineFrom", "scanWordWrap", "scanWord", "scanWordMenu", "scanFootWrap", "scanFoot",
+     "scanWordWrap", "scanWord", "scanWordMenu", "scanFootWrap", "scanFoot",
      "scanGrammar", "scanGPos", "scanGCase", "scanGNumber", "scanGGender", "scanGTense", "scanGMood", "scanGVoice", "scanGPerson"]
       .forEach(function (id) { el[id] = document.getElementById(id); });
   }
 
   function sqlStr(s) { return "'" + String(s).replace(/'/g, "''") + "'"; }
 
-  function topN() {
-    var n = parseInt(el.scanTopN.value, 10);
-    if (!isFinite(n) || n < 1) n = 15;
-    return Math.min(n, 55);
+  // The Top-N control is gone: the ranked views (foot patterns, foot words)
+  // show a fixed top 15.
+  var TOP_N = 15;
+
+  // Verse(s): a single verse number or a range, matching the morphology card.
+  // Returns a SQL condition, or null when the box is empty or malformed.
+  function verseCond() {
+    var m = (el.scanVerse.value || "").trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+    if (!m) return null;
+    return m[2]
+      ? "CAST(verse AS INTEGER) BETWEEN " + parseInt(m[1], 10) + " AND " + parseInt(m[2], 10)
+      : "CAST(verse AS INTEGER) = " + parseInt(m[1], 10);
   }
 
   // A figure title assembled from the options the user actually chose, so a
   // downloaded image says what it shows and over which scope.
   function scopeSuffix() {
-    var w = el.scanWork.value ? (WORKNAME[el.scanWork.value] || el.scanWork.value) : "Iliad + Odyssey";
-    var b = (el.scanBook.value && !el.scanBook.disabled) ? " book " + el.scanBook.value : "";
-    return " \u00b7 " + w + b;
+    var w = el.scanWork.value || "All works";
+    var b = el.scanBook.value ? " book " + el.scanBook.value : "";
+    var vr = (el.scanVerse.value || "").trim();
+    return " \u00b7 " + w + b + (vr ? " vv. " + vr : "");
   }
   function viewTitle(base) { return base + scopeSuffix(); }
 
   /* ----- the merged metrical record ---------------------------------------
-   * scanWork option values are lower-case slugs; morphology stores the
-   * capitalised work names, so the two are mapped here. ------------------- */
-  var WORKNAME = { iliad: "Iliad", odyssey: "Odyssey" };
+   * scanWork offers the work names straight from the corpus, so every
+   * scanned work is selectable. ------------------------------------------- */
   // Tokens whose alignment to the scansion is trustworthy.
   var MATCH_OK = "match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND foot_start IS NOT NULL";
   // WHERE conditions restricting morphology to the tab's current scope.
@@ -52,18 +60,18 @@
   function morphScope(px) {
     px = px || "";
     var conds = [px + "match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND " + px + "foot_start IS NOT NULL"];
-    if (el.scanWork.value) conds.push(px + "work = " + sqlStr(WORKNAME[el.scanWork.value] || el.scanWork.value));
-    else conds.push(px + "work IN ('Iliad','Odyssey')");
-    if (el.scanBook.value && !el.scanBook.disabled) conds.push(px + "book = " + sqlStr(el.scanBook.value));
+    if (el.scanWork.value) conds.push(px + "work = " + sqlStr(el.scanWork.value));
+    if (el.scanBook.value) conds.push(px + "book = " + sqlStr(el.scanBook.value));
+    var vc = verseCond(); if (vc) conds.push(vc);
     return conds;
   }
   // Line scope: like morphScope but with no match-status restriction, so a
   // line keeps all of its words (unmatched ones are flagged, not dropped).
   function lineScope() {
     var conds = ["verse IS NOT NULL AND verse <> ''"];
-    if (el.scanWork.value) conds.push("work = " + sqlStr(WORKNAME[el.scanWork.value] || el.scanWork.value));
-    else conds.push("work IN ('Iliad','Odyssey')");
-    if (el.scanBook.value && !el.scanBook.disabled) conds.push("book = " + sqlStr(el.scanBook.value));
+    if (el.scanWork.value) conds.push("work = " + sqlStr(el.scanWork.value));
+    if (el.scanBook.value) conds.push("book = " + sqlStr(el.scanBook.value));
+    var vc = verseCond(); if (vc) conds.push(vc);
     return conds;
   }
 
@@ -99,7 +107,7 @@
    * align, and the derived six-foot pattern. Cached per scope. ------------ */
   var LINES_CACHE = {};
   function linesAgg() {
-    var key = (el.scanWork.value || "") + "|" + (el.scanBook.disabled ? "" : el.scanBook.value || "");
+    var key = (el.scanWork.value || "") + "|" + (el.scanBook.value || "") + "|" + (el.scanVerse.value || "").trim();
     if (LINES_CACHE[key]) return LINES_CACHE[key];
     var rows = SQL.objects(
       "SELECT work, book, CAST(verse AS INTEGER) line_num, COUNT(*) n_words, " +
@@ -170,7 +178,7 @@
     if (FORMS) return;
     FORMS = {};
     SQL.objects("SELECT form, COUNT(*) n FROM morphology WHERE " + MATCH_OK +
-      " AND work IN ('Iliad','Odyssey') GROUP BY form;").forEach(function (r) {
+      " GROUP BY form;").forEach(function (r) {
       var wn = normGr(r.form); if (!wn) return;
       var e = FORMS[wn]; if (!e) e = FORMS[wn] = { forms: {}, c: 0 };
       e.c += r.n; e.forms[r.form] = (e.forms[r.form] || 0) + r.n;
@@ -259,7 +267,6 @@
       ev.preventDefault();
       el.scanWord.value = it.getAttribute("data-form");
       el.scanWordMenu.hidden = true;
-      run();
     });
     el.scanWord.addEventListener("blur", function () { setTimeout(function () { if (el.scanWordMenu) el.scanWordMenu.hidden = true; }, 160); });
     el.scanWord.addEventListener("keydown", function (e) { if (e.key === "Escape") el.scanWordMenu.hidden = true; });
@@ -416,8 +423,7 @@
     line_scan: {
       desc: "Each line word by word, from the merged metrical record: \u00af marks a long syllable, \u02d8 a short, and the subscript gives the feet each word occupies (D = dactyl, S = spondee in the derived pattern). | marks a foot boundary; a tinted | after foot 4 is the bucolic diaeresis; \u2016 marks the line's single principal caesura (masculine, feminine, or hephthemimeral; postpositives and prepositives do not count as word ends), shown dotted when two third-foot breaks leave its position uncertain.",
       run: function () {
-        var from = parseInt(el.scanLineFrom.value, 10); if (!isFinite(from) || from < 1) from = 1;
-        var rows = linesAgg().filter(function (r) { return r.line_num >= from; });
+        var rows = linesAgg();
         if (!rows.length) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No lines in this range.</div>'; el.scanSummary.innerHTML = ""; return; }
         drawLineScan(rows);
         statCards([["Lines matched", rows.length.toLocaleString()], ["First", rows[0].work + " " + rows[0].book + "." + rows[0].line_num]]);
@@ -485,7 +491,7 @@
           var e = map.get(wn); if (!e) { e = { c: 0, forms: {} }; map.set(wn, e); }
           e.c += r.n; e.forms[r.form] = (e.forms[r.form] || 0) + r.n;
         });
-        var arr = Array.from(map.entries()).sort(function (a, b) { return b[1].c - a[1].c; }).slice(0, topN());
+        var arr = Array.from(map.entries()).sort(function (a, b) { return b[1].c - a[1].c; }).slice(0, TOP_N);
         if (!arr.length) { el.scanChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">No matching words for this foot in scope.</div>'; return; }
         Chart.bars(el.scanChart, arr.map(function (e) {
           var disp = Object.keys(e[1].forms).sort(function (a, b) { return e[1].forms[b] - e[1].forms[a]; })[0];
@@ -517,7 +523,7 @@
           if (!r.pattern) { und++; return; }
           tally.set(r.pattern, (tally.get(r.pattern) || 0) + 1);
         });
-        var arr = Array.from(tally.entries()).sort(function (a, b) { return b[1] - a[1]; }).slice(0, topN());
+        var arr = Array.from(tally.entries()).sort(function (a, b) { return b[1] - a[1]; }).slice(0, TOP_N);
         Chart.bars(el.scanChart, arr.map(function (e) { return { label: e[0], value: e[1] }; }),
           { valueLabel: "lines", labelWidth: 120, title: viewTitle("Commonest foot patterns (D = dactyl, S = spondee)") });
         statCards([["Distinct patterns", tally.size], ["Lines with a derived pattern", (rows.length - und).toLocaleString()],
@@ -592,22 +598,15 @@
 
   function syncScanControls() {
     var v = el.scanView.value;
-    el.scanLineWrap.hidden = (v !== "line_scan");
     el.scanWordWrap.hidden = (v !== "word_foot");
     el.scanFootWrap.hidden = (v !== "foot_words");
     el.scanGrammar.hidden = !(v === "word_foot" || v === "foot_words");
   }
 
-  function grammarState() { var s = {}; GFIELDS.forEach(function (k) { s[k] = el[GMAP[k]] ? el[GMAP[k]].value : ""; }); return s; }
-
   function run() {
     if (!SQL || !SQL.isReady()) return;
     syncScanControls();
     scanLineState.page = 0;
-    UI.saveState("scan", {
-      view: el.scanView.value, work: el.scanWork.value, book: el.scanBook.value, topN: el.scanTopN.value,
-      lineFrom: el.scanLineFrom.value, word: el.scanWord.value, foot: el.scanFoot.value, grammar: grammarState()
-    });
     if (el.scanWordMenu) el.scanWordMenu.hidden = true;
     var view = VIEWS[el.scanView.value] || VIEWS.line_scan;
     el.scanViewDesc.textContent = view.desc;
@@ -618,33 +617,107 @@
     }
   }
 
+  // Book and verse only make sense within one work: both controls stay hidden
+  // (values cleared) until a work is chosen, and the book list is rebuilt from
+  // the books attested in that work — the same behaviour as the morphology
+  // scope filters.
   function populateBooks() {
     var work = el.scanWork.value;
+    el.scanBookWrap.hidden = !work;
+    el.scanVerseWrap.hidden = !work;
     if (!work) {
       el.scanBook.innerHTML = '<option value="">(all books)</option>';
       el.scanBook.value = "";
-      el.scanBook.disabled = true;
+      el.scanVerse.value = "";
       return;
     }
-    var books = SQL.query("SELECT DISTINCT book FROM morphology WHERE work = " + sqlStr(WORKNAME[work] || work) +
-      " ORDER BY CAST(book AS INTEGER);").values.map(function (r) { return r[0]; });
+    var books = SQL.query("SELECT DISTINCT book FROM morphology WHERE work = " + sqlStr(work) +
+      " AND book IS NOT NULL AND book <> '' ORDER BY CAST(book AS INTEGER), book;").values.map(function (r) { return r[0]; });
     UI.fillSelect(el.scanBook, books, { head: "(all books)" });
-    el.scanBook.disabled = false;
+  }
+
+  // The word-search panel is the shared MopsosSearch card (mopsos-shared.js);
+  // this page grafts the metrical filters onto it through the card's hooks,
+  // the same way morphology grafts its part-of-speech drop-downs: their
+  // conditions ride in the same generated query, lock with the same manual
+  // mode, and clear with the same Reset. Only this card orders numerically by
+  // work, book, and verse (the config's orderBy), so the matches read in line
+  // order; the morphology card keeps its own ordering.
+  var PS_EXTRA = ["psShape", "psFootStart", "psFootStartPos", "psFootEnd", "psFootEndPos"];
+  var PS_FOOT = [["psFootStart", "foot_start"], ["psFootStartPos", "foot_start_pos"],
+                 ["psFootEnd", "foot_end"], ["psFootEndPos", "foot_end_pos"]];
+  function initSearchCard() {
+    if (!window.MopsosSearch || !document.getElementById("psResults")) return;
+    var Search = window.MopsosSearch;
+    var $ = function (id) { return document.getElementById(id); };
+
+    // Foot and position drop-downs offer the values attested in the corpus.
+    PS_FOOT.forEach(function (p) {
+      var c = $(p[0]); if (c) UI.fillSelect(c, SQL.distinct(p[1]), { head: "(any)" });
+    });
+
+    var card = Search.card({
+      prefix: "ps",
+      applyBtn: "btnPsApply",
+      resetBtn: "btnPsReset",
+      previewCols: ["work", "book", "verse", "form", "lemma", "metrical_shape",
+                    "foot_start", "foot_start_pos", "foot_end", "foot_end_pos"],
+      baseConds: ['match_status <> "CONFLICT_NO_MATCH"', "is_valid = 1"],
+      worksWhere: 'match_status <> "CONFLICT_NO_MATCH" AND is_valid = 1',
+      orderBy: '"work", CAST(book AS INTEGER), CAST(verse AS INTEGER)',
+      extraConds: function () {
+        var out = [];
+        var shp = ($("psShape").value || "").trim().toUpperCase();
+        if (shp) out.push("metrical_shape = " + Search.sqlStr(shp));
+        PS_FOOT.forEach(function (p) {
+          var v = $(p[0]).value;
+          if (v) out.push(p[1] + " = " + Search.sqlStr(String(v)));
+        });
+        return out;
+      },
+      onLock: function (on) { PS_EXTRA.forEach(function (id) { var c = $(id); if (c) c.disabled = !on; }); },
+      onReset: function () { PS_EXTRA.forEach(function (id) { var c = $(id); if (c) c.value = ""; }); }
+    });
+
+    // The shape box is freetext with a browse of the shapes actually attested,
+    // narrowed as the user types (typing "HL" offers HL, HLL, HLH, ...);
+    // whatever is typed is uppercased into the query as-is, so an unattested
+    // shape honestly matches nothing.
+    var shapes = null;
+    function shapeItems() {
+      if (shapes) return shapes;
+      shapes = SQL.objects("SELECT metrical_shape s, COUNT(*) c FROM morphology" +
+        " WHERE metrical_shape IS NOT NULL AND metrical_shape <> '' GROUP BY s ORDER BY c DESC;")
+        .map(function (r) { return { key: String(r.s).toLowerCase(), display: r.s, beta: r.s, meta: r.c + "\u00d7" }; });
+      return shapes;
+    }
+    if ($("psShape") && $("psShapeMenu")) {
+      UI.greekCombo($("psShape"), $("psShapeMenu"), {
+        items: shapeItems,
+        onSelect: function (it) { $("psShape").value = it.display; }
+      });
+      $("psShape").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); card.apply(); }
+      });
+    }
   }
 
   function init() {
     grab();
     if (!el.scanView) return; // not on this page
+    // The on-page summary element is gone, but the views still write their
+    // stat cards; give them a detached sink rather than touching each one
+    // (they come back with the other views later).
+    if (!el.scanSummary) el.scanSummary = document.createElement("div");
 
-    el.scanView.addEventListener("change", run);
-    el.scanWork.addEventListener("change", function () { populateBooks(); run(); });
-    el.scanBook.addEventListener("change", run);
-    el.scanTopN.addEventListener("change", run);
-    el.scanFoot.addEventListener("change", run);
-    el.scanLineFrom.addEventListener("change", run);
-    el.scanLineFrom.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } });
+    // Changing a control never reruns the view: rendering happens only on
+    // "Show view" (or Enter in a text box, its keyboard synonym). Changing
+    // the work still rebuilds the dependent book list, and changing the view
+    // still reveals its controls — neither touches the output.
+    el.scanView.addEventListener("change", syncScanControls);
+    el.scanWork.addEventListener("change", populateBooks);
+    el.scanVerse.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } });
     el.scanWord.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); run(); } });
-    GFIELDS.forEach(function (k) { if (el[GMAP[k]]) el[GMAP[k]].addEventListener("change", run); });
     wireCombo();
     el.scanChart.addEventListener("click", function (ev) {
       var b = ev.target.closest && ev.target.closest("[data-scan-act]");
@@ -662,22 +735,19 @@
     SQL.ready().then(function () {
       if (el.scanLoadStatus) el.scanLoadStatus.style.display = "none";
       el.btnRunScan.disabled = false;
-      var st = UI.loadState("scan");
-      if (st) {
-        if (st.view && VIEWS[st.view]) el.scanView.value = st.view;
-        if (st.work != null) el.scanWork.value = st.work;
-      }
+      // Every scanned work is offered, straight from the corpus. Nothing is
+      // saved or restored across page loads: every visit starts at the same
+      // place, Iliad 1.1-5, scanned line by line.
+      UI.fillSelect(el.scanWork, SQL.distinct("work"), { head: "(all works)" });
+      el.scanWork.value = "Iliad";
       populateBooks();
-      if (st) {
-        if (st.book != null && !el.scanBook.disabled) el.scanBook.value = st.book;
-        if (st.topN) el.scanTopN.value = st.topN;
-        if (st.lineFrom != null) el.scanLineFrom.value = st.lineFrom;
-        if (st.word != null) el.scanWord.value = st.word;
-        if (st.foot != null) el.scanFoot.value = st.foot;
-        if (st.grammar) GFIELDS.forEach(function (k) { if (el[GMAP[k]] && st.grammar[k] != null) el[GMAP[k]].value = st.grammar[k]; });
+      if (el.scanWork.value) {
+        el.scanBook.value = "1";
+        el.scanVerse.value = "1-5";
       }
       syncScanControls();
       run();
+      initSearchCard();
     }).catch(function (e) {
       if (el.scanLoadStatus) el.scanLoadStatus.innerHTML = '<span>Could not load scansion corpus: ' + UI.esc(e.message) + "</span>";
     });

@@ -72,12 +72,12 @@
       <hr />
       <div class="grid-3" style="margin-top:1rem;">
         <div class="field">
-          <label for="qfLemmaLike"><strong>Lemma contains</strong></label>
-          <input type="text" id="qfLemmaLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul">
-        </div>
-        <div class="field">
           <label for="qfFormLike"><strong>Form contains</strong></label>
           <input type="text" id="qfFormLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. οιο or oio">
+        </div>
+        <div class="field">
+          <label for="qfLemmaLike"><strong>Lemma contains</strong></label>
+          <input type="text" id="qfLemmaLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul">
         </div>
         <div class="field">
           <label for="qfLemmaExact"><strong>Lemma matches exactly</strong></label>
@@ -94,8 +94,8 @@
       </div>
 
       <div id="qfSqlPanel" class="adv-panel" hidden>
-        <p class="help">Read-only SQL over table <code>morphology</code>. Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. <kbd>Enter</kbd> runs · <kbd>Shift</kbd>+<kbd>Enter</kbd> for a new line · results are not paginated.</p>
-        <textarea id="qfSqlInput" spellcheck="false"></textarea>
+        <p class="help">Read-only SQL over table <code>morphology</code>. Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. Results are not paginated.</p>
+        <textarea class="sqlInput" id="qfSqlInput" spellcheck="false"></textarea>
         <div class="btn-row" style="margin-top:.5rem;">
           <button id="qfSqlRun" class="btn btn-primary">Run</button>
         </div>
