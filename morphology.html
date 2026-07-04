@@ -43,19 +43,50 @@
       <button class="info-btn" data-info="morphInfo">What is this?</button>
     </div>
     <div id="morphInfo" class="info-panel" hidden>
-      <h4>Morphology tab</h4>
-      <p>There are three ways to explore the corpus:</p>
+      <h4>Part of Speech and Morphology Search Card</h4>
+      <p>There are two ways to explore the corpus in this card:</p>
       <ul>
-        <li><strong>Filter</strong>: pick a part of speech and MOPSOS shows only the grammatical features that actually apply to it.</li>
-        <li><strong>Custom queries</strong>: tucked inside the Filter card, for writing your own read-only queries by hand. Press <kbd>Enter</kbd> to run.</li>
-        <li><strong>Distribution Charts</strong>: count tokens by any dimension (book, lemma, case…), optionally broken down by a second dimension, under any filter. For example: which books have the most aorist optatives, or how noun number and case combine.</li>
+        <li><strong>Filter</strong>: pick a work, part of speech with grammatical features, and/or a partial match for a word, and MOPSOS will show matching forms.</li>
+        <li><strong>Custom queries</strong>: for advanced users, custom SQL queries can be written.
       </ul>
     </div>
     </div>
     <div class="card">
       <h2>1. Filter</h2>
-      <p class="help" style="margin-top:-.35rem;">Pick a part of speech to reveal the features that apply to it; choose any values and Apply. Results are paginated 50 per page.</p>
-      <div id="qfGroup" class="filter-group"></div>
+      <p class="help" style="margin-top:-.35rem;">View words that appear in the texts (<em>Form</em>) and their dictionary form (<em>Lemma</em>). You can filter by work, part of speech, or a sequence of letters. Results are paginated.</p>
+      <div class="grid-3" >
+        <div class="field">
+          <label for="qfLimitWork"><strong>Book / work</strong></label>
+          <select id="qfLimitWork"><option value="">(all works)</option></select>
+        </div>
+        <div class="field" id="qfLimitBookWrap" hidden>
+          <label for="qfLimitBook"><strong>Book number</strong></label>
+          <select id="qfLimitBook"><option value="">(all books)</option></select>
+        </div>
+        <div class="field" id="qfVerseWrap" hidden>
+          <label for="qfVerseRange"><strong>Verse(s)</strong></label>
+          <input type="text" id="qfVerseRange" autocomplete="off" spellcheck="false" placeholder="e.g. 212 or 212-415">
+        </div>
+      </div>
+      <div id="qfGroup" class="filter-group" style="margin-top:.5rem;"></div>
+      <hr />
+      <div class="grid-3" style="margin-top:1rem;">
+        <div class="field">
+          <label for="qfLemmaLike"><strong>Lemma contains</strong></label>
+          <input type="text" id="qfLemmaLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul">
+        </div>
+        <div class="field">
+          <label for="qfFormLike"><strong>Form contains</strong></label>
+          <input type="text" id="qfFormLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. οιο or oio">
+        </div>
+        <div class="field">
+          <label for="qfLemmaExact"><strong>Lemma matches exactly</strong></label>
+          <div class="combo">
+            <input type="text" id="qfLemmaExact" autocomplete="off" spellcheck="false" placeholder="e.g. ῥοδοδάκτυλος or Beta Code like rododaktulos; click to browse">
+            <div id="qfLemmaExactMenu" class="combo-menu" hidden></div>
+          </div>
+        </div>
+      </div>
       <div class="btn-row">
         <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply filter</button>
         <button id="btnResetFilter" class="btn">Reset</button>
@@ -499,6 +530,7 @@
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sql.js@1.13.0/dist/sql-wasm.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/beta-code-js@3.1.0/bundle/beta-code.js"></script>
   <script src="assets/js/papa-fallback.js"></script>
   <script src="assets/js/mopsos-text.js"></script>
   <script src="assets/js/mopsos-shared.js"></script>

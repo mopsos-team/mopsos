@@ -70,7 +70,8 @@ TABLES = [
         # to match the app's own conversion (buildDatabase in mopsos-shared.js).
         data_coercion={"is_valid": lambda v: 1 if v.strip().lower() == "true"
                        else (0 if v.strip().lower() == "false" else v)},
-        indexes=["lemma", "form", "work", "author", "sentence_id", "lemma_search"],
+        indexes=["lemma", "form", "work", "author", "sentence_id",
+                 "lemma_search", "form_search"],
         # lemma_search: accent/breathing-insensitive key for "ignore accents"
         # search (e.g. WHERE lemma_search LIKE 'luo%' matches every accented
         # spelling of a lemma) -- SQLite has no accent-insensitive collation, so
@@ -80,6 +81,7 @@ TABLES = [
         # and quicker to load.
         derived_columns={
             "lemma_search": ("lemma", lambda t: greek_text.strip_diacritics(t).lower()),
+            "form_search": ("form", lambda t: greek_text.strip_diacritics(t).lower()),
         },
     ),
     dict(

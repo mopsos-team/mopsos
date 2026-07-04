@@ -39,6 +39,19 @@
   const naGuard = (c) => q(c) + " IS NOT NULL AND " + q(c) + " NOT IN ('','-')";
   const displayName = (field, code) => (UI.LABELS[field] ? UI.label(field, code) : String(code));
 
+  // Normalize word-search input to match the lowercase, diacritic-free
+  // lemma_search / form_search columns. Latin input is first converted to
+  // Greek via the bundled beta-code-js library (window.BetaCode); from there
+  // both paths are identical: strip diacritics, lowercase, fold final sigma.
+  function searchKeyOf(input) {
+    const T = window.MopsosText;
+    const raw = String(input == null ? "" : input).trim();
+    if (!raw) return "";
+    const hasGreek = T && T.hasGreek ? T.hasGreek(raw) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
+    const greek = (hasGreek || !window.BetaCode) ? raw : window.BetaCode.betaCodeToGreek(raw);
+    return (T ? T.stripDiacritics(greek) : greek).toLowerCase().replace(/\u03c2/g, "\u03c3");
+  }
+
   // Quote an identifier only when it needs it, for legible generated SQL.
   const RESERVED = new Set(["case", "order", "group", "by", "select", "from", "where",
     "table", "index", "default", "check", "references", "limit", "offset", "having",
@@ -52,12 +65,18 @@
   let manualSql = false;            // true once the user hand-edits the SQL; dropdowns then disabled
   const PAGE_SIZE = 13;
 
+  // Scope + word-search controls that extend the quick filter (they sit
+  // outside #qfGroup, so lock/reset must name them explicitly).
+  const QF_EXTRA_IDS = ["qfLimitWork", "qfLimitBook", "qfVerseRange",
+    "qfLemmaLike", "qfFormLike", "qfLemmaExact"];
+
   // Disable/enable the dropdown query-builder when the SQL is taken over by hand.
   // The quick-filter Reset button is deliberately left enabled — it is how the
   // user gets back out of manual mode.
   function setQuickControlsEnabled(on) {
     const g = $("qfGroup");
     if (g) g.querySelectorAll("select, input").forEach((c) => { c.disabled = !on; });
+    QF_EXTRA_IDS.forEach((id) => { const c = $(id); if (c) c.disabled = !on; });
     if ($("btnApplyFilter")) $("btnApplyFilter").disabled = !on;
   }
 
@@ -65,6 +84,24 @@
     if (manualSql) return;
     manualSql = true;
     setQuickControlsEnabled(false);
+  }
+
+  // Book number and verse range only make sense within one work, so both
+  // controls stay hidden (and their values cleared) until a work is chosen;
+  // the book list is rebuilt from the books actually attested in that work,
+  // keeping the current selection when it survives the rebuild.
+  function refreshQfBooks() {
+    const wk = $("qfLimitWork").value;
+    $("qfLimitBookWrap").hidden = !wk;
+    $("qfVerseWrap").hidden = !wk;
+    if (!wk) { $("qfLimitBook").value = ""; $("qfVerseRange").value = ""; return; }
+    const keep = $("qfLimitBook").value;
+    const books = SQL.objects("SELECT DISTINCT book AS b FROM " + q(TABLE) +
+      " WHERE " + q("work") + " = " + sqlStr(wk) +
+      " AND book IS NOT NULL AND book <> '' ORDER BY CAST(book AS INTEGER), book;")
+      .map((r) => String(r.b));
+    UI.fillSelect($("qfLimitBook"), books, { head: "(all books)" });
+    if (books.indexOf(keep) >= 0) $("qfLimitBook").value = keep;
   }
 
   // No persistence: nothing is written to localStorage / cookies. State lives
@@ -77,6 +114,24 @@
     let sql = "SELECT " + cols.map(niceId).join(", ") + "\nFROM " + niceId(TABLE);
     const conds = ["match_status <> \"CONFLICT_NO_MATCH\""];
     for (const k in filters) if (filters[k]) conds.push(niceId(k) + " = " + sqlStr(filters[k]));
+    const wk = $("qfLimitWork").value; if (wk) conds.push(niceId("work") + " = " + sqlStr(wk));
+    const bk = $("qfLimitBook").value; if (bk) conds.push(niceId("book") + " = " + sqlStr(bk));
+    const vm = ($("qfVerseRange").value || "").trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+    if (vm) conds.push(vm[2]
+      ? "CAST(verse AS INTEGER) BETWEEN " + parseInt(vm[1], 10) + " AND " + parseInt(vm[2], 10)
+      : "CAST(verse AS INTEGER) = " + parseInt(vm[1], 10));
+    const lk = searchKeyOf($("qfLemmaLike").value);
+    if (lk) conds.push(niceId("lemma_search") + " LIKE " + sqlStr("%" + lk + "%"));
+    const fk = searchKeyOf($("qfFormLike").value);
+    if (fk) conds.push(niceId("form_search") + " LIKE " + sqlStr("%" + fk + "%"));
+    const exRaw = ($("qfLemmaExact").value || "").trim();
+    if (exRaw) {
+      // Greek (accents optional) or Beta Code, resolved to the accented
+      // corpus lemma; unresolvable input is passed through verbatim so the
+      // generated SQL still shows exactly what was asked (and matches nothing).
+      const seeds = resolveSeeds(exRaw);
+      conds.push(niceId("lemma") + " = " + sqlStr(seeds.length ? seeds[0] : exRaw));
+    }
     if (conds.length) sql += "\nWHERE " + conds.join("\n  AND ");
     sql += "\nORDER BY " + niceId("work") + ", " + "book, verse";
     sql += "\nLIMIT " + PAGE_SIZE + " OFFSET 0;";
@@ -551,7 +606,24 @@ function runCustomSql() {
       manualSql = false;
       setQuickControlsEnabled(true);
       qf.reset();
+      QF_EXTRA_IDS.forEach((id) => { $(id).value = ""; });
+      refreshQfBooks();
       applyQuickFilter();
+    });
+
+    // Quick-filter scope limiters and word searches. The selects and text
+    // boxes feed buildQuickSql when Apply runs; Enter in a text box applies
+    // directly, matching the SQL console's Enter-runs convention.
+    UI.fillSelect($("qfLimitWork"), SQL.distinct("work"), { head: "(all works)" });
+    $("qfLimitWork").addEventListener("change", refreshQfBooks);
+    refreshQfBooks();
+    ["qfVerseRange", "qfLemmaLike", "qfFormLike", "qfLemmaExact"].forEach((id) => {
+      $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); applyQuickFilter(); } });
+    });
+    // Same adaptive browse as the compound lookup, over the corpus lemma list.
+    if ($("qfLemmaExactMenu")) UI.greekCombo($("qfLemmaExact"), $("qfLemmaExactMenu"), {
+      items: buildLemmaItems,
+      onSelect(it) { $("qfLemmaExact").value = it.display; applyQuickFilter(); }
     });
 
     UI.fillSelect($("exDim1"), DIMENSIONS.map((d) => d[0]), { head: null });
