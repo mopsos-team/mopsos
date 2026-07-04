@@ -22,8 +22,8 @@
   const FEATURE_COLS = ["number", "case", "gender", "tense", "mood", "voice", "person", "degree"];
   const DEFAULT_FEATURES = ["number", "case", "gender", "tense", "mood"];
   // Columns the dropdown query selects (when present in the table).
-  const PREVIEW_COLS = ["author", "work", "book", "verse", "form", "lemma", "pos", "person",
-    "number", "tense", "mood", "voice", "gender", "case", "degree", "metrical_shape"];
+  const PREVIEW_COLS = ["work", "book", "verse", "form", "lemma", "pos", "person",
+    "number", "tense", "mood", "voice", "gender", "case"];
   // Dimensions offered in the explorer.
   const DIMENSIONS = [
     ["work", "Book / work"], ["author", "Author"], ["lemma", "Lemma"], ["form", "Word form"],

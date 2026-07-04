@@ -368,6 +368,9 @@
     case: { n: "Nominative", g: "Genitive", d: "Dative", a: "Accusative", v: "Vocative" },
     degree: { p: "Positive", c: "Comparative", s: "Superlative" }
   };
+  const TITLES = {
+    pos: "Part of speech",
+  };
 
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -386,7 +389,9 @@
 
     /** Friendly title-case for a column/field name. */
     fieldTitle(name) {
-      return String(name || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const normalized = String(name || "").replace(/_/g, " ");
+      if (TITLES[normalized]) return TITLES[normalized];
+      return normalized.replace(/\b\w/g, (c) => c.toUpperCase());
     },
 
     /**
