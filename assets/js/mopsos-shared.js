@@ -373,6 +373,7 @@
   const TITLES = {
     pos: "Part of speech",
     "metrical shape": "Metrical shape",
+    "metrical stem shape": "Stem shape",
     "foot start": "Foot start",
     "foot end": "Foot end",
     "foot start pos": "Foot start position",

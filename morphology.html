@@ -290,29 +290,107 @@
       <span class="panel-toggle">&rsaquo; Expand</span>
     </button>
     <div class="panel-body" hidden>
-<div class="card">
-  <h2>1. Infinitive forms</h2>
-  <p class="help" style="margin-top:-.3rem;">Tense and voice combinations attested among infinitives.</p>
-  <div class="mt-controls">
-    <div class="grid-3">
-      <div class="field"><label for="mtInfWork"><strong>Restrict to work</strong></label><select id="mtInfWork"><option value="">(all works)</option></select></div>
+    <div class="panel-info">
+      <div class="tab-meta-row">
+      <button class="info-btn" data-info="infInfo">What is this?</button>
     </div>
+    <div id="infInfo" class="info-panel" hidden>
+      <h4>Infinitive Search Card</h4>
+      <p>This card searches the allomorphs of the infinitive. Every infinitive in the corpus carries its conjugation class and the ending morpheme its form shows, so variant endings — -ειν beside -έμεν and -έμεναι, -ναι, -σθαι, and the rest — can be pulled up directly and compared across works.</code>).</p>
+      <ul>
+        <li><strong>Scope</strong>: pick a work to reveal its books and a verse box that takes a single verse (212) or a range (212-415).</li>
+        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation, or ending morpheme; every list offers the values attested among the corpus infinitives.</li>
+        <li><strong>Metrical filters</strong>: restrict by the metrical shape of the whole form or of its stem (H = heavy/long, L = light/short, one letter per syllable); type a shape and the menu narrows to the attested ones, or click to browse.</li>
+        <li><strong>Word searches</strong>: <em>Form contains</em> and <em>Lemma contains</em> find substrings, accent-insensitively; <em>Lemma matches exactly</em> pins down one verb and offers the corpus lemma list as you type. All three accept Greek (accents optional) or Beta Code.</li>
+        <li><strong>Custom queries</strong>: for advanced users, custom SQL queries can be written.</li>
+      </ul>
+    </div>
+    </div>
+<div class="card">
+  <h2>1. Filter</h2>
+  <p class="help" style="margin-top:-.35rem;">Find infinitives by scope, grammar (tense, voice, conjugation, ending morpheme), metrical shape, lemma, or form. Choose any values and Apply; results are paginated.</p>
+  <div class="grid-3">
     <div class="field">
-      <label for="mtInfSearch"><strong>Look up a verb's infinitives</strong> <span class="help">(optional, by lemma)</span></label>
-      <div class="combo">
-        <input id="mtInfSearch" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek (accents optional) or Beta Code, e.g. λύω or luw, or click to browse…">
-        <div id="mtInfSearchMenu" class="combo-menu" hidden></div>
-      </div>
-      <div id="mtInfDetail" style="margin-top:.5rem;"></div>
+      <label for="infLimitWork"><strong>Book / work</strong></label>
+      <select id="infLimitWork"><option value="">(all works)</option></select>
+    </div>
+    <div class="field" id="infLimitBookWrap" hidden>
+      <label for="infLimitBook"><strong>Book number</strong></label>
+      <select id="infLimitBook"><option value="">(all books)</option></select>
+    </div>
+    <div class="field" id="infVerseWrap" hidden>
+      <label for="infVerseRange"><strong>Verse(s)</strong></label>
+      <input type="text" id="infVerseRange" autocomplete="off" spellcheck="false" placeholder="e.g. 212 or 212-415">
     </div>
   </div>
-  <p id="mtInfDesc" class="help" style="margin-top:.4rem;"></p>
-  <div class="viz-wrap"><div id="mtInfChart"></div></div>
-  <div id="mtInfTable" style="margin-top:.8rem;"></div>
-  <details style="margin-top:.8rem;">
-    <summary class="small-muted" style="cursor:pointer;">Show generated SQL</summary>
-    <pre id="mtInfSql" class="status" style="margin-top:.5rem;"></pre>
-  </details>
+  <div class="grid-3">
+    <div class="field">
+      <label for="infTense"><strong>Tense</strong></label>
+      <select id="infTense"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="infVoice"><strong>Voice</strong></label>
+      <select id="infVoice"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="infConjugation"><strong>Conjugation</strong></label>
+      <select id="infConjugation"><option value="">(any)</option></select>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="field">
+      <label for="infMorpheme"><strong>Morpheme</strong></label>
+      <select id="infMorpheme"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="infStemShape"><strong>Metrical stem shape</strong></label>
+      <div class="combo">
+        <input type="text" id="infStemShape" autocomplete="off" spellcheck="false" placeholder="e.g. HL; type to filter the attested shapes, or click to browse">
+        <div id="infStemShapeMenu" class="combo-menu" hidden></div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="infShape"><strong>Metrical shape</strong></label>
+      <div class="combo">
+        <input type="text" id="infShape" autocomplete="off" spellcheck="false" placeholder="e.g. HLL; type to filter the attested shapes, or click to browse">
+        <div id="infShapeMenu" class="combo-menu" hidden></div>
+      </div>
+    </div>
+  </div>
+  <hr />
+  <div class="grid-3" style="margin-top:1rem;">
+    <div class="field">
+      <label for="infFormLike"><strong>Form contains</strong></label>
+      <input type="text" id="infFormLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. εμεν or emen">
+    </div>
+    <div class="field">
+      <label for="infLemmaLike"><strong>Lemma contains</strong></label>
+      <input type="text" id="infLemmaLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul">
+    </div>
+    <div class="field">
+      <label for="infLemmaExact"><strong>Lemma matches exactly</strong></label>
+      <div class="combo">
+        <input type="text" id="infLemmaExact" autocomplete="off" spellcheck="false" placeholder="e.g. λύω or Beta Code like luw; click to browse">
+        <div id="infLemmaExactMenu" class="combo-menu" hidden></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button id="btnInfApply" class="btn btn-primary" disabled>Apply filter</button>
+    <button id="btnInfReset" class="btn">Reset</button>
+    <button class="adv-toggle btn" data-adv="infSqlPanel">🐉 SQL (for advanced users) ▾</button>
+  </div>
+
+  <div id="infSqlPanel" class="adv-panel" hidden>
+    <p class="help">Read-only SQL over table <code>morphology</code>. Reserved-word columns are quoted, e.g. <code>WHERE "case" = 'g'</code>. Results are not paginated.</p>
+    <textarea class="sqlInput" id="infSqlInput" spellcheck="false"></textarea>
+    <div class="btn-row" style="margin-top:.5rem;">
+      <button id="infSqlRun" class="btn btn-primary">Run</button>
+    </div>
+    <pre id="infSqlStatus" class="status" style="margin-top:.55rem;">Ready: write SQL and press Enter.</pre>
+  </div>
+
+  <div id="infResults" style="margin-top:.7rem;"></div>
 </div>
     </div>
   </section>

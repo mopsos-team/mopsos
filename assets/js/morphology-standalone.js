@@ -331,6 +331,68 @@
 
   /* ----- init ------------------------------------------------------------- */
 
+  // The Infinitive Search panel is the same shared MopsosSearch card, pinned
+  // to infinitives (pos = 'v' AND mood = 'n') and carrying the allomorph and
+  // metrical filters through the card's hooks, the way the scansion page
+  // carries its own. Every drop-down and shape browse offers the values
+  // attested among the corpus infinitives.
+  const INF_WHERE = "pos = 'v' AND mood = 'n'";
+  const INF_SELECTS = [["infTense", "tense"], ["infVoice", "voice"],
+    ["infConjugation", "conjugation"], ["infMorpheme", "morpheme"]];
+  const INF_SHAPES = [["infStemShape", "infStemShapeMenu", "metrical_stem_shape"],
+    ["infShape", "infShapeMenu", "metrical_shape"]];
+  const INF_CONTROLS = INF_SELECTS.concat(INF_SHAPES).map(([id]) => id);
+  function initInfinitiveCard() {
+    INF_SELECTS.forEach(([id, col]) => {
+      const vals = SQL.objects("SELECT DISTINCT " + q(col) + " AS v FROM " + q(TABLE) +
+        " WHERE " + INF_WHERE + " AND " + naGuard(col) + " ORDER BY v;").map((r) => String(r.v));
+      UI.fillSelect($(id), vals, { head: "(any)", field: col });
+    });
+    const card = Search.card({
+      prefix: "inf",
+      applyBtn: "btnInfApply",
+      resetBtn: "btnInfReset",
+      previewCols: ["work", "book", "verse", "form", "lemma", "tense", "voice",
+        "conjugation", "morpheme", "metrical_stem_shape", "metrical_shape"],
+      baseConds: ["match_status <> \"CONFLICT_NO_MATCH\"", "pos = 'v'", "mood = 'n'",
+        "(conjugation IS NOT NULL OR morpheme IS NOT NULL)"],
+      worksWhere: INF_WHERE,
+      orderBy: '"work", CAST(book AS INTEGER), CAST(verse AS INTEGER)',
+      extraConds() {
+        const out = [];
+        INF_SELECTS.forEach(([id, col]) => {
+          const v = $(id).value;
+          if (v) out.push(Search.niceId(col) + " = " + Search.sqlStr(v));
+        });
+        INF_SHAPES.forEach(([id, , col]) => {
+          const v = ($(id).value || "").trim().toUpperCase();
+          if (v) out.push(Search.niceId(col) + " = " + Search.sqlStr(v));
+        });
+        return out;
+      },
+      onLock(on) { INF_CONTROLS.forEach((id) => { $(id).disabled = !on; }); },
+      onReset() { INF_CONTROLS.forEach((id) => { $(id).value = ""; }); }
+    });
+    // The shape boxes work like the scansion card's: freetext with a browse of
+    // the attested shapes, narrowed as the user types; picking one only fills
+    // the box, and typed input is uppercased into the query as-is.
+    const shapeCache = {};
+    INF_SHAPES.forEach(([id, menuId, col]) => {
+      UI.greekCombo($(id), $(menuId), {
+        items() {
+          if (!shapeCache[col]) {
+            shapeCache[col] = SQL.objects("SELECT " + q(col) + " AS s, COUNT(*) c FROM " + q(TABLE) +
+              " WHERE " + INF_WHERE + " AND " + naGuard(col) + " GROUP BY s ORDER BY c DESC;")
+              .map((r) => ({ key: String(r.s).toLowerCase(), display: String(r.s), beta: String(r.s), meta: r.c + "\u00d7" }));
+          }
+          return shapeCache[col];
+        },
+        onSelect(it) { $(id).value = it.display; }
+      });
+      $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); card.apply(); } });
+    });
+  }
+
   async function init() {
     UI.wireInfoButtons();
     UI.wireAdvancedToggles();
@@ -354,7 +416,7 @@
       applyBtn: "btnApplyFilter",
       resetBtn: "btnResetFilter",
       previewCols: PREVIEW_COLS,
-      baseConds: ["match_status <> \"CONFLICT_NO_MATCH\"", "is_valid = 1"],
+      baseConds: ["match_status <> \"CONFLICT_NO_MATCH\""],
       extraConds() {
         const f = qf.read(), out = [];
         for (const k in f) if (f[k]) out.push(Search.niceId(k) + " = " + Search.sqlStr(f[k]));
@@ -366,6 +428,7 @@
       },
       onReset() { qf.reset(); }
     });
+    initInfinitiveCard();
 
     UI.fillSelect($("exDim1"), DIMENSIONS.map((d) => d[0]), { head: null });
     UI.fillSelect($("exDim2"), DIMENSIONS.map((d) => d[0]), { head: "(none)" });

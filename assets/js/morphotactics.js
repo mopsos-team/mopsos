@@ -910,13 +910,6 @@
       "</tbody></table>";
   }
 
-  function wireInfinitiveCombo() {
-    UI.greekCombo(el.infSearch, el.infSearchMenu, {
-      items() { buildInfinitiveData(); return infinitiveItems; },
-      onSelect(it) { el.infSearch.value = it.display; renderInfinitiveDetail(it); }
-    });
-  }
-
   function render() {
     const v = el.view.value;
     try {
@@ -955,10 +948,6 @@
     el.slotPos.value = posValues.includes("v") ? "v" : posValues[0];
     refreshSlotFeatures();
     el.slotPos.addEventListener("change", refreshSlotFeatures);
-    // infinitive panel
-    UI.fillSelect(el.infWork, SQL.distinct("work"), { head: "(all works)" });
-    el.infWork.addEventListener("change", renderInfinitivePanel);
-    wireInfinitiveCombo();
     // compound panel (own table; guarded in case an older cached database predates it)
     let compoundsOk = true;
     try {
@@ -1033,7 +1022,6 @@
     el.run.disabled = false;
     // Standalone panels render immediately; the picker card waits for a click.
     if (compoundsOk) { try { renderCompoundPanel(); } catch (e) { el.cmpChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Error: ' + UI.esc(e.message) + "</div>"; } }
-    try { renderInfinitivePanel(); } catch (e) { el.infChart.innerHTML = '<div class="small-muted" style="padding:.7rem;">Error: ' + UI.esc(e.message) + "</div>"; }
     render();
   }
 
