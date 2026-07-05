@@ -147,13 +147,12 @@ VIEWS = {
 def make_coercer(column, sql_types, data_coercion):
     """Return a function mapping one raw CSV string to its stored value.
     Precedence: explicit data_coercion callable > numeric sql_type > text.
-    Empty becomes NULL everywhere; for numeric columns '-' is also NULL, but
-    text columns keep '-' (a meaningful 'not applicable' marker in this data)."""
+    Empty and '-' become NULL everywhere."""
     if column in data_coercion:
         fn = data_coercion[column]
 
         def coerce_custom(value):
-            if value.strip() == "":
+            if value.strip() in ("", "-"):
                 return None
             try:
                 return fn(value)
@@ -174,7 +173,7 @@ def make_coercer(column, sql_types, data_coercion):
                 return value  # leave unexpected values rather than crash
         return coerce_numeric
 
-    return lambda value: None if value == "" else value.strip()
+    return lambda value: None if value.strip() in ("", "-") else value.strip()
 
 
 def load_table(con, cfg):
