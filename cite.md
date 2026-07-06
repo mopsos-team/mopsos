@@ -25,7 +25,7 @@ section: cite
   title        = &#123;&#123;MoPSoS: Introduction to the database of Ancient Greek morphology, prosody, syntax and scansion&#125;&#125;,
   year         = &#123;2026&#125;,
   month        = jul,
-  howpublished = &#123;Conference presentation, ``Epic through Numbers'' panel, Celtic Conference in Classics&#125;,
+  howpublished = &#123;Conference presentation, Celtic Conference in Classics&#125;,
   note         = &#123;Presented 15 July 2026&#125;
 &#125;</pre>
 </div>
