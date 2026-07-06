@@ -432,18 +432,12 @@
     },
 
     /**
-     * Persist a small UI-state object for the current page, so a person's
-     * selections survive navigating away and back (within the session).
+     * Do not use persistent state, since this will confuse users and also trap
+     * them if they happen to select the wrong thing. Keep the API for now to
+     * minimize diff.
      */
-    saveState(key, obj) {
-      try { sessionStorage.setItem("mopsos:" + location.pathname + ":" + key, JSON.stringify(obj)); } catch (e) { /* ignore */ }
-    },
-    loadState(key) {
-      try {
-        const s = sessionStorage.getItem("mopsos:" + location.pathname + ":" + key);
-        return s ? JSON.parse(s) : null;
-      } catch (e) { return null; }
-    },
+    saveState(key, obj) { (this._state || (this._state = {}))[key] = obj; },
+    loadState(key) { return (this._state && key in this._state) ? this._state[key] : null; },
 
     /**
      * Build a part-of-speech-aware filter group. Picking a part of speech
