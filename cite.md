@@ -14,7 +14,7 @@ section: cite
 
 <div class="card cite-page">
   <h2>1. Reference</h2>
-  <p class="cite-text">Migliaretti, Elisa, Spiridon-Iosif Capotos, Zachary Fletcher, and Muhammad Rehan. 2026. &ldquo;MoPSoS: Introduction to the database of Ancient Greek morphology, prosody, syntax and scansion.&rdquo; Conference presentation, &ldquo;Epic through Numbers&rdquo; panel, Celtic Conference in Classics, 15 July 2026.</p>
+  <p class="cite-text">Migliaretti, Elisa, Spiridon-Iosif Capotos, Zachary Fletcher, and Muhammad Rehan. 2026. &ldquo;MoPSoS: Introduction to the database of Ancient Greek morphology, prosody, syntax and scansion.&rdquo; Conference presentation, Celtic Conference in Classics, 15 July 2026.</p>
 
   <div class="cite-bib-head">
     <h2>2. BibTeX</h2>
