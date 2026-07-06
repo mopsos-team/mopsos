@@ -817,29 +817,6 @@
               }
             });
           }
-          // 2. English via the LSJ bridge (mopsos-semantics.js): "anger" -> μῆνις …
-          const sem = window.MopsosSemantics;
-          if (sem && sem.resolve && !a.start && !a.end && out.length < limit) {
-            const res = sem.resolve(a.core);
-            const seeds = (res && res.source === "english" && res.seeds) || [];
-            seeds.forEach((seed) => {
-              // matched with the combo's own mode: an exact/prefix hit for a
-              // lemma list, a substring hit for the compound catalogue (so
-              // "finger" surfaces ῥοδοδάκτυλος as well as δάκτυλος)
-              const sk = T.stripDiacritics(seed);
-              const skOpen = sk.replace(/\u03c3$/, ""); // let a lemma's final -ς match word-internally too
-              items.forEach((it) => {
-                if (seen.has(it.display)) return;
-                const hit = mode === "substring"
-                  ? (it.key && (it.key.indexOf(sk) >= 0 || (skOpen.length > 2 && it.key.indexOf(skOpen) >= 0)))
-                  : it.key === sk;
-                if (hit) {
-                  seen.add(it.display);
-                  out.push(Object.assign({}, it, { meta: (it.meta ? it.meta + " \u00b7 " : "") + "\u201c" + a.core + "\u201d " + seed }));
-                }
-              });
-            });
-          }
           if (out.length || needle) return out.slice(0, limit);
         }
         // no MopsosText / nothing to match on: plain case-insensitive substring on display text
@@ -1091,7 +1068,6 @@
       return items.filter((it) => it.key.indexOf(k) === 0).slice(0, 3).map((it) => it.display);
     }
     // Latin letters: Beta Code against the lemma list (exact, then prefix),
-    // then English via the LSJ bridge (mopsos-semantics.js) when loaded.
     if (T) {
       const nb = T.looseBetaKey(raw);
       if (nb) {
