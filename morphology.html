@@ -313,10 +313,10 @@
     </div>
     <div id="infInfo" class="info-panel" hidden>
       <h4>Infinitive Search Card</h4>
-      <p>This card searches the allomorphs of the infinitive. Every infinitive in the corpus carries its conjugation class and its ending-morpheme allomorph, recorded as a number (1, 2, 3 …; descriptive labels will be assigned to the numbers later), so the variant endings can be pulled up directly and compared across works.</p>
+      <p>This card searches the allomorphs of the infinitive. Every infinitive in the corpus carries its conjugation class and its ending-morpheme allomorph, tagged per class — thematic ‑ειν / ‑έμεν / ‑έμεναι / ‑έειν, athematic ‑ναι / ‑μεν / ‑μεναι, sigmatic ‑σαι, future thematic ‑σειν / ‑σέμεν / ‑σέμεναι, and future contract ‑ειν — so the variant endings can be pulled up directly and compared across works.</p>
       <ul>
         <li><strong>Scope</strong>: pick a work to reveal its books and a verse box that takes a single verse (212) or a range (212-415).</li>
-        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation class (athematic, thematic, contract, sigmatic), or ending morpheme; every list offers the values attested among the corpus infinitives. Voice offers active and passive; medial and mediopassive infinitives are currently being processed. Each result row carries the infinitive's tense, voice, conjugation class, ending-morpheme allomorph number, lemma, and the metrical shape of its stem and whole form in situ — so ζευγνύμεναι comes back present-tense, athematic, with its allomorph number, lemma ζεύγνυμι, and stem shape HL.</li>
+        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation class (athematic, thematic, contract, sigmatic), or ending type; every list offers the values attested among the corpus infinitives. The ending type can be chosen on its own (each option names its class) or after a conjugation, which narrows the list to that class's endings. Voice offers active and passive; medial and mediopassive infinitives are currently being processed. Each result row carries the infinitive's tense, voice, conjugation class, ending type, lemma, and the metrical shape of its stem and whole form in situ — so ζευγνύμεναι comes back present-tense, athematic, with the ‑μεναι ending, lemma ζεύγνυμι, and stem shape HL.</li>
         <li><strong>Metrical filters</strong>: restrict by the metrical shape of the whole form or of its stem (H = heavy/long, L = light/short, one letter per syllable); type a shape and the menu narrows to the attested ones, or click to browse.</li>
         <li><strong>Word searches</strong>: <em>Form contains</em> and <em>Lemma contains</em> find substrings, accent-insensitively; <code>#abc</code> anchors the start, <code>abc#</code> the end, and a toggle switches both boxes to regular expressions. <em>Lemma matches exactly</em> pins down one verb and offers only the lemmata with attested infinitives as you type. All accept Greek (accents optional), Beta Code, or English.</li>
         <li><strong>Custom queries</strong>: for advanced users, custom SQL queries can be written (<code>REGEXP</code> is available).</li>
@@ -356,7 +356,7 @@
   </div>
   <div class="grid-3">
     <div class="field">
-      <label for="infMorpheme"><strong>Morpheme</strong></label>
+      <label for="infMorpheme"><strong>Ending type</strong></label>
       <select id="infMorpheme"><option value="">(any)</option></select>
     </div>
     <div class="field">

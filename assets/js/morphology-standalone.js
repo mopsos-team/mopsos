@@ -364,13 +364,65 @@
   // attested among the corpus infinitives.
   const INF_WHERE = "pos = 'v' AND mood = 'n'";
   const INF_SELECTS = [["infTense", "tense"], ["infVoice", "voice"],
-    ["infConjugation", "conjugation"], ["infMorpheme", "morpheme"]];
+    ["infConjugation", "conjugation"]];
   const INF_SHAPES = [["infStemShape", "infStemShapeMenu", "metrical_stem_shape"],
     ["infShape", "infShapeMenu", "metrical_shape"]];
-  const INF_CONTROLS = INF_SELECTS.concat(INF_SHAPES).map(([id]) => id);
+  const INF_CONTROLS = INF_SELECTS.concat([["infMorpheme"]], INF_SHAPES).map(([id]) => id);
 
-  // The morpheme column stores allomorph numbers (1, 2, 3 …); they are shown
-  // as-is. Descriptive labels will be assigned to the numbers manually later.
+  /* The morpheme column stores allomorph numbers whose meaning depends on the
+   * conjugation class; the sigmatic and contract classes carry their own tags
+   * under the future tense ("future thematic" ‑σειν and future contract
+   * ‑ειν). Edit this table to change the tags; a (class, number) combination
+   * not listed here falls back to its raw number. */
+  const INF_ENDING_TAGS = {
+    t:  { name: "thematic",        tags: { "1": "\u2011ειν", "2": "\u2011έμεν", "3": "\u2011έμεναι", "4": "\u2011έειν", "5": "analogical / epic creation", "6": "contracted" } },
+    a:  { name: "athematic",       tags: { "1": "\u2011ναι", "2": "\u2011μεν", "3": "\u2011μεναι" } },
+    s:  { name: "sigmatic",        tags: { "1": "\u2011σαι" } },
+    sf: { name: "future thematic", tags: { "1": "\u2011σειν", "2": "\u2011σέμεν", "3": "\u2011σέμεναι" } },
+    c:  { name: "contract",        tags: { "1": "\u2011ειν", "2": "\u2011έμεν", "3": "\u2011έμεναι", "4": "\u2011έειν", "5": "analogical / epic creation", "6": "contracted" } },
+    cf: { name: "future contract", tags: { "1": "\u2011ειν" } }
+  };
+  function infEndingClass(conj, tense) {
+    return ((conj === "s" || conj === "c") && tense === "f") ? conj + "f" : conj;
+  }
+  function infEndingTag(conj, tense, m) {
+    const cls = INF_ENDING_TAGS[infEndingClass(conj, tense)];
+    return (cls && cls.tags[String(m)]) || "";
+  }
+
+  /* The ending-type drop-down offers the attested (class, number) pairs,
+   * each shown by its tag; without a conjugation it lists every class's
+   * endings on its own, and picking a conjugation narrows it to that class
+   * (plus its future variant, for sigmatic and contract). */
+  function fillInfEndingSelect() {
+    const sel = $("infMorpheme");
+    const conj = $("infConjugation").value;
+    const prev = sel.value;
+    const rows = SQL.objects("SELECT conjugation cj, tense t, morpheme m, COUNT(*) c FROM " + q(TABLE) +
+      " WHERE " + INF_WHERE + " AND " + naGuard("morpheme") + " AND " + naGuard("conjugation") +
+      " GROUP BY cj, t, m;");
+    const opts = new Map();
+    rows.forEach((r) => {
+      if (conj && String(r.cj) !== conj) return;
+      const cls = infEndingClass(String(r.cj), String(r.t));
+      const key = cls + "|" + r.m;
+      const o = opts.get(key) || { cls: cls, m: String(r.m), n: 0 };
+      o.n += r.c; opts.set(key, o);
+    });
+    const order = ["t", "a", "s", "sf", "c", "cf"];
+    const list = [...opts.values()].sort((x, y) =>
+      (order.indexOf(x.cls) - order.indexOf(y.cls)) || (Number(x.m) - Number(y.m)));
+    sel.innerHTML = '<option value="">(any)</option>';
+    list.forEach((o) => {
+      const cls = INF_ENDING_TAGS[o.cls];
+      const opt = document.createElement("option");
+      opt.value = o.cls + "|" + o.m;
+      opt.textContent = ((cls && cls.tags[o.m]) || ("morpheme " + o.m)) +
+        (cls ? " \u00b7 " + cls.name : "");
+      sel.appendChild(opt);
+    });
+    if ([...sel.options].some((op) => op.value === prev)) sel.value = prev;
+  }
 
   function initInfinitiveCard() {
     INF_SELECTS.forEach(([id, col]) => {
@@ -381,6 +433,8 @@
       if (col === "voice") vals = vals.filter((v) => v === "a" || v === "p");
       UI.fillSelect($(id), vals, { head: "(any)", field: col });
     });
+    fillInfEndingSelect();
+    $("infConjugation").addEventListener("change", fillInfEndingSelect);
     // The exact-lemma browse (and its resolution on Apply) is restricted to
     // the lemmata that actually have infinitives in the corpus.
     let infLemmas = null;
@@ -404,12 +458,37 @@
         "(conjugation IS NOT NULL OR morpheme IS NOT NULL)"],
       worksWhere: INF_WHERE,
       orderBy: '"work", CAST(book AS INTEGER), CAST(verse AS INTEGER)',
+      // the Morpheme cell shows the row's ending tag (from its conjugation,
+      // tense, and allomorph number); unmapped combinations keep the number
+      transformResult(columns, values) {
+        const lc = columns.map((c) => String(c).toLowerCase());
+        const mi = lc.indexOf("morpheme"), ci = lc.indexOf("conjugation"), ti = lc.indexOf("tense");
+        if (mi < 0 || ci < 0) return null;
+        return { columns, values: values.map((row) => {
+          const tag = infEndingTag(String(row[ci]), ti < 0 ? "" : String(row[ti]), row[mi]);
+          if (!tag) return row;
+          const out = row.slice(); out[mi] = tag; return out;
+        }) };
+      },
       extraConds() {
         const out = [];
         INF_SELECTS.forEach(([id, col]) => {
           const v = $(id).value;
           if (v) out.push(Search.niceId(col) + " = " + Search.sqlStr(v));
         });
+        // an ending type pins its allomorph number and conjugation class; the
+        // future classes (sf, cf) additionally pin tense = 'f', and the plain
+        // sigmatic and contract endings exclude it (their future variants
+        // share the same numbers)
+        const em = $("infMorpheme").value;
+        if (em) {
+          const i = em.indexOf("|");
+          const cls = em.slice(0, i), m = em.slice(i + 1), cj = cls.charAt(0);
+          out.push(Search.niceId("morpheme") + " = " + Search.sqlStr(m));
+          out.push(Search.niceId("conjugation") + " = " + Search.sqlStr(cj));
+          if (cls.length > 1) out.push(Search.niceId("tense") + " = 'f'");
+          else if (cj === "s" || cj === "c") out.push(Search.niceId("tense") + " <> 'f'");
+        }
         INF_SHAPES.forEach(([id, , col]) => {
           const v = ($(id).value || "").trim().toUpperCase();
           if (v) out.push(Search.niceId(col) + " = " + Search.sqlStr(v));
@@ -417,7 +496,7 @@
         return out;
       },
       onLock(on) { INF_CONTROLS.forEach((id) => { $(id).disabled = !on; }); },
-      onReset() { INF_CONTROLS.forEach((id) => { $(id).value = ""; }); }
+      onReset() { INF_CONTROLS.forEach((id) => { $(id).value = ""; }); fillInfEndingSelect(); }
     });
     // The shape boxes work like the scansion card's: freetext with a browse of
     // the attested shapes, narrowed as the user types; picking one only fills
