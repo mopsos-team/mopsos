@@ -85,7 +85,7 @@ section: morphotactics
   </div>
   <div id="mtCmpMembersSec">
     <h3 style="margin-top:1rem;">Members of the matching compounds</h3>
-    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Each lexeme's bar is split by allomorph (variants differing only in accent or capitalization count as one; hover a segment for its share), so the common and rare allomorphs of each member can be read off directly.</p>
+    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Each lexeme's bar is split by allomorph in descending order of attestation (variants differing only in accent or capitalization count as one, labeled by their commonest accented form; hover a segment for its exact share). Click a member to open a chart just below with each of its allomorphs counted separately.</p>
     <div class="grid-2">
       <div class="viz-wrap" id="mtCmpM1Wrap"><div id="mtCmpM1Chart"></div></div>
       <div class="viz-wrap" id="mtCmpM2Wrap"><div id="mtCmpM2Chart"></div></div>

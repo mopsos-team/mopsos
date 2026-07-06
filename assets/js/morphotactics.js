@@ -702,6 +702,25 @@
     return t ? t.stripDiacritics(s) : String(s).toLowerCase();
   }
 
+  /* Display form for a folded allomorph: the commonest raw variant, preferring
+   * lowercase-initial ones, lowercased at the head (so Πολυ / Πολύ / πολυ
+   * displays as its accented lowercase πολυ/πολύ, whichever is commoner among
+   * the lowercase variants), leading/trailing hyphens dropped, and a final
+   * sigma written ς as in running Greek text. */
+  function alloDisplay(variants) {
+    let best = null, bestScore = -1;
+    variants.forEach((n, raw) => {
+      const head = raw.charAt(0);
+      const lower = head === head.toLowerCase();
+      const score = (lower ? 1e9 : 0) + n;
+      if (score > bestScore) { bestScore = score; best = raw; }
+    });
+    if (!best) return "";
+    let s = best.charAt(0).toLowerCase() + best.slice(1);
+    s = s.replace(/^[-\u2010\u2013]+|[-\u2010\u2013]+$/g, "");
+    return s.replace(/\u03c3$/, "\u03c2");
+  }
+
   function memberAlloTally(rows, field, surfKey) {
     const m = new Map();
     rows.forEach((r) => {
@@ -709,19 +728,47 @@
       let e = m.get(v);
       if (!e) { e = { n: 0, allo: new Map() }; m.set(v, e); }
       e.n += 1;
-      const s = normAllomorph(memberSurfaces(r)[surfKey] || "");
-      if (s) e.allo.set(s, (e.allo.get(s) || 0) + 1);
+      const raw = (memberSurfaces(r)[surfKey] || "").trim();
+      const k = normAllomorph(raw);
+      if (!k) return;
+      let a = e.allo.get(k);
+      if (!a) { a = { n: 0, variants: new Map() }; e.allo.set(k, a); }
+      a.n += 1;
+      a.variants.set(raw, (a.variants.get(raw) || 0) + 1);
     });
     return [...m.entries()].sort((a, b) => b[1].n - a[1].n);
   }
 
-  function alloStackedChart(host, entries, title) {
+  // one drill-down container per member chart, kept just under it
+  function drillHostFor(host) {
+    let d = host.parentNode.querySelector(":scope > .allo-drill");
+    if (!d) { d = document.createElement("div"); d.className = "allo-drill"; host.parentNode.appendChild(d); }
+    return d;
+  }
+
+  function renderAlloDrill(host, lemma, entry, slotName) {
+    const drill = drillHostFor(host);
+    if (drill.dataset.open === lemma) { drill.innerHTML = ""; drill.dataset.open = ""; return; }
+    drill.dataset.open = lemma;
+    const items = [...entry.allo.entries()].sort((a, b) => b[1].n - a[1].n)
+      .map(([, a]) => ({ label: alloDisplay(a.variants) || "?", value: a.n }));
+    drill.innerHTML = '<p class="fig-caption" style="margin:.4rem 0 .15rem;">Allomorphs of ' + UI.esc(lemma) +
+      " as " + slotName + " (" + entry.n + " compound" + (entry.n === 1 ? "" : "s") +
+      "; variants differing only in accent or capitalization are folded, shown in their commonest accented form). Click the lemma again to close.</p>" +
+      '<div class="allo-drill-chart"></div>';
+    Chart.bars(drill.querySelector(".allo-drill-chart"), items,
+      { preserveOrder: true, valueLabel: "compounds", labelWidth: 110,
+        title: "Allomorphs of " + lemma });
+  }
+
+  function alloStackedChart(host, entries, title, slotName) {
     host.innerHTML = "";
+    const drill = drillHostFor(host); drill.innerHTML = ""; drill.dataset.open = "";
     const d3 = window.d3;
     if (!entries.length) { host.innerHTML = '<div class="small-muted" style="padding:.7rem;">No matching compounds.</div>'; return; }
     if (!d3) { // graceful fallback: plain bars, lemma + folded allomorphs
       Chart.bars(host, entries.slice(0, 12).map(([k, e]) => ({
-        label: k + " (" + [...e.allo.keys()].slice(0, 3).join(", ") + ")", value: e.n
+        label: k + " (" + [...e.allo.values()].map((a) => alloDisplay(a.variants)).slice(0, 3).join(", ") + ")", value: e.n
       })), { valueLabel: "compounds", labelWidth: 130, title: title });
       return;
     }
@@ -729,7 +776,7 @@
     // one color per allomorph, assigned by global frequency so the same
     // allomorph keeps its color wherever it recurs
     const global = new Map();
-    top.forEach(([, e]) => e.allo.forEach((n, a) => global.set(a, (global.get(a) || 0) + n)));
+    top.forEach(([, e]) => e.allo.forEach((a, k) => global.set(k, (global.get(k) || 0) + a.n)));
     const alloOrder = [...global.entries()].sort((x, y) => y[1] - x[1]).map(([a]) => a);
     const color = d3.scaleOrdinal(alloOrder, alloOrder.map((_, i) => d3.schemeTableau10[i % 10]));
     const labelW = 128, rowH = 24, gap = 7, width = 430, topPad = 24;
@@ -743,21 +790,26 @@
       .attr("fill", "currentColor").text(title);
     top.forEach(([lemma, e], i) => {
       const y = topPad + i * (rowH + gap);
-      const g = svg.append("g").attr("transform", "translate(0," + y + ")");
+      const g = svg.append("g").attr("transform", "translate(0," + y + ")")
+        .style("cursor", "pointer")
+        .on("click", () => renderAlloDrill(host, lemma, e, slotName));
       g.append("text").attr("x", labelW - 6).attr("y", rowH / 2 + 4).attr("text-anchor", "end")
-        .attr("font-size", 11.5).attr("fill", "currentColor").text(lemma)
-        .append("title").text(lemma + " \u00b7 " + e.n + " compounds");
+        .attr("font-size", 11.5).attr("fill", "currentColor")
+        .attr("text-decoration", "underline dotted").text(lemma)
+        .append("title").text(lemma + " \u00b7 " + e.n + " compounds \u00b7 click for its allomorphs");
       let cx = labelW;
-      const parts = [...e.allo.entries()].sort((a, b) => b[1] - a[1]);
-      parts.forEach(([a, n]) => {
-        const w = Math.max(1, x(n));
+      // every allomorph, in descending order of attestation
+      const parts = [...e.allo.entries()].sort((a, b) => b[1].n - a[1].n);
+      parts.forEach(([k, a]) => {
+        const disp = alloDisplay(a.variants);
+        const w = Math.max(1, x(a.n));
         const rect = g.append("rect").attr("x", cx).attr("y", 0).attr("width", w).attr("height", rowH)
-          .attr("rx", 2).attr("fill", color(a));
-        rect.append("title").text(lemma + " \u00b7 " + a + ": " + n + " compound" + (n === 1 ? "" : "s") +
-          " (" + Math.round(100 * n / e.n) + "%)");
+          .attr("rx", 2).attr("fill", color(k));
+        rect.append("title").text(lemma + " \u00b7 " + disp + ": " + a.n + " compound" + (a.n === 1 ? "" : "s") +
+          " (" + Math.round(100 * a.n / e.n) + "%) \u00b7 click for all allomorphs");
         if (w >= 30) g.append("text").attr("x", cx + w / 2).attr("y", rowH / 2 + 3.6)
           .attr("text-anchor", "middle").attr("font-size", 10).attr("fill", "#fff")
-          .style("pointer-events", "none").text(a);
+          .style("pointer-events", "none").text(disp);
         cx += w;
       });
       g.append("text").attr("x", cx + 5).attr("y", rowH / 2 + 4).attr("font-size", 10.5)
@@ -770,18 +822,29 @@
     if (!host) return;
     host.innerHTML = "";
     const d3 = window.d3;
-    // (allomorph1 -> allomorph2) pair counts over the matching compounds
+    // (allomorph1 -> allomorph2) pair counts over the matching compounds,
+    // with raw variants kept so labels can show the accented representative
     const pair = new Map(), tot1 = new Map(), tot2 = new Map();
+    const var1 = new Map(), var2 = new Map();
+    const seeVar = (m, k, raw) => {
+      let v = m.get(k); if (!v) { v = new Map(); m.set(k, v); }
+      v.set(raw, (v.get(raw) || 0) + 1);
+    };
     rows.forEach((r) => {
       const sf = memberSurfaces(r);
-      const a1 = normAllomorph(sf.s1), a2 = normAllomorph(sf.s2);
+      const r1 = (sf.s1 || "").trim(), r2 = (sf.s2 || "").trim();
+      const a1 = normAllomorph(r1), a2 = normAllomorph(r2);
       if (!a1 || !a2) return;
       pair.set(a1 + "\u0000" + a2, (pair.get(a1 + "\u0000" + a2) || 0) + 1);
       tot1.set(a1, (tot1.get(a1) || 0) + 1);
       tot2.set(a2, (tot2.get(a2) || 0) + 1);
+      seeVar(var1, a1, r1); seeVar(var2, a2, r2);
     });
+    const OTHER_KEY = "(other)";
+    const dispOf = (k, side) => k === OTHER_KEY ? k :
+      alloDisplay((side === 1 ? var1 : var2).get(k) || new Map()) || k;
     if (!pair.size) { if (el.cmpFlowNote) el.cmpFlowNote.textContent = ""; return; }
-    const TOPN = 10, OTHER = "(other)";
+    const TOPN = 10, OTHER = OTHER_KEY;
     const keep1 = new Set([...tot1.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOPN).map(([k]) => k));
     const keep2 = new Set([...tot2.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOPN).map(([k]) => k));
     const links = new Map();
@@ -792,7 +855,10 @@
     });
     if (!d3) { // textual fallback
       const topLinks = [...links.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12)
-        .map(([k, n]) => k.replace("\u0000", " \u2192 ") + " (" + n + ")").join(", ");
+        .map(([k, n]) => {
+          const [a, b] = k.split("\u0000");
+          return dispOf(a, 1) + " \u2192 " + dispOf(b, 2) + " (" + n + ")";
+        }).join(", ");
       host.innerHTML = '<div class="small-muted" style="padding:.7rem;">Commonest allomorph pairings: ' + UI.esc(topLinks) + "</div>";
       return;
     }
@@ -836,32 +902,33 @@
       svg.append("path").attr("d", path).attr("fill", color(a)).attr("opacity", .5)
         .on("mouseover", function () { d3.select(this).attr("opacity", .8); })
         .on("mouseout", function () { d3.select(this).attr("opacity", .5); })
-        .append("title").text(a + " \u2192 " + b + ": " + n + " compound" + (n === 1 ? "" : "s"));
+        .append("title").text(dispOf(a, 1) + " \u2192 " + dispOf(b, 2) + ": " + n + " compound" + (n === 1 ? "" : "s"));
     });
     // node bars + labels
     L.forEach(([k, n]) => {
       const p = PL.get(k);
       svg.append("rect").attr("x", x0).attr("y", p.y0).attr("width", nodeW).attr("height", p.y1 - p.y0)
-        .attr("rx", 2).attr("fill", color(k)).append("title").text(k + ": " + n);
+        .attr("rx", 2).attr("fill", color(k)).append("title").text(dispOf(k, 1) + ": " + n);
       svg.append("text").attr("x", x0 - 6).attr("y", (p.y0 + p.y1) / 2 + 3.5).attr("text-anchor", "end")
-        .attr("font-size", 11).attr("fill", "currentColor").text(k + " (" + n + ")");
+        .attr("font-size", 11).attr("fill", "currentColor").text(dispOf(k, 1) + " (" + n + ")");
     });
     R.forEach(([k, n]) => {
       const p = PR.get(k);
       svg.append("rect").attr("x", x1).attr("y", p.y0).attr("width", nodeW).attr("height", p.y1 - p.y0)
-        .attr("rx", 2).attr("fill", "#8a8f98").attr("opacity", .8).append("title").text(k + ": " + n);
+        .attr("rx", 2).attr("fill", "#8a8f98").attr("opacity", .8).append("title").text(dispOf(k, 2) + ": " + n);
       svg.append("text").attr("x", x1 + nodeW + 6).attr("y", (p.y0 + p.y1) / 2 + 3.5)
-        .attr("font-size", 11).attr("fill", "currentColor").text(k + " (" + n + ")");
+        .attr("font-size", 11).attr("fill", "currentColor").text(dispOf(k, 2) + " (" + n + ")");
     });
     if (el.cmpFlowNote) el.cmpFlowNote.textContent =
       "Which first-member allomorphs combine with which second-member allomorphs among the matching compounds; " +
-      "ribbon width = number of compounds joining that pair. Variants differing only in accent or capitalization are one allomorph.";
+      "ribbon width = number of compounds joining that pair. Variants differing only in accent or capitalization " +
+      "count as one allomorph and are labeled by their commonest accented form.";
   }
 
   function renderMemberCharts(rows, label) {
     const suffix = label ? " (" + label + ")" : "";
-    if (!el.cmpM1Wrap.hidden) alloStackedChart(el.cmpM1Chart, memberAlloTally(rows, "member1", "s1"), "Commonest first members" + suffix);
-    if (!el.cmpM2Wrap.hidden) alloStackedChart(el.cmpM2Chart, memberAlloTally(rows, "member2", "s2"), "Commonest second members" + suffix);
+    if (!el.cmpM1Wrap.hidden) alloStackedChart(el.cmpM1Chart, memberAlloTally(rows, "member1", "s1"), "Commonest first members" + suffix, "first member");
+    if (!el.cmpM2Wrap.hidden) alloStackedChart(el.cmpM2Chart, memberAlloTally(rows, "member2", "s2"), "Commonest second members" + suffix, "second member");
     renderAlloFlow(rows);
   }
 

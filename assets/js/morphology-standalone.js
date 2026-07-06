@@ -368,7 +368,67 @@
   const INF_SHAPES = [["infStemShape", "infStemShapeMenu", "metrical_stem_shape"],
     ["infShape", "infShapeMenu", "metrical_shape"]];
   const INF_CONTROLS = INF_SELECTS.concat(INF_SHAPES).map(([id]) => id);
+
+  /* The morpheme column stores allomorph CLASS codes; the actual morpheme is
+   * derived from the form itself by longest-suffix match against the attested
+   * infinitive endings, then read back off the accented form (so ζευγνύμεναι
+   * gives ‑μεναι and οἰνοχοεῖν gives ‑εῖν, accents and breathings intact). */
+  const INF_ENDINGS = ["σασθαι", "εσθαι", "σθαι", "εμεναι", "μεναι", "εμεν", "ιμεν", "μεν",
+    "σεειν", "εειν", "σειν", "ειν", "ηναι", "ωναι", "υναι", "οναι", "αναι", "εναι", "ναι",
+    "σαι", "ουν", "αν", "ην", "αι"];
+  function infMorphemeOf(form) {
+    if (!form) return "";
+    const T = window.MopsosText;
+    const key = T ? T.stripDiacritics(form) : String(form).toLowerCase();
+    let hit = null;
+    for (const e of INF_ENDINGS) { if (key.endsWith(e)) { hit = e; break; } }
+    if (!hit) return "";
+    // walk the accented form from the end until the matched number of BASE
+    // letters is collected, keeping every combining mark that rides on them
+    const raw = String(form).replace(/[^\u0370-\u03ff\u1f00-\u1fff\u0300-\u036f]+$/u, "");
+    const nfd = raw.normalize("NFD");
+    let need = hit.length, i = nfd.length;
+    while (i > 0 && need > 0) {
+      i--;
+      const cc = nfd.charCodeAt(i);
+      if (!(cc >= 0x300 && cc <= 0x36f)) need--;
+    }
+    return "\u2011" + nfd.slice(i).normalize("NFC");
+  }
+
+  // one label per class code: its attested endings in descending frequency,
+  // each shown in its commonest accented realization
+  function computeMorphemeLabels() {
+    const rows = SQL.objects("SELECT form f, morpheme m, COUNT(*) c FROM " + q(TABLE) +
+      " WHERE " + INF_WHERE + " AND " + naGuard("morpheme") + " GROUP BY f, m;");
+    const perCode = new Map();
+    rows.forEach((r) => {
+      const e = infMorphemeOf(r.f);
+      if (!e) return;
+      const T = window.MopsosText;
+      const fold = T ? T.stripDiacritics(e) : e.toLowerCase();
+      // whole-word matches (ἴμεν, ἔμεναι) carry a word-initial breathing that
+      // is not part of the morpheme; prefer proper-suffix realizations for
+      // the class label whenever any exist
+      const whole = fold.length >= (T ? T.stripDiacritics(r.f) : String(r.f).toLowerCase()).length;
+      let code = perCode.get(r.m);
+      if (!code) { code = new Map(); perCode.set(r.m, code); }
+      let grp = code.get(fold);
+      if (!grp) { grp = { n: 0, best: e, bestN: -1, bestWhole: true }; code.set(fold, grp); }
+      grp.n += r.c;
+      const better = (grp.bestWhole && !whole) || (grp.bestWhole === whole && r.c > grp.bestN);
+      if (better) { grp.bestN = r.c; grp.best = e; grp.bestWhole = whole; }
+    });
+    const labels = {};
+    perCode.forEach((code, m) => {
+      const tops = [...code.values()].sort((a, b) => b.n - a.n);
+      labels[m] = tops.slice(0, 3).map((g) => g.best).join(" / ") + (tops.length > 3 ? " \u2026" : "");
+    });
+    UI.LABELS.morpheme = labels;
+  }
+
   function initInfinitiveCard() {
+    computeMorphemeLabels();
     INF_SELECTS.forEach(([id, col]) => {
       let vals = SQL.objects("SELECT DISTINCT " + q(col) + " AS v FROM " + q(TABLE) +
         " WHERE " + INF_WHERE + " AND " + naGuard(col) + " ORDER BY v;").map((r) => String(r.v));
@@ -400,6 +460,20 @@
         "(conjugation IS NOT NULL OR morpheme IS NOT NULL)"],
       worksWhere: INF_WHERE,
       orderBy: '"work", CAST(book AS INTEGER), CAST(verse AS INTEGER)',
+      // the Morpheme cell shows the token's ACTUAL derived ending (from its
+      // own accented form); the class label stays as the fallback when the
+      // ending cannot be derived
+      transformResult(columns, values) {
+        const mi = columns.findIndex((c) => String(c).toLowerCase() === "morpheme");
+        const fi = columns.findIndex((c) => String(c).toLowerCase() === "form");
+        if (mi < 0 || fi < 0) return null;
+        return { columns, values: values.map((row) => {
+          const out = row.slice();
+          const e = infMorphemeOf(row[fi]);
+          if (e) out[mi] = e;
+          return out;
+        }) };
+      },
       extraConds() {
         const out = [];
         INF_SELECTS.forEach(([id, col]) => {

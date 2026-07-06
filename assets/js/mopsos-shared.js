@@ -1349,7 +1349,11 @@
         el.results.innerHTML = '<div class="small-muted" style="padding:.7rem;">Query error: ' + UI.esc(e.message) + "</div>";
         return;
       }
-      const columns = res.columns || [], values = res.values || [];
+      let columns = res.columns || [], values = res.values || [];
+      if (cfg.transformResult) {
+        try { const t = cfg.transformResult(columns, values); if (t) { columns = t.columns; values = t.values; } }
+        catch (e) { /* rendering must not die on a display transform */ }
+      }
       const lo = manualSql ? null : readLimitOffset(sql);
       const total = lo ? countRows(sql) : null;
       const canPage = !!(lo && total != null && lo.limit > 0);
@@ -1393,6 +1397,10 @@
           try {
             const full = SQL.query(sql.replace(LIMIT_RE, "").trim());
             cols = full.columns; vals = full.values;
+            if (cfg.transformResult) {
+              const t = cfg.transformResult(cols, vals);
+              if (t) { cols = t.columns; vals = t.values; }
+            }
           } catch (e) { /* fall back to the visible page */ }
         }
         const HIDE = new Set(["section_id", "sentence_id"]);
