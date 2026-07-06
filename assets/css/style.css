@@ -835,6 +835,47 @@ table.preview th { background: #f3f7f8; }
 
 /* Under-construction marks for tabs still being built */
 .wip-mark { font-size: .8em; }
+
+/* much smaller caption under figures (e.g. the compound-category figure) */
+.fig-caption { color: var(--muted); font-size: .72rem; line-height: 1.35; max-width: 62ch; }
+
+/* small hoverable (i) pointer next to labels; the explanation pops up in a
+ * themed bubble on hover or keyboard focus (content lives in data-tip) */
+.info-tip { position: relative; display: inline-block; cursor: help; color: var(--muted); font-size: .85em;
+  border-bottom: 1px dotted currentColor; line-height: 1; }
+.info-tip:hover, .info-tip:focus { color: var(--text); outline: none; }
+.info-tip::after {
+  content: attr(data-tip);
+  position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%) translateY(3px);
+  width: max-content; max-width: 250px; padding: .5rem .65rem;
+  background: var(--card-strong); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow);
+  font-size: .74rem; line-height: 1.4; text-align: left; white-space: normal;
+  opacity: 0; visibility: hidden; pointer-events: none; z-index: 60;
+  transition: opacity .12s ease, transform .12s ease;
+}
+.info-tip::before {
+  content: ""; position: absolute; left: 50%; bottom: calc(100% + 3px); transform: translateX(-50%) rotate(45deg);
+  width: 9px; height: 9px; background: var(--card-strong);
+  border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  opacity: 0; visibility: hidden; z-index: 61; transition: opacity .12s ease;
+}
+.info-tip:hover::after, .info-tip:focus::after,
+.info-tip:hover::before, .info-tip:focus::before {
+  opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0);
+}
+.info-tip:hover::before, .info-tip:focus::before { transform: translateX(-50%) rotate(45deg); }
+
+/* toolbar row above rendered tables (Download CSV) */
+.tbl-toolbar { display: flex; justify-content: flex-end; gap: .4rem; margin: .15rem 0 .3rem; }
+
+/* regex toggle sitting inside a help line */
+.regex-toggle { white-space: nowrap; cursor: pointer; }
+.regex-toggle input { vertical-align: middle; margin-right: .25rem; }
+
+/* clickable compound in the matching-compounds table */
+.cmp-open { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
+.cmp-open:hover { color: var(--accent, #155b6e); }
 .wip-badge { display: inline-block; vertical-align: middle; margin-left: .5rem; padding: .18rem .55rem; border: 1px solid var(--line); border-radius: 999px; background: var(--card-strong, #fff); font-family: "IBM Plex Sans", sans-serif; font-size: .72rem; font-weight: 600; letter-spacing: .02em; color: var(--muted, #666); white-space: nowrap; }
 
 /* Word-level scansion line (each word under its stored metrical marks) */

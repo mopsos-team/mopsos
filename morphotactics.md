@@ -39,7 +39,7 @@ section: morphotactics
     </ul>
   </div>
   <div class="mt-controls">
-    <div class="grid-2">
+    <div class="grid-3">
       <div class="field">
         <label for="mtCmpM1"><strong>First member</strong></label>
         <div class="combo">
@@ -48,8 +48,9 @@ section: morphotactics
         </div>
       </div>
       <div class="field"><label for="mtCmpM1Cat"><strong>or first-member category</strong></label><select id="mtCmpM1Cat"><option value="">(any category)</option></select></div>
+      <div class="field"><label for="mtCmpM1Sub"><strong>or first-member subcategory</strong></label><select id="mtCmpM1Sub" disabled><option value="">(any subcategory)</option></select></div>
     </div>
-    <div class="grid-2">
+    <div class="grid-3">
       <div class="field">
         <label for="mtCmpM2"><strong>Second member</strong></label>
         <div class="combo">
@@ -58,6 +59,7 @@ section: morphotactics
         </div>
       </div>
       <div class="field"><label for="mtCmpM2Cat"><strong>or second-member category</strong></label><select id="mtCmpM2Cat"><option value="">(any category)</option></select></div>
+      <div class="field"><label for="mtCmpM2Sub"><strong>or second-member subcategory</strong></label><select id="mtCmpM2Sub" disabled><option value="">(any subcategory)</option></select></div>
     </div>
     <div class="grid-3">
       <div class="field"><label for="mtCmpWork"><strong>Attested in</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
@@ -71,18 +73,25 @@ section: morphotactics
       <div id="mtCmpDetail" style="margin-top:.5rem;"></div>
     </div>
   </div>
+  <div id="mtCmpMatchesSec">
+    <h3 style="margin-top:1rem;">Matching compounds</h3>
+    <div id="mtCmpMatches" style="margin-top:.3rem;"></div>
+  </div>
   <div id="mtCmpPairSec">
-    <p id="mtCmpDesc" class="help" style="margin-top:.4rem;"></p>
+    <h3 style="margin-top:1rem;">Compound member categories</h3>
     <div class="viz-wrap"><div id="mtCmpChart"></div></div>
+    <p id="mtCmpDesc" class="fig-caption" style="margin-top:.25rem;"></p>
     <div id="mtCmpTable" style="margin-top:.8rem;"></div>
   </div>
   <div id="mtCmpMembersSec">
     <h3 style="margin-top:1rem;">Members of the matching compounds</h3>
-    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Pick a category and this shows which members carry it.</p>
+    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Each lexeme's bar is split by allomorph (variants differing only in accent or capitalization count as one; hover a segment for its share), so the common and rare allomorphs of each member can be read off directly.</p>
     <div class="grid-2">
       <div class="viz-wrap" id="mtCmpM1Wrap"><div id="mtCmpM1Chart"></div></div>
       <div class="viz-wrap" id="mtCmpM2Wrap"><div id="mtCmpM2Chart"></div></div>
     </div>
+    <div class="viz-wrap" style="margin-top:.6rem;"><div id="mtCmpFlowChart"></div></div>
+    <p id="mtCmpFlowNote" class="fig-caption" style="margin-top:.25rem;"></p>
   </div>
   <div id="mtCmpLocSec" hidden>
     <h3 style="margin-top:1rem;">Metrical localization</h3>

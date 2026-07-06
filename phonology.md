@@ -18,9 +18,9 @@ section: phonology
     <h4>Phonology tab</h4>
     <p>Choose which tokens to analyse and (optionally) how to limit them, then pick a single view. Each token is normalised (diacritics stripped, final ς→σ) and syllabified by the maximal-onset principle; the segmental and syllabic views are derived from that single pass, so their numbers are mutually consistent.</p>
     <ul>
-      <li><strong>Segments</strong>: frequencies, positional distribution inside the word (including the final law read directly off the corpus), bigram phonotactics with over- and under-represented transitions (PMI), and the functional load of each segment contrast measured by minimal pairs.</li>
+      <li><strong>Segments</strong>: frequencies, positional distribution inside the word, word-initial and word-final segments, bigram phonotactics, and the functional load of each segment contrast.</li>
       <li><strong>Syllable structure</strong>: shapes, cluster inventories, and the sonority contour of complex onsets, with the non-rising exceptions itemised.</li>
-      <li><strong>Prosody and sandhi</strong>: the views that go beyond orthography by reading the merged metrical record: weight by nature checked against weight by position (surfacing muta cum liquida and correption), the dichrona α ι υ resolved by how they scan, accent placement against the limitation laws, and elision and hiatus at word junctures in verse order.</li>
+      <li><strong>Prosody and sandhi</strong>: weight by nature checked against weight by position (surfacing muta cum liquida and correption), and elision and hiatus at word boundaries in verse order.</li>
     </ul>
   </div>
   </div>
@@ -75,10 +75,9 @@ section: phonology
           <option value="segments" selected>Segment frequencies</option>
           <option value="positions">Position within the word (initial / medial / final)</option>
           <option value="initials">Word-initial segments</option>
-          <option value="finals">Word-final segments (the final law)</option>
-          <option value="bigrams">Bigram phonotactics (with PMI table)</option>
-          <option value="fload">Functional load (minimal pairs)</option>
-          <option value="balance">Vowel vs consonant balance</option>
+          <option value="finals">Word-final segments</option>
+          <option value="bigrams">Bigram phonotactics</option>
+          <option value="fload">Functional load</option>
         </optgroup>
         <optgroup label="Syllable structure">
           <option value="shapes">Syllable shape profile (CV / CVC …)</option>
@@ -88,15 +87,11 @@ section: phonology
           <option value="codas">Complex codas</option>
           <option value="sonority">Sonority sequencing in onsets</option>
           <option value="diphthongs">Diphthong distribution</option>
-          <option value="quantity">Nucleus quantity by orthography</option>
         </optgroup>
-        <optgroup label="Prosody and sandhi (uses the metrical record)">
+        <optgroup label="Prosody and sandhi">
           <option value="weight">Weight: nature vs position</option>
-          <option value="dichrona">The dichrona α ι υ, resolved by the metre</option>
-          <option value="accent">Accent placement and the limitation laws</option>
           <option value="elision">Elision in the verse</option>
-          <option value="hiatus">Hiatus at word junctures</option>
-          <option value="alliteration">Adjacent alliteration windows</option>
+          <option value="hiatus">Hiatus at word boundaries</option>
         </optgroup>
         <optgroup label="Data">
           <option value="table">Token-level phonology table</option>
@@ -109,7 +104,7 @@ section: phonology
     </div>
   </div>
   <p class="help" style="margin:.5rem 0 0; padding:.55rem .7rem; border:1px solid var(--acc2); border-radius:9px; background:var(--pgbg);">
-    <strong>Note:</strong> the segmental and syllabic views are heuristic analyses over normalized orthography (letters as phoneme proxies, orthographic syllabification), not a reconstruction of Ancient Greek phonology. The views under “Prosody and sandhi” additionally read the corpus itself: the per-word metrical record, the accented forms, and word order in the line.
+    <strong>Note:</strong> the segmental and syllabic views are heuristic analyses over normalized orthography (letters as phoneme proxies, orthographic syllabification), not a reconstruction of Ancient Greek phonology. The views under “Prosody and sandhi” additionally read the corpus itself: the per-word metrical record and word order in the line.
   </p>
   <p id="phonViewDesc" class="help" style="margin-top:.2rem;"></p>
   <div id="phonSummary" class="analysis-wrap" style="margin-top:.4rem;"></div>

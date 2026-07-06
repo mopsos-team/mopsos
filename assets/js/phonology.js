@@ -12,7 +12,7 @@
  *   - the accentuation of the raw (un-normalised) forms for the accent
  *     placement views;
  *   - line order (sentence_id, id) for elision and hiatus at word
- *     junctures.
+ *     boundaries.
  * All charts are drawn with MopsosChart and carry an in-image title so
  * downloads are self-describing.
  * Depends on: window.MopsosSQL, window.MopsosUI, window.MopsosChart.
@@ -368,10 +368,9 @@
     segments: "Frequency of each segment (normalised letters as phoneme proxies) across the selected tokens.",
     positions: "Where each segment occurs within the word: word-initially, medially, or word-finally. Positional restrictions (e.g. which consonants can end a word) show up as missing bands.",
     initials: "The word-initial segment of each token.",
-    finals: "The word-final segment of each token. Classical Greek words end only in a vowel or in \u03bd, \u03c1, \u03c2 (plus \u03be \u03c8 = \u2026\u03ba\u03c2 \u2026\u03c0\u03c2): the final law, read directly off the corpus.",
+    finals: "The word-final segment of each token. Classical Greek words end only in a vowel or in \u03bd, \u03c1, \u03c2 (plus \u03be \u03c8 = \u2026\u03ba\u03c2 \u2026\u03c0\u03c2), read directly off the corpus.",
     bigrams: "Segment-to-segment transitions (with # as the word boundary): which sequences the language uses and, in the table, which are over- and under-represented relative to chance (pointwise mutual information).",
     fload: "Minimal pairs among the distinct normalised forms of the current selection: which segment contrasts actually distinguish words, and how often. A corpus-based proxy for the functional load of each contrast.",
-    balance: "Total vowel vs. consonant segments across all tokens.",
     shapes: "Distribution of syllable shapes (V, CV, CVC, CCV\u2026) by the maximal-onset principle.",
     syllen: "How many syllables words have (1-syllable, 2-syllable\u2026).",
     complexity: "Average and maximum onset/coda cluster sizes.",
@@ -379,13 +378,9 @@
     codas: "Complex syllable codas (two or more consonants).",
     sonority: "Complex onsets classified by their sonority contour (stop < fricative < nasal < liquid): the Sonority Sequencing Principle predicts rising contours, and the exceptions (mostly \u03c3-clusters) are itemised below the chart.",
     diphthongs: "Counts of the recognised diphthong nuclei.",
-    quantity: "Vowel quantity of syllable nuclei by orthography alone: long, short, or ambiguous (the dichrona \u03b1 \u03b9 \u03c5).",
     weight: "Weight by nature (from the letters: long nucleus or a word-internal coda) checked against weight by position (how the syllable actually scans in the verse, from the merged metrical record). Disagreements are where the interesting phonology lives: muta cum liquida, epic correption, synizesis.",
-    dichrona: "The ambiguous vowels \u03b1 \u03b9 \u03c5 in open syllables: how often each scans heavy vs. light in the verse: the metrical record resolves what the orthography cannot.",
-    accent: "Accent type by syllable position (counted from the word end, from the fully accented forms). The classical limitation laws (no circumflex deeper than the penult, sensitivity to final-syllable quantity) are checked against the corpus below the chart.",
-    elision: "Which word forms are actually elided in the verse (final vowel dropped before a following vowel), from the alignment record of the corpus.",
-    hiatus: "Vowel junctures between adjacent words in the same line: how often a vowel-final word meets a vowel-initial one without elision, and which vowel pairs meet. Computed from the words in verse order.",
-    alliteration: "Adjacent tokens (in query order) sharing the same consonant initial.",
+    elision: "Which words are actually elided in the verse (final vowel dropped before a following vowel), from the alignment record of the corpus; counted and named by their unelided citation form.",
+    hiatus: "Vowel boundaries between adjacent words in the same line: how often a vowel-final word meets a vowel-initial one without elision, and which vowel pairs meet. Computed from the words in verse order.",
     table: "Per-token syllabification and shape, paginated."
   };
 
@@ -528,15 +523,15 @@
     var SQL = window.MopsosSQL, UI = window.MopsosUI;
     var whereAll = corpusScopeWhere();
     var total = SQL.scalar("SELECT COUNT(*) FROM morphology WHERE " + whereAll + ";");
-    var rows = SQL.objects("SELECT form f, COUNT(*) n FROM morphology WHERE match_status = 'OK_ELIDED' AND " +
+    var rows = SQL.objects("SELECT lemma f, COUNT(*) n FROM morphology WHERE match_status = 'OK_ELIDED' AND " +
       whereAll + " GROUP BY f ORDER BY n DESC LIMIT " + topN() + ";");
     var nEl = SQL.scalar("SELECT COUNT(*) FROM morphology WHERE match_status = 'OK_ELIDED' AND " + whereAll + ";");
     if (!rows.length) { host.innerHTML = '<div class="small-muted" style="padding:.7rem;">No elided tokens recorded in this scope.</div>'; return; }
     C.bars(host, rows.map(function (r) { return { label: r.f, value: r.n }; }),
-      { valueLabel: "elided tokens", labelWidth: 110, title: vTitle("Commonest elided forms") });
+      { valueLabel: "elided tokens", labelWidth: 110, title: vTitle("Commonest elided forms (given unelided)") });
     statCards([["Elided tokens", nEl.toLocaleString()], ["All tokens in scope", total.toLocaleString()],
       ["Elision rate", total ? (100 * nEl / total).toFixed(2) + "%" : "\u2013"]]);
-    el.phonTable.innerHTML = '<p class="small-muted">Elision is read from the corpus alignment record (match_status = OK_ELIDED), i.e. tokens whose final vowel was dropped before a following vowel in the verse. The part-of-speech and case limiters do not apply here; the work limiter does.</p>';
+    el.phonTable.innerHTML = '<p class="small-muted">Elision is read from the corpus alignment record (match_status = OK_ELIDED), i.e. tokens whose final vowel was dropped before a following vowel in the verse. Each bar names the unelided citation form (the lemma), not the elided surface. The part-of-speech and case limiters do not apply here; the work limiter does.</p>';
   }
 
   function renderHiatus(C, host) {
@@ -546,7 +541,7 @@
     if (!H) {
       var rows = SQL.objects("SELECT work w, book b, verse v, form f FROM morphology WHERE " + corpusScopeWhere() +
         " ORDER BY work, CAST(book AS INTEGER), CAST(verse AS INTEGER), CAST(sentence_id AS INTEGER), id;");
-      H = { junctures: 0, vowelMeet: 0, elided: 0, pairs: new Map() };
+      H = { boundaries: 0, vowelMeet: 0, elided: 0, pairs: new Map() };
       var prev = null, prevLine = "";
       for (var i2 = 0; i2 < rows.length; i2++) {
         var r = rows[i2];
@@ -557,7 +552,7 @@
           elided: isElidedForm(r.f)
         } : null;
         if (prev && cur && line === prevLine) {
-          H.junctures++;
+          H.boundaries++;
           if (isVowel(prev.last) && isVowel(cur.first)) {
             if (prev.elided) H.elided++;
             else { H.vowelMeet++; inc(H.pairs, prev.last + " + " + cur.first); }
@@ -567,13 +562,13 @@
       }
       state.corpusCache[key] = H;
     }
-    if (!H.junctures) { host.innerHTML = '<div class="small-muted" style="padding:.7rem;">No word junctures found in this scope.</div>'; return; }
+    if (!H.boundaries) { host.innerHTML = '<div class="small-muted" style="padding:.7rem;">No word boundaries found in this scope.</div>'; return; }
     var items = mapToItems(H.pairs).slice(0, topN());
-    C.bars(host, items, { valueLabel: "junctures", labelWidth: 110, title: vTitle("Vowel + vowel word junctures (unelided)") });
-    statCards([["Word junctures", H.junctures.toLocaleString()],
-      ["Vowel meets vowel (hiatus)", H.vowelMeet.toLocaleString() + " (" + (100 * H.vowelMeet / H.junctures).toFixed(2) + "%)"],
-      ["Elided junctures", H.elided.toLocaleString() + " (" + (100 * H.elided / H.junctures).toFixed(2) + "%)"]]);
-    el.phonTable.innerHTML = '<p class="small-muted">Adjacent words within the same line, in verse order. A juncture counts as hiatus when the first word ends in a vowel (and is not elided) and the next begins with one; digamma-initial and correpted junctures are included, so this is an upper bound on true hiatus. The part-of-speech and case limiters do not apply here; the work limiter does.</p>';
+    C.bars(host, items, { valueLabel: "boundaries", labelWidth: 110, title: vTitle("Vowel + vowel word boundaries (unelided)") });
+    statCards([["Word boundaries", H.boundaries.toLocaleString()],
+      ["Vowel meets vowel (hiatus)", H.vowelMeet.toLocaleString() + " (" + (100 * H.vowelMeet / H.boundaries).toFixed(2) + "%)"],
+      ["Elided boundaries", H.elided.toLocaleString() + " (" + (100 * H.elided / H.boundaries).toFixed(2) + "%)"]]);
+    el.phonTable.innerHTML = '<p class="small-muted">Adjacent words within the same line, in verse order. A boundary counts as hiatus when the first word ends in a vowel (and is not elided) and the next begins with one; digamma-initial and correpted boundaries are included, so this is an upper bound on true hiatus. The part-of-speech and case limiters do not apply here; the work limiter does.</p>';
   }
 
   function statCards(pairs) {
@@ -650,9 +645,6 @@
       statCards([["Distinct forms", A.types.size.toLocaleString()], ["Minimal pairs", F.totalPairs.toLocaleString()],
         ["Distinct contrasts", F.contrasts.size.toLocaleString()]]);
       el.phonTable.innerHTML = '<p class="small-muted">Pairs of distinct normalised forms differing in exactly one segment slot, counted per segment contrast. Accentual and quantity distinctions are not visible here (forms are diacritic-stripped), so this measures segmental functional load only.</p>';
-    } else if (view === "balance") {
-      C.bars(host, [{ label: "Vowels", value: A.vowelCount }, { label: "Consonants", value: A.consCount }],
-        { valueLabel: "segments", labelWidth: 120, title: vTitle("Vowel vs consonant segments") });
     } else if (view === "shapes") {
       C.bars(host, mapToItems(A.shapes).slice(0, N), { valueLabel: "syllables", labelWidth: 110, title: vTitle("Syllable shapes") });
     } else if (view === "syllen") {
@@ -681,11 +673,6 @@
         vio.slice(0, 25).map(function (d) { return [d.label, d.value]; }), { paginate: false });
     } else if (view === "diphthongs") {
       C.bars(host, mapToItems(A.diphthongs).slice(0, N), { valueLabel: "nuclei", labelWidth: 90, emptyMsg: "No diphthongs found.", title: vTitle("Diphthong nuclei") });
-    } else if (view === "quantity") {
-      var qorder = ["long", "short", "ambiguous"];
-      C.bars(host, qorder.filter(function (q) { return A.quantity.has(q); }).map(function (q) {
-        return { label: q, value: A.quantity.get(q) };
-      }), { valueLabel: "nuclei", labelWidth: 120, preserveOrder: true, title: vTitle("Nucleus quantity by orthography") });
     } else if (view === "weight") {
       if (!A.weightN) {
         host.innerHTML = '<div class="small-muted" style="padding:1rem;">No metrical shapes in this selection. Analyse word forms (not lemmata) and include the metrical_shape column, e.g. via the default query.</div>';
@@ -705,35 +692,6 @@
         : "";
       if (mcl.length) UI.renderTable(el.phonTable.appendChild(document.createElement("div")), ["Word \u00b7 syllable", "Tokens"],
         mcl.map(function (d) { return [d.label, d.value]; }), { paginate: false });
-    } else if (view === "dichrona") {
-      var vs = ["\u03b1", "\u03b9", "\u03c5"];
-      var mat3 = vs.map(function (v) { return [A.dichrona[v].H, A.dichrona[v].L]; });
-      if (!mat3.some(function (r) { return r[0] + r[1] > 0; })) {
-        host.innerHTML = '<div class="small-muted" style="padding:1rem;">No scanned dichrona in this selection. Analyse word forms with the metrical_shape column included.</div>';
-        return;
-      }
-      C.groupedBars(host, mat3, vs, ["scans heavy (long)", "scans light (short)"],
-        { valueLabel: "open syllables", title: vTitle("The dichrona \u03b1 \u03b9 \u03c5 as the metre resolves them"), xLabel: "vowel", yLabel: "open syllables" });
-      statCards(vs.map(function (v) {
-        var d = A.dichrona[v], t2 = d.H + d.L;
-        return ["% of open " + v + " heavy", t2 ? (100 * d.H / t2).toFixed(1) + "%" : "\u2013"];
-      }));
-    } else if (view === "accent") {
-      if (!A.accN) { host.innerHTML = '<div class="small-muted" style="padding:1rem;">No accented forms in this selection.</div>'; return; }
-      var types = ["acute", "circumflex", "grave"];
-      var mat4 = types.map(function (t3) { return A.accent[t3].slice(0, 3); });
-      C.groupedBars(host, mat4, types, ["ultima", "penult", "antepenult"],
-        { valueLabel: "words", title: vTitle("Accent type by syllable position"), xLabel: "accent", yLabel: "words" });
-      var deep = A.accent.acute[3] + A.accent.circumflex[3] + A.accent.grave[3];
-      var circDeep = A.accent.circumflex[2] + A.accent.circumflex[3];
-      statCards([["Accented words", A.accN.toLocaleString()],
-        ["Accent deeper than antepenult", deep.toLocaleString()],
-        ["Circumflex beyond the penult", circDeep.toLocaleString()],
-        ["Circumflex penult + long ultima", A.circLongUltima.toLocaleString() + " / " + A.circPenult.toLocaleString()],
-        ["Acute antepenult + long ultima", A.acuteAntepenultLongUltima.toLocaleString() + " / " + A.acuteAntepenult.toLocaleString()]]);
-      el.phonTable.innerHTML = '<p class="small-muted">The limitation laws predict zero accents deeper than the antepenult, no circumflex beyond the penult, a circumflex on the penult only over a short ultima, and no acute on the antepenult when the ultima is long. Quantity here is judged from spelling with word-final -αι/-οι counted short, but dichronal ultimas cannot be judged from spelling alone, so a small remainder is expected in the two ratio cards. Grave appears only on the ultima by definition; graves counted elsewhere would indicate tagging or normalisation noise.</p>';
-    } else if (view === "alliteration") {
-      C.bars(host, mapToItems(A.alliteration).slice(0, N), { valueLabel: "adjacent pairs", labelWidth: 90, emptyMsg: "No adjacent alliteration found.", title: vTitle("Adjacent alliteration") });
     } else if (view === "table") {
       host.innerHTML = "";
       window.MopsosUI.renderTable(el.phonTable, ["form", "syllabification", "shapes", "syllables"], A.report,

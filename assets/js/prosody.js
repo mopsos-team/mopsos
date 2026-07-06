@@ -288,7 +288,7 @@
     }
     return parts.join("\u2009");
   }
-  // Foot-end junctures (diaereses) are marked wherever they occur: | when a
+  // Foot-end boundaries (diaereses) are marked wherever they occur: | when a
   // word ends exactly at a foot boundary, tinted after foot 4 (the bucolic
   // diaeresis).
   function diaeresisMark(fe, fep, pattern) {
@@ -314,7 +314,7 @@
     if (uncertain) return '<span class="scan-junc scan-caes scan-caes-unc" title="' + name + ': position uncertain (two third-foot word breaks)">\u2016</span>';
     return '<span class="scan-junc scan-caes" title="' + name + '">\u2016</span>';
   }
-  // -> { junctureIndex: html } for the single caesura of this line.
+  // -> { boundaryIndex: html } for the single caesura of this line.
   function caesuraPlan(tokens, pattern, okFn, feOf, fepOf, formOf) {
     var plan = {};
     if (!pattern) return plan;

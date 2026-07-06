@@ -221,6 +221,15 @@
 
     if (db) db.close();
     db = new SQL.Database(new Uint8Array(raw));
+    // Register REGEXP so `column REGEXP 'pattern'` works in generated and
+    // hand-written queries (SQLite calls regexp(pattern, value)). JavaScript
+    // RegExp syntax; an invalid pattern simply matches nothing.
+    try {
+      db.create_function("regexp", (pattern, value) => {
+        try { return new RegExp(String(pattern)).test(String(value == null ? "" : value)) ? 1 : 0; }
+        catch (e) { return 0; }
+      });
+    } catch (e) { /* regexp support is a bonus */ }
     const ti = db.exec("PRAGMA table_info(" + quoteId(CONFIG.table) + ");");
     columns = (ti && ti.length) ? ti[0].values.map((r) => r[1]) : [];
     const rc = db.exec("SELECT COUNT(*) FROM " + quoteId(CONFIG.table) + ";");
@@ -368,7 +377,8 @@
     voice: { a: "Active", m: "Middle", p: "Passive", e: "Middle-passive" },
     gender: { m: "Masculine", f: "Feminine", n: "Neuter" },
     case: { n: "Nominative", g: "Genitive", d: "Dative", a: "Accusative", v: "Vocative" },
-    degree: { p: "Positive", c: "Comparative", s: "Superlative" }
+    degree: { p: "Positive", c: "Comparative", s: "Superlative" },
+    conjugation: { a: "Athematic", t: "Thematic", c: "Contract", s: "Sigmatic" }
   };
   const TITLES = {
     pos: "Part of speech",
@@ -386,6 +396,25 @@
   const api = {
     LABELS,
     esc,
+
+    /** Download tabular data as a CSV file (UTF-8 with BOM, so Greek opens
+     *  correctly in Excel). columns = header strings, values = 2D array. */
+    downloadCsv(name, columns, values) {
+      const cell = (v) => {
+        const s = v === null || v === undefined ? "" : String(v);
+        return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      };
+      const lines = [columns.map(cell).join(",")]
+        .concat((values || []).map((row) => row.map(cell).join(",")));
+      const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = String(name || "mopsos_table").replace(/[^\w.-]+/g, "_") +
+        "_" + new Date().toISOString().slice(0, 10) + ".csv";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    },
 
     /** Human label for a (field,value) morphology code; falls back to raw value. */
     label(field, value) {
@@ -602,13 +631,24 @@
         return esc(v);
       };
 
+      const csvName = opts.csvName || (container.id ? container.id : "mopsos_table");
+      const csvExport = () => {
+        // export EVERY row (not just the visible page), with the same human
+        // labels the table shows
+        const rows = values.map((row) => row.map((v, i) => {
+          if (v === null || v === undefined || v === "" || v === "-") return "";
+          return labelMap[columns[i]] ? this.label(labelMap[columns[i]], v) : v;
+        }));
+        this.downloadCsv(csvName, columns.map((c) => this.fieldTitle(c)), rows);
+      };
+
       const draw = () => {
         const total = values.length;
         const start = state.showAll ? 0 : state.page * pageSize;
         const end = state.showAll ? total : Math.min(total, start + pageSize);
         const slice = values.slice(start, end);
 
-        let html = "";
+        let html = '<div class="tbl-toolbar"><button type="button" class="btn btn-sm" data-act="csv" title="Download every row of this table as CSV">\u2913 Download CSV</button></div>';
         if (paginate) {
           const pages = Math.max(1, Math.ceil(total / pageSize));
           html += '<div class="pager">';
@@ -635,11 +675,15 @@
         html += "</tbody></table></div>";
         container.innerHTML = html;
 
+        const csvBtn = container.querySelector('[data-act="csv"]');
+        if (csvBtn) csvBtn.addEventListener("click", csvExport);
+
         if (paginate) {
           const pages = Math.max(1, Math.ceil(total / pageSize));
           container.querySelectorAll("[data-act]").forEach((b) => {
             b.addEventListener("click", () => {
               const act = b.dataset.act;
+              if (act === "csv") return;
               if (act === "first") state.page = 0;
               else if (act === "prev") state.page = Math.max(0, state.page - 1);
               else if (act === "next") state.page = Math.min(pages - 1, state.page + 1);
@@ -715,25 +759,91 @@
       const self = this;
       const limit = opts.limit || 200;
       const T = window.MopsosText;
+      // "prefix" (default) or "substring". Independent of the mode, the input
+      // accepts explicit anchors: #abc (or abc-) = starts with, abc# (or -abc)
+      // = ends with, #abc# = exactly abc.
+      const mode = opts.mode || "prefix";
+
+      // For a multi-value box (opts.multi), only the text after the final
+      // comma is live-searched, and a pick replaces just that token.
+      function currentToken() {
+        const v = inputEl.value || "";
+        if (!opts.multi) return v;
+        const i = v.lastIndexOf(",");
+        return i < 0 ? v : v.slice(i + 1);
+      }
+
+      function parseAnchors(q) {
+        let start = false, end = false, core = q;
+        if (core.charAt(0) === "#") { start = true; core = core.slice(1); }
+        if (core.slice(-1) === "#") { end = true; core = core.slice(0, -1); }
+        if (core.charAt(0) === "-") { end = true; core = core.slice(1); }      // "-μων": a suffix, the linguist's notation
+        if (core.slice(-1) === "-") { start = true; core = core.slice(0, -1); } // "ἀγα-": a prefix
+        return { core: core, start: start, end: end };
+      }
+      function keyMatch(key, needle, a) {
+        if (!key) return false;
+        if (a.start && a.end) return key === needle;
+        if (a.start) return key.indexOf(needle) === 0;
+        if (a.end) return key.length >= needle.length && key.lastIndexOf(needle) === key.length - needle.length;
+        return mode === "substring" ? key.indexOf(needle) >= 0 : key.indexOf(needle) === 0;
+      }
 
       function candidates(query) {
         const items = (opts.items && opts.items()) || [];
         const q = String(query || "").trim();
         if (!q) return items.slice(0, limit);
-        const hasGreek = T && T.hasGreek ? T.hasGreek(q) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(q);
+        const a = parseAnchors(q);
+        if (!a.core) return items.slice(0, limit);
+        const hasGreek = T && T.hasGreek ? T.hasGreek(a.core) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(a.core);
         if (hasGreek && T) {
-          const needle = T.stripDiacritics(q);
+          const needle = T.stripDiacritics(a.core);
           if (!needle) return items.slice(0, limit);
-          return items.filter((it) => it.key && it.key.indexOf(needle) === 0).slice(0, limit);
+          const seenG = new Set();
+          return items.filter((it) => {
+            if (!keyMatch(it.key, needle, a) || seenG.has(it.display)) return false;
+            seenG.add(it.display); return true;
+          }).slice(0, limit);
         }
         if (T) {
-          const needle = T.looseBetaKey(q);
+          const out = [], seen = new Set();
+          const needle = T.looseBetaKey(a.core);
+          // 1. Beta Code against each item's transliteration (w = long o, h = long e,
+          //    so "mwn#" finds items ending in -μων and "ths#" items in -της)
           if (needle) {
-            return items.filter((it) => it.beta && T.looseBetaKey(it.beta).indexOf(needle) === 0).slice(0, limit);
+            items.forEach((it) => {
+              if (it.beta && keyMatch(T.looseBetaKey(it.beta), needle, a) && !seen.has(it.display)) {
+                seen.add(it.display); out.push(it);
+              }
+            });
           }
+          // 2. English via the LSJ bridge (mopsos-semantics.js): "anger" -> μῆνις …
+          const sem = window.MopsosSemantics;
+          if (sem && sem.resolve && !a.start && !a.end && out.length < limit) {
+            const res = sem.resolve(a.core);
+            const seeds = (res && res.source === "english" && res.seeds) || [];
+            seeds.forEach((seed) => {
+              // matched with the combo's own mode: an exact/prefix hit for a
+              // lemma list, a substring hit for the compound catalogue (so
+              // "finger" surfaces ῥοδοδάκτυλος as well as δάκτυλος)
+              const sk = T.stripDiacritics(seed);
+              const skOpen = sk.replace(/\u03c3$/, ""); // let a lemma's final -ς match word-internally too
+              items.forEach((it) => {
+                if (seen.has(it.display)) return;
+                const hit = mode === "substring"
+                  ? (it.key && (it.key.indexOf(sk) >= 0 || (skOpen.length > 2 && it.key.indexOf(skOpen) >= 0)))
+                  : it.key === sk;
+                if (hit) {
+                  seen.add(it.display);
+                  out.push(Object.assign({}, it, { meta: (it.meta ? it.meta + " \u00b7 " : "") + "\u201c" + a.core + "\u201d " + seed }));
+                }
+              });
+            });
+          }
+          if (out.length || needle) return out.slice(0, limit);
         }
         // no MopsosText / nothing to match on: plain case-insensitive substring on display text
-        const lq = q.toLowerCase();
+        const lq = a.core.toLowerCase();
         return items.filter((it) => String(it.display || "").toLowerCase().indexOf(lq) >= 0).slice(0, limit);
       }
 
@@ -748,10 +858,15 @@
         menuEl._items = items;
       }
 
-      function refresh() { render(candidates(inputEl.value)); }
+      function refresh() { render(candidates(currentToken())); }
 
       inputEl.addEventListener("input", refresh);
-      inputEl.addEventListener("focus", refresh);
+      inputEl.addEventListener("focus", () => {
+        // English matching rides on the LSJ bridge; kick off its (cached)
+        // fetch the moment the box is first focused so it's ready by typing time
+        if (window.MopsosSemantics && window.MopsosSemantics.loadBridge) window.MopsosSemantics.loadBridge().then(refresh);
+        refresh();
+      });
       inputEl.addEventListener("blur", () => { setTimeout(() => { menuEl.hidden = true; }, 160); });
       inputEl.addEventListener("keydown", (e) => { if (e.key === "Escape") menuEl.hidden = true; });
       menuEl.addEventListener("mousedown", (e) => {
@@ -760,7 +875,13 @@
         e.preventDefault();
         const it = menuEl._items && menuEl._items[Number(row.dataset.idx)];
         menuEl.hidden = true;
-        if (it && opts.onSelect) opts.onSelect(it);
+        if (!it) return;
+        if (opts.multi) {
+          const v = inputEl.value || "";
+          const i = v.lastIndexOf(",");
+          inputEl.value = (i < 0 ? "" : v.slice(0, i + 1) + " ") + it.display;
+        }
+        if (opts.onSelect) opts.onSelect(it);
       });
 
       return { refresh };
@@ -969,14 +1090,28 @@
       if (hit) return [hit];
       return items.filter((it) => it.key.indexOf(k) === 0).slice(0, 3).map((it) => it.display);
     }
-    // Latin letters: Beta Code against the lemma list (exact, then prefix)
+    // Latin letters: Beta Code against the lemma list (exact, then prefix),
+    // then English via the LSJ bridge (mopsos-semantics.js) when loaded.
     if (T) {
       const nb = T.looseBetaKey(raw);
       if (nb) {
         const exactB = items.filter((it) => it.beta && T.looseBetaKey(it.beta) === nb).map((it) => it.display);
         if (exactB.length) return exactB.slice(0, 3);
-        return items.filter((it) => it.beta && T.looseBetaKey(it.beta).indexOf(nb) === 0).slice(0, 3).map((it) => it.display);
+        const pref = items.filter((it) => it.beta && T.looseBetaKey(it.beta).indexOf(nb) === 0).slice(0, 3).map((it) => it.display);
+        if (pref.length) return pref;
       }
+    }
+    const sem = window.MopsosSemantics;
+    if (sem && sem.resolve) {
+      const res = sem.resolve(raw);
+      const seeds = (res && res.seeds) || [];
+      const out = [];
+      seeds.forEach((s) => {
+        const k = T ? T.stripDiacritics(s) : s;
+        const hit = lemmaByStrip.get(k);
+        if (hit && out.indexOf(hit) < 0) out.push(hit);
+      });
+      if (out.length) return out.slice(0, 3);
     }
     return [];
   }
@@ -1011,7 +1146,8 @@
   // 'Genitive'). Unlike MopsosUI.renderTable this does no paging of its own —
   // the card pages in SQL — which is also why page scripts use it for small
   // derived tables.
-  function renderTable(columns, values) {
+  function renderTable(columns, values, opts) {
+    opts = opts || {};
     const UI = window.MopsosUI;
     // Internal alignment keys are never shown, even when a hand-written
     // SELECT * returns them.
@@ -1024,7 +1160,9 @@
     if (!columns.length || !values.length) {
       return '<div class="small-muted" style="padding:.7rem;">No rows.</div>';
     }
-    let html = '<div class="table-wrap"><table class="preview"><thead><tr>';
+    let html = "";
+    if (!opts.noCsv) html += '<div class="tbl-toolbar"><button type="button" class="btn btn-sm tbl-dl-dom" title="Download this table as CSV">\u2913 Download CSV</button></div>';
+    html += '<div class="table-wrap"><table class="preview"><thead><tr>';
     for (const c of columns) html += "<th>" + UI.esc(UI.fieldTitle(c)) + "</th>";
     html += "</tr></thead><tbody>";
     for (const row of values) {
@@ -1035,6 +1173,20 @@
     html += "</tbody></table></div>";
     return html;
   }
+
+  // One delegated listener downloads any renderTable()-string table (they are
+  // never paginated in the DOM, so scraping the rendered rows is complete).
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest(".tbl-dl-dom");
+    if (!b) return;
+    const bar = b.closest(".tbl-toolbar");
+    const wrap = bar && bar.nextElementSibling;
+    const table = wrap && wrap.querySelector && wrap.querySelector("table");
+    if (!table) return;
+    const cols = [...table.querySelectorAll("thead th")].map((th) => th.textContent);
+    const rows = [...table.querySelectorAll("tbody tr")].map((tr) => [...tr.children].map((td) => td.textContent));
+    window.MopsosUI.downloadCsv("mopsos_table", cols, rows);
+  });
 
   /* ----- the card itself --------------------------------------------------- */
 
@@ -1047,10 +1199,71 @@
       verseWrap: $(P + "VerseWrap"), verse: $(P + "VerseRange"),
       lemmaLike: $(P + "LemmaLike"), formLike: $(P + "FormLike"),
       lemmaExact: $(P + "LemmaExact"), lemmaExactMenu: $(P + "LemmaExactMenu"),
+      regex: $(P + "Regex"),
       sqlInput: $(P + "SqlInput"), sqlRun: $(P + "SqlRun"), sqlStatus: $(P + "SqlStatus"),
       results: $(P + "Results"),
       apply: $(cfg.applyBtn), reset: $(cfg.resetBtn)
     };
+
+    // "Form contains" / "Lemma contains" condition against the lowercase
+    // diacritic-free *_search columns. Plain text is a substring; #abc anchors
+    // the start, abc# the end, #abc# is an exact match. With the regex toggle
+    // on, the input is passed as a JavaScript regular expression instead (it
+    // is matched against the same accent-free lowercase column, so write the
+    // pattern in plain lowercase Greek, e.g. ^ζευγ.*μεναι$).
+    function likeCond(col, raw, useRegex) {
+      raw = String(raw == null ? "" : raw).trim();
+      if (!raw) return null;
+      if (useRegex) return niceId(col) + " REGEXP " + sqlStr(raw);
+      let start = false, end = false, core = raw;
+      if (core.charAt(0) === "#") { start = true; core = core.slice(1); }
+      if (core.slice(-1) === "#") { end = true; core = core.slice(0, -1); }
+      const k = searchKey(core);
+      if (!k) return null;
+      if (start && end) return niceId(col) + " = " + sqlStr(k);
+      if (start) return niceId(col) + " LIKE " + sqlStr(k + "%");
+      if (end) return niceId(col) + " LIKE " + sqlStr("%" + k);
+      return niceId(col) + " LIKE " + sqlStr("%" + k + "%");
+    }
+
+    // Resolve the "Lemma matches exactly" input. When the card restricts its
+    // lemma list (cfg.lemmaItems, e.g. only verbs with attested infinitives),
+    // resolution happens against that list — Greek (accents optional), Beta
+    // Code, or English — so e.g. "upo" can never resolve to a preposition here.
+    function resolveExact(raw) {
+      if (!cfg.lemmaItems) {
+        const seeds = resolveLemmata(raw);
+        return seeds.length ? seeds[0] : null;
+      }
+      const T = window.MopsosText;
+      const items = cfg.lemmaItems() || [];
+      const hasGr = T && T.hasGreek ? T.hasGreek(raw) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
+      if (hasGr) {
+        let hit = items.find((it) => it.display === raw);
+        if (hit) return hit.display;
+        const k = T ? T.stripDiacritics(raw) : raw;
+        hit = items.find((it) => it.key === k) || items.find((it) => it.key && it.key.indexOf(k) === 0);
+        return hit ? hit.display : null;
+      }
+      if (T) {
+        const nb = T.looseBetaKey(raw);
+        if (nb) {
+          let hit = items.find((it) => it.beta && T.looseBetaKey(it.beta) === nb) ||
+                    items.find((it) => it.beta && T.looseBetaKey(it.beta).indexOf(nb) === 0);
+          if (hit) return hit.display;
+        }
+        const sem = window.MopsosSemantics;
+        if (sem && sem.resolve) {
+          const seeds = (sem.resolve(raw).seeds) || [];
+          for (const s of seeds) {
+            const k = T.stripDiacritics(s);
+            const hit = items.find((it) => it.key === k);
+            if (hit) return hit.display;
+          }
+        }
+      }
+      return null;
+    }
     const pageSize = cfg.pageSize || 13;
     const OWN = [el.work, el.book, el.verse, el.lemmaLike, el.formLike, el.lemmaExact];
     let manualSql = false;      // true once the SQL is hand-edited; controls then locked
@@ -1098,17 +1311,19 @@
       if (vm) conds.push(vm[2]
         ? "CAST(verse AS INTEGER) BETWEEN " + parseInt(vm[1], 10) + " AND " + parseInt(vm[2], 10)
         : "CAST(verse AS INTEGER) = " + parseInt(vm[1], 10));
-      const lk = searchKey(el.lemmaLike.value);
-      if (lk) conds.push(niceId("lemma_search") + " LIKE " + sqlStr("%" + lk + "%"));
-      const fk = searchKey(el.formLike.value);
-      if (fk) conds.push(niceId("form_search") + " LIKE " + sqlStr("%" + fk + "%"));
+      const useRegex = !!(el.regex && el.regex.checked);
+      const lc = likeCond("lemma_search", el.lemmaLike.value, useRegex);
+      if (lc) conds.push(lc);
+      const fc = likeCond("form_search", el.formLike.value, useRegex);
+      if (fc) conds.push(fc);
       const exRaw = (el.lemmaExact.value || "").trim();
       if (exRaw) {
-        // Greek (accents optional) or Beta Code, resolved to the accented
-        // corpus lemma; unresolvable input is passed through verbatim so the
-        // generated SQL still shows exactly what was asked (and matches nothing).
-        const seeds = resolveLemmata(exRaw);
-        conds.push(niceId("lemma") + " = " + sqlStr(seeds.length ? seeds[0] : exRaw));
+        // Greek (accents optional), Beta Code, or English, resolved to the
+        // accented corpus lemma; unresolvable input is passed through verbatim
+        // so the generated SQL still shows exactly what was asked (and matches
+        // nothing).
+        const hit = resolveExact(exRaw);
+        conds.push(niceId("lemma") + " = " + sqlStr(hit || exRaw));
       }
       if (conds.length) sql += "\nWHERE " + conds.join("\n  AND ");
       sql += "\nORDER BY " + (cfg.orderBy || niceId("work") + ", book, verse");
@@ -1153,12 +1368,14 @@
       html += btn("\u2039 Prev", canPage ? Math.max(0, lo.offset - lo.limit) : 0, atStart);
       html += btn("Next \u203a", canPage ? lo.offset + lo.limit : 0, atEnd);
       html += btn("Last \u00bb", lastOff, atEnd);
+      html += '<button class="btn btn-sm" data-csv="1" title="Download every row this query matches (not just this page) as CSV">\u2913 CSV' +
+        (canPage ? " (" + total.toLocaleString() + ")" : "") + "</button>";
       html += "</span>";
       if (canPage) html += '<span class="small-muted" style="margin-left:.6rem;">Rows ' +
         Math.min(lo.offset + 1, total) + "\u2013" + Math.min(lo.offset + values.length, total) +
         " of " + total + " \u00b7 page " + page + " of " + pages + "</span>";
       html += "</div>";
-      html += renderTable(columns, values);
+      html += renderTable(columns, values, { noCsv: true });
       el.results.innerHTML = html;
 
       el.results.querySelectorAll("[data-off]").forEach((b) => {
@@ -1166,6 +1383,26 @@
           el.sqlInput.value = setOffset(sql, parseInt(b.dataset.off, 10));
           run();
         });
+      });
+
+      const csvB = el.results.querySelector("[data-csv]");
+      if (csvB) csvB.addEventListener("click", () => {
+        let cols = columns, vals = values;
+        if (canPage) {
+          // the whole result: the same query with its trailing LIMIT/OFFSET stripped
+          try {
+            const full = SQL.query(sql.replace(LIMIT_RE, "").trim());
+            cols = full.columns; vals = full.values;
+          } catch (e) { /* fall back to the visible page */ }
+        }
+        const HIDE = new Set(["section_id", "sentence_id"]);
+        const keep = cols.map((c, i) => (HIDE.has(String(c).toLowerCase()) ? -1 : i)).filter((i) => i >= 0);
+        UI.downloadCsv("mopsos_" + P + "_results",
+          keep.map((i) => UI.fieldTitle(cols[i])),
+          vals.map((row) => keep.map((i) => {
+            const v = row[i];
+            return v == null ? "" : UI.label(cols[i], v);
+          })));
       });
 
       el.sqlStatus.textContent = "OK: " + values.length + " row" + (values.length === 1 ? "" : "s") + ".";
@@ -1188,20 +1425,23 @@
     [el.verse, el.lemmaLike, el.formLike, el.lemmaExact].forEach((c) => {
       if (c) c.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); apply(); } });
     });
-    // The usual adaptive browse over the corpus lemma list. Picking a lemma
-    // only fills the box — like every other control, it changes nothing until
-    // Apply (or Enter in a text box) regenerates and runs the query.
+    // The usual adaptive browse over the corpus lemma list — or over the
+    // card's own restricted list (cfg.lemmaItems), so e.g. the infinitive
+    // card only ever offers lemmata that actually have infinitives. Picking
+    // a lemma only fills the box — like every other control, it changes
+    // nothing until Apply (or Enter in a text box) regenerates and runs the query.
     if (el.lemmaExactMenu) UI.greekCombo(el.lemmaExact, el.lemmaExactMenu, {
-      items: lemmaItems,
+      items: cfg.lemmaItems || lemmaItems,
       onSelect(it) { el.lemmaExact.value = it.display; }
     });
+    if (el.regex) OWN.push(el.regex);
     el.apply.disabled = false;
     el.apply.addEventListener("click", apply);
     el.reset.addEventListener("click", () => {
       manualSql = false;
       setEnabled(true);
       if (cfg.onReset) cfg.onReset();
-      OWN.forEach((c) => { if (c) c.value = ""; });
+      OWN.forEach((c) => { if (!c) return; if (c.type === "checkbox") c.checked = false; else c.value = ""; });
       refreshBooks();
       apply();
     });
@@ -1485,10 +1725,20 @@
         return o;
       });
       const width = 820;
-      const margin = { top: 14, right: 14, bottom: 70, left: 48 };
+      const margin = { top: 34, right: 14, bottom: 70, left: 48 };
       const height = 380;
       const root = svg(el, width, height);
       const series = d3.stack().keys(colLabels)(data);
+
+      // legend: name every stacked color (top-left, above the plot)
+      const lg = root.append("g").attr("transform", "translate(" + margin.left + ",6)");
+      let lx = 0;
+      colLabels.forEach((c, i) => {
+        const g = lg.append("g").attr("transform", "translate(" + lx + ",0)");
+        g.append("rect").attr("width", 11).attr("height", 11).attr("rx", 2).attr("fill", api.color(i));
+        g.append("text").attr("x", 15).attr("y", 10).attr("font-size", 10).attr("fill", "#475569").text(c);
+        lx += 28 + (String(c).length * 6.4);
+      });
 
       const x = d3.scaleBand().domain(rowLabels).range([margin.left, width - margin.right]).padding(0.2);
       const maxV = d3.max(series, (s) => d3.max(s, (d) => d[1])) || 1;

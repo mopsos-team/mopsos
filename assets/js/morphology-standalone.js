@@ -63,6 +63,29 @@
     const au = $("exLimitAuthor").value; if (au) all.author = au;
     return all;
   }
+
+  /* One lemma, or several comma-separated lemmata, restricting the charts:
+   * each part is resolved adaptively (Greek with or without accents, Beta
+   * Code, or English) to a corpus lemma, and the counts are then computed
+   * over just those lemmata — so the distribution of μῆνις, or of μῆνις +
+   * χόλος + κότος together, can be charted by work, book, case, and so on
+   * (choose "Lemma" as a dimension to compare them side by side). */
+  function exLemmaCond() {
+    const box = $("exLemmata");
+    const raw = box ? (box.value || "").trim() : "";
+    if (!raw) return { cond: "", label: "", lemmas: [] };
+    const lemmas = [];
+    raw.split(",").map((s) => s.trim()).filter(Boolean).forEach((p) => {
+      const seeds = Search.resolveLemmata(p);
+      if (seeds.length && lemmas.indexOf(seeds[0]) < 0) lemmas.push(seeds[0]);
+    });
+    if (!lemmas.length) return { cond: "0", label: " (no corpus lemma matches \u201c" + raw + "\u201d)", lemmas: [] };
+    return {
+      cond: q("lemma") + " IN (" + lemmas.map(sqlStr).join(", ") + ")",
+      label: " (lemma" + (lemmas.length === 1 ? "" : "ta") + ": " + lemmas.join(", ") + ")",
+      lemmas
+    };
+  }
   function filterTextOf(filters) {
     const keys = Object.keys(filters);
     return keys.length
@@ -76,6 +99,7 @@
     $("exDim1Wrap").hidden = (type === "network" || type === "paradigm");
     $("exDim2Wrap").hidden = !cross;
     $("exLemmaWrap").hidden = (type !== "paradigm");
+    const lw = $("exLemmataWrap"); if (lw) lw.hidden = (type === "paradigm");
     $("exNodeUnitWrap").hidden = (type !== "network");
     $("exSemanticWrap").hidden = (type !== "network");
   }
@@ -104,11 +128,12 @@
 
   function drawNetwork() {
     const filters = explorerFilters();
-    const w = whereOf(filters);
+    const lx = exLemmaCond();
+    const w = [whereOf(filters), lx.cond].filter(Boolean).join(" AND ");
     const topN = parseInt($("exTopN").value, 10) || 20;
     const semQuery = ($("exSemantic").value || "").trim();
     const chart = $("exChart"), title = $("exTitle"), desc = $("exDesc");
-    const filterText = filterTextOf(filters);
+    const filterText = filterTextOf(filters) + lx.label;
     $("exTable").innerHTML = "";
 
     try {
@@ -167,14 +192,15 @@
     if (type === "network") { drawNetwork(); return; }
 
     const filters = explorerFilters();
-    const w = whereOf(filters);
+    const lx = exLemmaCond();
+    const w = [whereOf(filters), lx.cond].filter(Boolean).join(" AND ");
     const dim1 = $("exDim1").value;
     const dim2 = $("exDim2").value;
     const topN = parseInt($("exTopN").value, 10) || 20;
     const title = $("exTitle");
     const desc = $("exDesc");
     const chart = $("exChart");
-    const filterText = filterTextOf(filters);
+    const filterText = filterTextOf(filters) + lx.label;
     $("exTable").innerHTML = "";
 
     try {
@@ -344,11 +370,27 @@
   const INF_CONTROLS = INF_SELECTS.concat(INF_SHAPES).map(([id]) => id);
   function initInfinitiveCard() {
     INF_SELECTS.forEach(([id, col]) => {
-      const vals = SQL.objects("SELECT DISTINCT " + q(col) + " AS v FROM " + q(TABLE) +
+      let vals = SQL.objects("SELECT DISTINCT " + q(col) + " AS v FROM " + q(TABLE) +
         " WHERE " + INF_WHERE + " AND " + naGuard(col) + " ORDER BY v;").map((r) => String(r.v));
+      // Only active and passive are offered: the medial and mediopassive
+      // infinitives are still being processed (see the (i) note by the label).
+      if (col === "voice") vals = vals.filter((v) => v === "a" || v === "p");
       UI.fillSelect($(id), vals, { head: "(any)", field: col });
     });
+    // The exact-lemma browse (and its resolution on Apply) is restricted to
+    // the lemmata that actually have infinitives in the corpus.
+    let infLemmas = null;
+    const infLemmaItems = () => {
+      if (infLemmas) return infLemmas;
+      const T = window.MopsosText;
+      infLemmas = SQL.objects("SELECT lemma l, lemma_search k, COUNT(*) c FROM " + q(TABLE) +
+        " WHERE " + INF_WHERE + " AND lemma NOT IN ('','-') GROUP BY l, k ORDER BY c DESC;")
+        .map((r) => ({ key: r.k || (T ? T.stripDiacritics(r.l) : r.l), display: r.l,
+                       beta: T ? T.toBetaCode(r.l) : "", meta: r.c + "\u00d7" }));
+      return infLemmas;
+    };
     const card = Search.card({
+      lemmaItems: infLemmaItems,
       prefix: "inf",
       applyBtn: "btnInfApply",
       resetBtn: "btnInfReset",
@@ -458,9 +500,20 @@
       items: Search.lemmaItems,
       onSelect(it) { $("exSemantic").value = it.display; runExplorer(); }
     });
+    // one lemma, or several comma-separated, each adaptively browsed
+    if ($("exLemmata") && $("exLemmataMenu")) {
+      UI.greekCombo($("exLemmata"), $("exLemmataMenu"), {
+        items: Search.lemmaItems,
+        multi: true,
+        onSelect() { runExplorer(); }
+      });
+      $("exLemmata").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); runExplorer(); } });
+    }
     $("btnExRun").addEventListener("click", runExplorer);
     $("btnExReset").addEventListener("click", () => {
-      ex.reset(); $("exSemantic").value = ""; $("exLimitWork").value = ""; $("exLimitAuthor").value = ""; runExplorer();
+      ex.reset(); $("exSemantic").value = ""; $("exLimitWork").value = ""; $("exLimitAuthor").value = "";
+      if ($("exLemmata")) $("exLemmata").value = "";
+      runExplorer();
     });
 
     // No saved state is read: every load starts fresh. The search card built

@@ -73,6 +73,8 @@
     cmpM2Menu: $("mtCmpM2Menu"),
     cmpM1Chart: $("mtCmpM1Chart"),
     cmpM2Chart: $("mtCmpM2Chart"),
+    cmpFlowChart: $("mtCmpFlowChart"),
+    cmpFlowNote: $("mtCmpFlowNote"),
     cmpM1Cat: $("mtCmpM1Cat"),
     cmpM2Cat: $("mtCmpM2Cat"),
     cmpM1Sub: $("mtCmpM1Sub"),
@@ -81,6 +83,8 @@
     cmpLocChart: $("mtCmpLocChart"),
     cmpLocSec: $("mtCmpLocSec"),
     cmpPairSec: $("mtCmpPairSec"),
+    cmpMatchesSec: $("mtCmpMatchesSec"),
+    cmpMatches: $("mtCmpMatches"),
     cmpMembersSec: $("mtCmpMembersSec"),
     cmpM1Wrap: $("mtCmpM1Wrap"),
     cmpM2Wrap: $("mtCmpM2Wrap"),
@@ -365,7 +369,7 @@
     return plan;
   }
   function renderLineScan(work, book, verse, hitKey) {
-    const toks = SQL.objects("SELECT form, metrical_shape shp, foot_start ft, foot_start_pos fsp, foot_end fe, foot_end_pos fep, match_status ms, lemma_search ls FROM " +
+    const toks = SQL.objects("SELECT form, metrical_shape shp, foot_start ft, foot_start_pos fsp, foot_end fe, foot_end_pos fep, match_status ms, lemma_search ls, form_search fs FROM " +
       q(TABLE) + " WHERE work = " + sqlStr(work) + " AND book = " + sqlStr(String(book)) +
       " AND verse = " + sqlStr(String(verse)) + " ORDER BY CAST(sentence_id AS INTEGER), id;");
     let allShp = "", bad = 0;
@@ -376,7 +380,8 @@
     const patt = bad ? null : parseFeet(allShp);
     const spans = toks.map((t) => {
       const ok = /^OK/.test(String(t.ms || "")) && t.ft != null;
-      const hit = hitKey && t.ls === hitKey;
+      const hit = hitKey && (typeof hitKey === "string" ? t.ls === hitKey
+        : tokenIsCompound(t, hitKey.key, hitKey.ck));
       const cls = "scan-w" + (ok ? (t.shp ? "" : " elided") : " unk") + (hit ? " hit" : "");
       const marks = ok ? (t.shp ? wordMarks(t.shp, t.ft, t.fsp, patt) : "\u2019") : "?";
       const feet = ok ? (t.fe && t.fe !== t.ft ? t.ft + "\u2013" + t.fe : String(t.ft)) : "";
@@ -422,11 +427,28 @@
   const attSetCache = new Map();
   function attestedSetFor(work) {
     if (attSetCache.has(work)) return attSetCache.get(work);
-    const s = new Set(compoundAttestations
-      .filter((a) => a.work === work)
-      .map((a) => normalizeGreek(a.compound)));
+    // Lemma matching against the merged morphology table: a compound counts
+    // as attested in a work when its lemma_search occurs among that work's
+    // tokens — so every corpus work (Iliad, Odyssey, Theogony, Works and
+    // Days) is selectable, not only the works the catalogue itself cites.
+    const s = new Set(SQL.objects(
+      "SELECT DISTINCT m.lemma_search k FROM " + q(TABLE) + " m\n" +
+      "WHERE m.work = " + sqlStr(work) + "\n" +
+      "  AND m.lemma_search IN (SELECT lemma_search FROM " + q("ncompounds_analysis") + ");")
+      .map((r) => r.k).filter(Boolean));
     attSetCache.set(work, s);
     return s;
+  }
+
+  // Exact compound members as they surface in the compound itself, split off
+  // the segmentation (ῥοδο+δάκτυλος -> "ῥοδο" and "δάκτυλος"); member1 /
+  // member2 hold the members' LEMMATA, and wherever members are reported both
+  // are given side by side.
+  function memberSurfaces(r) {
+    const seg = String((r && r.segmentation) || "");
+    const i = seg.indexOf("+");
+    if (i < 0) return { s1: "", s2: "" };
+    return { s1: seg.slice(0, i), s2: seg.slice(i + 1) };
   }
 
   // One member box per slot. The values are the member1 / member2 attributes
@@ -501,12 +523,15 @@
       el.cmpSearch.value = "";
     }
     el.cmpPairSec.hidden = compoundDetailActive;
+    if (el.cmpMatchesSec) el.cmpMatchesSec.hidden = compoundDetailActive;
     if (compoundDetailActive) {
       // the open record owns the page: population charts stand down, and the
       // localization section keeps showing that compound's evidence
       el.cmpMembersSec.hidden = true;
       return;
     }
+
+    renderCompoundMatches(rows, label);
 
     el.cmpSql.textContent =
       "SELECT lemma, lemma_search, segmentation, member1, member1_category, member1_subcategory, member2, member2_category, member2_subcategory\n" +
@@ -600,20 +625,244 @@
     renderMemberCharts(rows, label);
   }
 
-  // Which members the matching compounds are built from: pick a category (or
-  // nothing) and see its commonest first and second members side by side.
-  function renderMemberCharts(rows, label) {
-    const tally = (field) => {
-      const m = new Map();
-      rows.forEach((r) => { const v = r[field]; if (v) m.set(v, (m.get(v) || 0) + 1); });
-      return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12)
-        .map(([k, n]) => ({ label: k, value: n }));
+  /* The compounds matching the filters, listed FIRST (before the category
+   * figure): each row gives the compound (click to open its record), its
+   * segmentation, and, for each slot, both the exact compound member (from
+   * the segmentation) and the lemma it corresponds to, with its category. */
+  function renderCompoundMatches(rows, label) {
+    const host = el.cmpMatches;
+    if (!host) return;
+    const PAGE = 25;
+    let page = 0;
+    const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+    const memberCell = (surface, lemma, cat) => {
+      if (!surface && !lemma) return "\u2013";
+      let s = surface ? "<strong>" + UI.esc(surface) + "</strong>" : "";
+      if (lemma) s += (s ? " \u00b7 " : "") + wlink(lemma);
+      if (cat) s += ' <span class="small-muted">(' + UI.esc(catLabel(cat)) + ")</span>";
+      return s;
     };
+    const draw = () => {
+      const slice = rows.slice(page * PAGE, page * PAGE + PAGE);
+      let html = '<div class="pager"><span class="pager-controls">' +
+        '<button class="btn btn-sm" data-m="prev"' + (page === 0 ? " disabled" : "") + ">\u2039 Previous</button>" +
+        '<button class="btn btn-sm" data-m="next"' + (page >= pages - 1 ? " disabled" : "") + ">Next \u203a</button>" +
+        '<button class="btn btn-sm" data-m="csv" title="Download every matching compound as CSV">\u2913 CSV (' + rows.length + ")</button>" +
+        '</span><span class="pager-info">' + rows.length + " compound" + (rows.length === 1 ? "" : "s") +
+        (label ? " " + UI.esc(label) : "") + " \u00b7 page " + (page + 1) + " / " + pages +
+        " \u00b7 click a compound to open its record</span></div>";
+      html += '<div class="table-wrap"><table class="preview"><thead><tr>' +
+        "<th>Compound</th><th>Segmentation</th><th>First member (\u00b7 lemma)</th><th>Second member (\u00b7 lemma)</th></tr></thead><tbody>";
+      slice.forEach((r) => {
+        const sf = memberSurfaces(r);
+        html += '<tr><td><span class="cmp-open" data-key="' + UI.esc(r.lemma_search) + '">' + UI.esc(r.lemma) + "</span></td>" +
+          "<td>" + UI.esc(r.segmentation || "") + "</td>" +
+          "<td>" + memberCell(sf.s1, r.member1, r.member1_category) + "</td>" +
+          "<td>" + memberCell(sf.s2, r.member2, r.member2_category) + "</td></tr>";
+      });
+      html += "</tbody></table></div>";
+      host.innerHTML = html;
+      host.querySelectorAll("[data-m]").forEach((b) => b.addEventListener("click", () => {
+        const act = b.dataset.m;
+        if (act === "prev") { page = Math.max(0, page - 1); draw(); }
+        else if (act === "next") { page = Math.min(pages - 1, page + 1); draw(); }
+        else if (act === "csv") {
+          UI.downloadCsv("mopsos_matching_compounds",
+            ["Compound", "Segmentation", "First member", "First-member lemma", "First-member category",
+             "Second member", "Second-member lemma", "Second-member category"],
+            rows.map((r) => {
+              const sf = memberSurfaces(r);
+              return [r.lemma, r.segmentation || "", sf.s1, r.member1 || "", catLabel(r.member1_category || ""),
+                      sf.s2, r.member2 || "", catLabel(r.member2_category || "")];
+            }));
+        }
+      }));
+      host.querySelectorAll(".cmp-open").forEach((sp) => sp.addEventListener("click", () => {
+        const it = compoundByKey.get(sp.dataset.key);
+        if (!it) return;
+        el.cmpSearch.value = it.display;
+        renderCompoundDetail(it);
+        renderCompoundPanel();
+      }));
+    };
+    draw();
+  }
+
+  // Which members the matching compounds are built from, with the SHARE OF
+  // EACH ALLOMORPH inside every lexeme's bar: variants differing only in
+  // case or accent (Πολυ / Πολύ / πολυ) are folded into one allomorph via
+  // the accent-insensitive search key, and each fold gets its own color so
+  // the common and rare allomorphs of a lexeme can be read off directly.
+  // Below the two bar charts, a ribbon diagram connects first-member
+  // allomorphs to second-member allomorphs (ribbon width = how many
+  // compounds join that pair).
+  function normAllomorph(s) {
+    if (!s) return "";
+    const t = window.MopsosText;
+    return t ? t.stripDiacritics(s) : String(s).toLowerCase();
+  }
+
+  function memberAlloTally(rows, field, surfKey) {
+    const m = new Map();
+    rows.forEach((r) => {
+      const v = r[field]; if (!v) return;
+      let e = m.get(v);
+      if (!e) { e = { n: 0, allo: new Map() }; m.set(v, e); }
+      e.n += 1;
+      const s = normAllomorph(memberSurfaces(r)[surfKey] || "");
+      if (s) e.allo.set(s, (e.allo.get(s) || 0) + 1);
+    });
+    return [...m.entries()].sort((a, b) => b[1].n - a[1].n);
+  }
+
+  function alloStackedChart(host, entries, title) {
+    host.innerHTML = "";
+    const d3 = window.d3;
+    if (!entries.length) { host.innerHTML = '<div class="small-muted" style="padding:.7rem;">No matching compounds.</div>'; return; }
+    if (!d3) { // graceful fallback: plain bars, lemma + folded allomorphs
+      Chart.bars(host, entries.slice(0, 12).map(([k, e]) => ({
+        label: k + " (" + [...e.allo.keys()].slice(0, 3).join(", ") + ")", value: e.n
+      })), { valueLabel: "compounds", labelWidth: 130, title: title });
+      return;
+    }
+    const top = entries.slice(0, 12);
+    // one color per allomorph, assigned by global frequency so the same
+    // allomorph keeps its color wherever it recurs
+    const global = new Map();
+    top.forEach(([, e]) => e.allo.forEach((n, a) => global.set(a, (global.get(a) || 0) + n)));
+    const alloOrder = [...global.entries()].sort((x, y) => y[1] - x[1]).map(([a]) => a);
+    const color = d3.scaleOrdinal(alloOrder, alloOrder.map((_, i) => d3.schemeTableau10[i % 10]));
+    const labelW = 128, rowH = 24, gap = 7, width = 430, topPad = 24;
+    const height = topPad + top.length * (rowH + gap);
+    const maxN = top[0][1].n || 1;
+    const x = d3.scaleLinear().domain([0, maxN]).range([0, width - labelW - 60]);
+    const svg = d3.select(host).append("svg")
+      .attr("viewBox", "0 0 " + width + " " + height)
+      .attr("width", "100%").style("max-width", width + "px").style("height", "auto");
+    svg.append("text").attr("x", 0).attr("y", 14).attr("font-size", 12).attr("font-weight", 600)
+      .attr("fill", "currentColor").text(title);
+    top.forEach(([lemma, e], i) => {
+      const y = topPad + i * (rowH + gap);
+      const g = svg.append("g").attr("transform", "translate(0," + y + ")");
+      g.append("text").attr("x", labelW - 6).attr("y", rowH / 2 + 4).attr("text-anchor", "end")
+        .attr("font-size", 11.5).attr("fill", "currentColor").text(lemma)
+        .append("title").text(lemma + " \u00b7 " + e.n + " compounds");
+      let cx = labelW;
+      const parts = [...e.allo.entries()].sort((a, b) => b[1] - a[1]);
+      parts.forEach(([a, n]) => {
+        const w = Math.max(1, x(n));
+        const rect = g.append("rect").attr("x", cx).attr("y", 0).attr("width", w).attr("height", rowH)
+          .attr("rx", 2).attr("fill", color(a));
+        rect.append("title").text(lemma + " \u00b7 " + a + ": " + n + " compound" + (n === 1 ? "" : "s") +
+          " (" + Math.round(100 * n / e.n) + "%)");
+        if (w >= 30) g.append("text").attr("x", cx + w / 2).attr("y", rowH / 2 + 3.6)
+          .attr("text-anchor", "middle").attr("font-size", 10).attr("fill", "#fff")
+          .style("pointer-events", "none").text(a);
+        cx += w;
+      });
+      g.append("text").attr("x", cx + 5).attr("y", rowH / 2 + 4).attr("font-size", 10.5)
+        .attr("fill", "currentColor").attr("opacity", .75).text(e.n);
+    });
+  }
+
+  function renderAlloFlow(rows) {
+    const host = el.cmpFlowChart;
+    if (!host) return;
+    host.innerHTML = "";
+    const d3 = window.d3;
+    // (allomorph1 -> allomorph2) pair counts over the matching compounds
+    const pair = new Map(), tot1 = new Map(), tot2 = new Map();
+    rows.forEach((r) => {
+      const sf = memberSurfaces(r);
+      const a1 = normAllomorph(sf.s1), a2 = normAllomorph(sf.s2);
+      if (!a1 || !a2) return;
+      pair.set(a1 + "\u0000" + a2, (pair.get(a1 + "\u0000" + a2) || 0) + 1);
+      tot1.set(a1, (tot1.get(a1) || 0) + 1);
+      tot2.set(a2, (tot2.get(a2) || 0) + 1);
+    });
+    if (!pair.size) { if (el.cmpFlowNote) el.cmpFlowNote.textContent = ""; return; }
+    const TOPN = 10, OTHER = "(other)";
+    const keep1 = new Set([...tot1.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOPN).map(([k]) => k));
+    const keep2 = new Set([...tot2.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOPN).map(([k]) => k));
+    const links = new Map();
+    pair.forEach((n, k) => {
+      const [a1, a2] = k.split("\u0000");
+      const s = keep1.has(a1) ? a1 : OTHER, t = keep2.has(a2) ? a2 : OTHER;
+      links.set(s + "\u0000" + t, (links.get(s + "\u0000" + t) || 0) + n);
+    });
+    if (!d3) { // textual fallback
+      const topLinks = [...links.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12)
+        .map(([k, n]) => k.replace("\u0000", " \u2192 ") + " (" + n + ")").join(", ");
+      host.innerHTML = '<div class="small-muted" style="padding:.7rem;">Commonest allomorph pairings: ' + UI.esc(topLinks) + "</div>";
+      return;
+    }
+    const sumBy = (idx) => {
+      const m = new Map();
+      links.forEach((n, k) => { const a = k.split("\u0000")[idx]; m.set(a, (m.get(a) || 0) + n); });
+      return [...m.entries()].sort((x, y) => (x[0] === OTHER) - (y[0] === OTHER) || y[1] - x[1]);
+    };
+    const L = sumBy(0), R = sumBy(1);
+    const total = L.reduce((s, [, n]) => s + n, 0);
+    const width = 640, nodeW = 10, padX = 118, gapY = 5, plotH = 330, topPad = 26;
+    const height = topPad + plotH + 10;
+    const usableL = plotH - gapY * (L.length - 1), usableR = plotH - gapY * (R.length - 1);
+    const place = (list, usable) => {
+      let y = topPad; const pos = new Map();
+      list.forEach(([k, n]) => { const h = Math.max(2, usable * n / total); pos.set(k, { y0: y, y1: y + h, off: 0 }); y += h + gapY; });
+      return pos;
+    };
+    const PL = place(L, usableL), PR = place(R, usableR);
+    const color = d3.scaleOrdinal(L.map(([k]) => k), L.map((_, i) => d3.schemeTableau10[i % 10]));
+    const svg = d3.select(host).append("svg")
+      .attr("viewBox", "0 0 " + width + " " + height)
+      .attr("width", "100%").style("max-width", width + "px").style("height", "auto");
+    svg.append("text").attr("x", 0).attr("y", 14).attr("font-size", 12).attr("font-weight", 600)
+      .attr("fill", "currentColor").text("First-member allomorph \u2192 second-member allomorph");
+    const x0 = padX, x1 = width - padX - nodeW;
+    // ribbons (drawn first, under the node bars), width proportional to count
+    const ordered = [...links.entries()].sort((a, b) => b[1] - a[1]);
+    ordered.forEach(([k, n]) => {
+      const [a, b] = k.split("\u0000");
+      const pl = PL.get(a), pr = PR.get(b);
+      const hL = (pl.y1 - pl.y0) * n / (L.find((d) => d[0] === a)[1]);
+      const hR = (pr.y1 - pr.y0) * n / (R.find((d) => d[0] === b)[1]);
+      const sy = pl.y0 + pl.off, ty = pr.y0 + pr.off;
+      pl.off += hL; pr.off += hR;
+      const mx = (x0 + nodeW + x1) / 2;
+      const path = "M" + (x0 + nodeW) + "," + sy +
+        "C" + mx + "," + sy + " " + mx + "," + ty + " " + x1 + "," + ty +
+        "L" + x1 + "," + (ty + hR) +
+        "C" + mx + "," + (ty + hR) + " " + mx + "," + (sy + hL) + " " + (x0 + nodeW) + "," + (sy + hL) + "Z";
+      svg.append("path").attr("d", path).attr("fill", color(a)).attr("opacity", .5)
+        .on("mouseover", function () { d3.select(this).attr("opacity", .8); })
+        .on("mouseout", function () { d3.select(this).attr("opacity", .5); })
+        .append("title").text(a + " \u2192 " + b + ": " + n + " compound" + (n === 1 ? "" : "s"));
+    });
+    // node bars + labels
+    L.forEach(([k, n]) => {
+      const p = PL.get(k);
+      svg.append("rect").attr("x", x0).attr("y", p.y0).attr("width", nodeW).attr("height", p.y1 - p.y0)
+        .attr("rx", 2).attr("fill", color(k)).append("title").text(k + ": " + n);
+      svg.append("text").attr("x", x0 - 6).attr("y", (p.y0 + p.y1) / 2 + 3.5).attr("text-anchor", "end")
+        .attr("font-size", 11).attr("fill", "currentColor").text(k + " (" + n + ")");
+    });
+    R.forEach(([k, n]) => {
+      const p = PR.get(k);
+      svg.append("rect").attr("x", x1).attr("y", p.y0).attr("width", nodeW).attr("height", p.y1 - p.y0)
+        .attr("rx", 2).attr("fill", "#8a8f98").attr("opacity", .8).append("title").text(k + ": " + n);
+      svg.append("text").attr("x", x1 + nodeW + 6).attr("y", (p.y0 + p.y1) / 2 + 3.5)
+        .attr("font-size", 11).attr("fill", "currentColor").text(k + " (" + n + ")");
+    });
+    if (el.cmpFlowNote) el.cmpFlowNote.textContent =
+      "Which first-member allomorphs combine with which second-member allomorphs among the matching compounds; " +
+      "ribbon width = number of compounds joining that pair. Variants differing only in accent or capitalization are one allomorph.";
+  }
+
+  function renderMemberCharts(rows, label) {
     const suffix = label ? " (" + label + ")" : "";
-    const opts = (t) => ({ valueLabel: "compounds", labelWidth: 130, title: t + suffix,
-      emptyMsg: "No matching compounds." });
-    if (!el.cmpM1Wrap.hidden) Chart.bars(el.cmpM1Chart, tally("member1"), opts("Commonest first members"));
-    if (!el.cmpM2Wrap.hidden) Chart.bars(el.cmpM2Chart, tally("member2"), opts("Commonest second members"));
+    if (!el.cmpM1Wrap.hidden) alloStackedChart(el.cmpM1Chart, memberAlloTally(rows, "member1", "s1"), "Commonest first members" + suffix);
+    if (!el.cmpM2Wrap.hidden) alloStackedChart(el.cmpM2Chart, memberAlloTally(rows, "member2", "s2"), "Commonest second members" + suffix);
+    renderAlloFlow(rows);
   }
 
   /* ---------------- Panel: infinitive forms ---------------- */
@@ -676,14 +925,64 @@
     compoundAttestations = SQL.objects("SELECT compound, work, book, line_num FROM " + q("ncompounds_attestations") + ";");
   }
 
+  /* The catalogue's citation form does not always coincide with the corpus
+   * lemmatization (ἀΐδηλον vs. ἀΐδηλος, ἀκήδεστοι vs. ἀκήδεστος, βοῶπις
+   * lemmatized where the catalogue has βόωψ, …). A compound whose key finds
+   * no corpus tokens directly is therefore retried (1) as a SURFACE FORM
+   * (the catalogue form is itself an inflected token), then (2) under a
+   * RELATED CORPUS LEMMA sharing its stem (a fixed ending list, plus final
+   * ψ/ξ unpacked to π / κ γ χ, prefix-matched with a length guard). Only
+   * when all three fail does the record fall back to catalogue citations. */
+  const corpusKeyCache = new Map();
+  const STEM_ENDINGS = ["οισιν", "ησιν", "εντων", "εσσα", "οισι", "οιο", "ουσ", "εισ", "οσ", "ον", "ου",
+    "ων", "οι", "ησ", "ην", "ασ", "αι", "εσ", "ισ", "ιν", "υσ", "ωσ", "ωρ", "εν", "η", "α", "ω", "υ"];
+  function corpusKeyInfo(key) {
+    if (corpusKeyCache.has(key)) return corpusKeyCache.get(key);
+    let info = null;
+    if (SQL.scalar("SELECT COUNT(*) FROM " + q(TABLE) + " WHERE lemma_search = " + sqlStr(key) + ";")) {
+      info = { cond: "lemma_search = " + sqlStr(key), keys: [key], byForm: false, note: "" };
+    } else if (SQL.scalar("SELECT COUNT(*) FROM " + q(TABLE) + " WHERE form_search = " + sqlStr(key) + ";")) {
+      const lem = SQL.objects("SELECT DISTINCT lemma FROM " + q(TABLE) + " WHERE form_search = " + sqlStr(key) + " LIMIT 3;")
+        .map((x) => x.lemma).join(", ");
+      info = { cond: "form_search = " + sqlStr(key), keys: null, byForm: true,
+        note: "matched as a surface form (the corpus lemmatizes it under " + lem + ")" };
+    } else {
+      const stems = [];
+      STEM_ENDINGS.forEach((e) => { if (key.endsWith(e) && key.length - e.length >= 5) stems.push(key.slice(0, key.length - e.length)); });
+      if (key.length >= 4 && key.endsWith("\u03c8")) stems.push(key.slice(0, -1) + "\u03c0");
+      if (key.length >= 4 && key.endsWith("\u03be")) ["\u03ba", "\u03b3", "\u03c7"].forEach((c) => stems.push(key.slice(0, -1) + c));
+      for (const st of stems) {
+        const cands = SQL.objects("SELECT DISTINCT lemma_search k, MIN(lemma) l FROM " + q(TABLE) +
+          " WHERE lemma_search LIKE " + sqlStr(st + "%") + " GROUP BY k;")
+          .filter((c) => Math.abs(c.k.length - key.length) <= 4);
+        if (cands.length) {
+          info = { cond: "lemma_search IN (" + cands.map((c) => sqlStr(c.k)).join(", ") + ")",
+            keys: cands.map((c) => c.k), byForm: false,
+            note: "matched under the related corpus lemma" + (cands.length > 1 ? "ta " : " ") + cands.map((c) => c.l).join(", ") };
+          break;
+        }
+      }
+    }
+    corpusKeyCache.set(key, info);
+    return info;
+  }
+
+  // Does a token row (with lemma_search ls and form_search fs) belong to the
+  // compound resolved by corpusKeyInfo?
+  function tokenIsCompound(t, key, ck) {
+    if (!ck) return false;
+    return ck.byForm ? t.fs === key : ck.keys.indexOf(t.ls) >= 0;
+  }
+
   function renderCompoundDetail(item) {
     compoundDetailActive = true;
     compoundDetailKey = item.key;
     if (el.cmpMembersSec) el.cmpMembersSec.hidden = true;
     if (el.cmpPairSec) el.cmpPairSec.hidden = true;
+    if (el.cmpMatchesSec) el.cmpMatchesSec.hidden = true;
     buildCompoundMetrics();
     const r = item.row;
-    const m = compoundMetrics.get(item.key);
+    const ck = corpusKeyInfo(item.key);
     const attested = compoundAttestations
       .filter((a) => normalizeGreek(a.compound) === item.key)
       .sort((a, b) => a.work.localeCompare(b.work) || Number(a.book) - Number(b.book) || Number(a.line_num) - Number(b.line_num));
@@ -692,17 +991,20 @@
     html += "<tr><th>Compound</th><td>" + UI.esc(r.lemma) + "</td></tr>";
     html += "<tr><th>Beta Code</th><td><code>" + UI.esc(betaOf(r.lemma)) + "</code></td></tr>";
     if (r.segmentation) html += "<tr><th>Segmentation</th><td>" + UI.esc(r.segmentation) + "</td></tr>";
-    html += "<tr><th>First member</th><td>" + wlink(r.member1) + " (" + UI.esc(catLabel(r.member1_category)) + ")</td></tr>";
+    const sf = memberSurfaces(r);
+    html += "<tr><th>First member</th><td>" + (sf.s1 ? "<strong>" + UI.esc(sf.s1) + "</strong> \u00b7 lemma " : "") +
+      wlink(r.member1) + " (" + UI.esc(catLabel(r.member1_category)) + ")</td></tr>";
     if (r.member1_subcategory) html += "<tr><th>First-member subcategory</th><td>" + UI.esc(r.member1_subcategory) + "</td></tr>";
-    html += "<tr><th>Second member</th><td>" + wlink(r.member2) + " (" + UI.esc(catLabel(r.member2_category)) + ")</td></tr>";
+    html += "<tr><th>Second member</th><td>" + (sf.s2 ? "<strong>" + UI.esc(sf.s2) + "</strong> \u00b7 lemma " : "") +
+      wlink(r.member2) + " (" + UI.esc(catLabel(r.member2_category)) + ")</td></tr>";
     if (r.member2_subcategory) html += "<tr><th>Second-member subcategory</th><td>" + UI.esc(r.member2_subcategory) + "</td></tr>";
     html += "</tbody></table>";
 
     /* every occurrence in the corpus (all works), with rebuilt line text —
      * shown FIRST, before the metrical record and its charts */
-    const occ = SQL.objects("SELECT work w, book b, CAST(verse AS INTEGER) v, COUNT(*) n FROM " + q(TABLE) +
-      " WHERE lemma_search = " + sqlStr(item.key) + " AND verse IS NOT NULL AND verse <> ''" +
-      " GROUP BY w, b, v ORDER BY w, CAST(b AS INTEGER), v;");
+    const occ = ck ? SQL.objects("SELECT work w, book b, CAST(verse AS INTEGER) v, COUNT(*) n FROM " + q(TABLE) +
+      " WHERE " + ck.cond + " AND verse IS NOT NULL AND verse <> ''" +
+      " GROUP BY w, b, v ORDER BY w, CAST(b AS INTEGER), v;") : [];
     if (occ.length) {
       const perWork = new Map();
       let nTok = 0;
@@ -710,7 +1012,7 @@
       const workBits = [...perWork.entries()].map(([w2, n2]) => w2 + " " + n2).join(", ");
       html += '<p class="small-muted" style="margin:.6rem 0 .25rem;"><strong>Occurrences in the corpus</strong>: ' +
         nTok + " token" + (nTok === 1 ? "" : "s") + " in " + occ.length + " line" + (occ.length === 1 ? "" : "s") +
-        " (" + UI.esc(workBits) + ")</p>";
+        " (" + UI.esc(workBits) + ")" + (ck.note ? " \u00b7 " + UI.esc(ck.note) : "") + "</p>";
       const withText = occ.slice(0, 8);
       html += withText.map((o) => {
         const t = lineTextFor(o.w, o.b, o.v);
@@ -733,12 +1035,17 @@
 
     /* metrical record: attested forms with their shapes, starting feet, and
      * the lines (book.verse) where each placement occurs */
-    const formToks = SQL.objects(
+    const formToks = ck ? SQL.objects(
       "SELECT form, metrical_shape shp, foot_start ft, foot_start_pos fsp, foot_end fe, work w, book b, CAST(verse AS INTEGER) v\n" +
       "FROM " + q(TABLE) + "\n" +
-      "WHERE lemma_search = " + sqlStr(item.key) + "\n" +
+      "WHERE " + ck.cond + "\n" +
       "  AND match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND foot_start IS NOT NULL\n" +
-      "ORDER BY work, CAST(book AS INTEGER), v;");
+      "ORDER BY work, CAST(book AS INTEGER), v;") : [];
+    const m = { tot: 0, end6: 0, start: [0, 0, 0, 0, 0, 0] };
+    formToks.forEach((fr) => {
+      const ft = parseInt(fr.ft, 10);
+      if (ft >= 1 && ft <= 6) { m.start[ft - 1]++; m.tot++; if (parseInt(fr.fe, 10) === 6) m.end6++; }
+    });
     if (m && m.tot) {
       let best = 0;
       for (let i = 1; i < 6; i++) if (m.start[i] > m.start[best]) best = i;
@@ -783,7 +1090,7 @@
     }
 
     el.cmpDetail.innerHTML = html;
-    renderCompoundLocalization(item, occ);
+    renderCompoundLocalization(item, occ, ck);
     if (m && m.tot) {
       const det = document.getElementById("mtCmpDetChart");
       if (det) Chart.bars(det, m.start.map((v, i) => ({ label: "Foot " + (i + 1), value: +(100 * v / m.tot).toFixed(1) })),
@@ -795,22 +1102,24 @@
   // Metrical localization for one chosen compound: the commonest whole-line
   // patterns it appears in, with the feet the compound occupies highlighted;
   // the first few lines scanned word by word; and a button for all of them.
-  function renderCompoundLocalization(item, occ) {
+  function renderCompoundLocalization(item, occ, ck) {
     el.cmpLocSec.hidden = false;
     const wrap = el.cmpLocChart.closest && el.cmpLocChart.closest(".viz-wrap");
     if (wrap) wrap.classList.remove("fig-fit", "fig-full");
     if (!occ.length) {
-      el.cmpLocNote.textContent = "No occurrences of " + item.display + " in the corpus, so no localization evidence to show.";
+      el.cmpLocNote.textContent = "The corpus has no metrically aligned tokens of " + item.display +
+        " under this or any related spelling, so its verse placement cannot be shown; the catalogue citations above are the attestation evidence.";
       el.cmpLocChart.innerHTML = "";
       return;
     }
+    const hitter = { key: item.key, ck: ck };
     const cap = 200;
     const lines = occ.slice(0, cap);
     // one query for every token of every line containing the compound
     const toks = SQL.objects(
-      "SELECT m.work w, m.book b, CAST(m.verse AS INTEGER) v, m.metrical_shape shp, m.foot_start ft, m.foot_end fe, m.match_status ms, m.lemma_search ls\n" +
+      "SELECT m.work w, m.book b, CAST(m.verse AS INTEGER) v, m.metrical_shape shp, m.foot_start ft, m.foot_end fe, m.match_status ms, m.lemma_search ls, m.form_search fs\n" +
       "FROM " + q(TABLE) + " m JOIN (SELECT DISTINCT work, book, verse FROM " + q(TABLE) +
-      " WHERE lemma_search = " + sqlStr(item.key) + " AND verse IS NOT NULL AND verse <> '') L\n" +
+      " WHERE " + ck.cond + " AND verse IS NOT NULL AND verse <> '') L\n" +
       "  ON m.work = L.work AND m.book = L.book AND m.verse = L.verse\n" +
       "ORDER BY m.work, CAST(m.book AS INTEGER), CAST(m.verse AS INTEGER), CAST(m.sentence_id AS INTEGER), m.id;");
     const perLine = new Map();
@@ -820,7 +1129,7 @@
       if (!L2) { L2 = { shp: "", bad: 0, ft: null, fe: null }; perLine.set(k2, L2); }
       if (!(/^OK/.test(String(t.ms || "")) && t.ft != null)) L2.bad++;
       if (t.shp) L2.shp += t.shp;
-      if (t.ls === item.key && L2.ft == null) { L2.ft = parseInt(t.ft, 10); L2.fe = parseInt(t.fe, 10) || parseInt(t.ft, 10); }
+      if (tokenIsCompound(t, item.key, ck) && L2.ft == null) { L2.ft = parseInt(t.ft, 10); L2.fe = parseInt(t.fe, 10) || parseInt(t.ft, 10); }
     });
     const tally = new Map();
     let und = 0;
@@ -843,26 +1152,37 @@
       (und ? '<p class="small-muted" style="margin:.25rem 0 .4rem;">' + und + " line" + (und === 1 ? "" : "s") + " without a fully derivable pattern.</p>" : "");
     const sample = lines.slice(0, 3);
     html += '<div class="scan-passage" style="margin-top:.5rem;">' +
-      sample.map((o) => renderLineScan(o.w, o.b, o.v, item.key)).join("") + "</div>";
+      sample.map((o) => renderLineScan(o.w, o.b, o.v, hitter)).join("") + "</div>";
     if (occ.length > sample.length) {
-      html += '<div class="btn-row" style="margin-top:.4rem;"><button class="btn btn-sm" id="mtCmpScanBtn">Scan every line with this compound (' + occ.length + ")</button></div>" +
+      html += '<div class="btn-row" style="margin-top:.4rem;"><button class="btn btn-sm" id="mtCmpScanBtn">Show every line with this compound (Scansion <span class="wip-mark" title="Under construction">\ud83d\udea7</span>) (' + occ.length + ")</button></div>" +
         '<div id="mtCmpScanOut" style="margin-top:.4rem;"></div>';
     }
     el.cmpLocChart.innerHTML = html;
     const scanBtn = document.getElementById("mtCmpScanBtn");
-    if (scanBtn) scanBtn.addEventListener("click", () => {
-      const out = document.getElementById("mtCmpScanOut");
-      const cap2 = 40;
-      const rest = occ.slice(sample.length, cap2);
-      out.innerHTML = '<div class="scan-passage">' +
-        rest.map((o) => renderLineScan(o.w, o.b, o.v, item.key)).join("") + "</div>" +
-        (occ.length > cap2 ? '<p class="small-muted">Showing the first ' + cap2 + " of " + occ.length + " lines.</p>" : "");
-      scanBtn.disabled = true;
-    });
+    if (scanBtn) {
+      const showLabel = scanBtn.innerHTML;
+      let shown = false;
+      scanBtn.addEventListener("click", () => {
+        const out = document.getElementById("mtCmpScanOut");
+        shown = !shown;
+        if (!shown) { out.innerHTML = ""; scanBtn.innerHTML = showLabel; return; }
+        const cap2 = 40;
+        const rest = occ.slice(sample.length, cap2);
+        out.innerHTML = '<div class="scan-passage">' +
+          rest.map((o) => renderLineScan(o.w, o.b, o.v, hitter)).join("") + "</div>" +
+          (occ.length > cap2 ? '<p class="small-muted">Showing the first ' + cap2 + " of " + occ.length + " lines.</p>" : "");
+        scanBtn.innerHTML = "Hide the scansion of these lines";
+      });
+    }
   }
 
   function wireCompoundCombo() {
+    // Substring matching: typing μαχ (or max) finds every compound containing
+    // it; -μων / mwn# finds the compounds ENDING in -μων (Beta Code: w = long
+    // o, h = long e, so ths# = -της), #abc anchors the start, and an English
+    // word (e.g. "finger") finds the compounds the LSJ bridge maps it to.
     UI.greekCombo(el.cmpSearch, el.cmpSearchMenu, {
+      mode: "substring",
       items() {
         buildCompoundData();
         // browse only the compounds the current filters allow, so the list
@@ -952,66 +1272,84 @@
     let compoundsOk = true;
     try {
       buildCompoundData();
-      UI.fillSelect(el.cmpWork,
-        [...new Set(compoundAttestations.map((a) => a.work))].sort(),
-        { head: "(all works)" });
-      const catSelect = (sel, values) => {
-        UI.fillSelect(sel, values, { head: "(any)" });
-        [...sel.options].forEach((o) => { if (o.value) o.textContent = catLabel(o.value); });
+      // every corpus work is selectable; the filter itself is lemma matching
+      // against the morphology table (see attestedSetFor)
+      UI.fillSelect(el.cmpWork, SQL.distinct("work"), { head: "(all works)" });
+
+      /* Every filter control's options are computed from the compounds that
+       * match every OTHER current filter, so the two slots stay mutually
+       * compatible: pick a first member (or first-member category or
+       * subcategory) and the second-member list, category, and subcategory
+       * only offer values that actually combine with it — and vice versa. */
+      const rowsExcept = (keys) => {
+        const f = compoundFilters();
+        keys.forEach((k) => { f[k] = (k === "m1" || k === "m2") ? null : ""; });
+        return filteredCompounds(f);
       };
-      catSelect(el.cmpM1Cat, [...new Set(compoundRows.map((r) => r.member1_category).filter(Boolean))].sort((a, b) => catLabel(a).localeCompare(catLabel(b))));
-      catSelect(el.cmpM2Cat, [...new Set(compoundRows.map((r) => r.member2_category).filter(Boolean))].sort((a, b) => catLabel(a).localeCompare(catLabel(b))));
-      // Subcategories (stem classes: s-stem, thematic, and so on) exist only
-      // where the analysis records one; each list adapts to the chosen
-      // category, keeps a still-valid selection, and disables when the chosen
-      // category carries no subcategories at all.
-      const refreshSubcats = () => {
-        const fill = (sel, field, catField, cat) => {
-          if (!sel) return;
-          const keep = sel.value;
-          const values = [...new Set(compoundRows
-            .filter((r) => (!cat || r[catField] === cat) && r[field])
-            .map((r) => r[field]))].sort((a, b) => a.localeCompare(b));
-          UI.fillSelect(sel, values, { head: "(any subcategory)" });
-          if ([...sel.options].some((o) => o.value === keep)) sel.value = keep;
-          sel.disabled = !values.length;
-        };
-        fill(el.cmpM1Sub, "member1_subcategory", "member1_category", el.cmpM1Cat.value);
-        fill(el.cmpM2Sub, "member2_subcategory", "member2_category", el.cmpM2Cat.value);
-      };
-      refreshSubcats();
-      [el.cmpWork, el.cmpM1Sub, el.cmpM2Sub].forEach((c) => { if (c) c.addEventListener("change", renderCompoundPanel); });
-      [el.cmpM1Cat, el.cmpM2Cat].forEach((c) => c.addEventListener("change", () => { refreshSubcats(); renderCompoundPanel(); }));
-      // one adaptive combo per member slot, fed by the members actually
-      // attested in that slot (with their category and compound count)
-      const memberItems = (field, catField) => {
+      const memberItemsFor = (slot) => {
+        const field = slot === "m1" ? "member1" : "member2";
+        const catField = field + "_category";
+        const surfKey = slot === "m1" ? "s1" : "s2";
+        const rows = rowsExcept([slot]);
         const T = window.MopsosText;
         const m = new Map();
-        compoundRows.forEach((r) => {
+        rows.forEach((r) => {
           const v = r[field]; if (!v) return;
           let e2 = m.get(v);
-          if (!e2) { e2 = { n: 0, cat: r[catField] }; m.set(v, e2); }
+          if (!e2) { e2 = { n: 0, cat: r[catField], surf: new Set() }; m.set(v, e2); }
           e2.n += 1;
+          const s = memberSurfaces(r)[surfKey];
+          if (s && s !== v) e2.surf.add(s);
         });
         return [...m.entries()].sort((a, b) => b[1].n - a[1].n).map(([v, e2]) => ({
           key: T ? T.stripDiacritics(v) : v, display: v,
           beta: T ? T.toBetaCode(v) : "",
-          meta: (e2.cat ? catLabel(e2.cat) + " \u00b7 " : "") + e2.n
+          meta: ([...e2.surf].slice(0, 2).join(" ") + ([...e2.surf].length > 2 ? "\u2026" : "") + " ").trim() +
+            (e2.cat ? " \u00b7 " + catLabel(e2.cat) : "") + " \u00b7 " + e2.n
         }));
       };
-      const m1List = memberItems("member1", "member1_category");
-      const m2List = memberItems("member2", "member2_category");
-      const wireMember = (input, menu, items) => {
+      const refreshCompoundOptions = () => {
+        const fillCat = (sel, rows, field) => {
+          if (!sel) return;
+          const values = [...new Set(rows.map((r) => r[field]).filter(Boolean))]
+            .sort((a, b) => catLabel(a).localeCompare(catLabel(b)));
+          UI.fillSelect(sel, values, { head: "(any category)" });
+          [...sel.options].forEach((o) => { if (o.value) o.textContent = catLabel(o.value); });
+        };
+        const fillSub = (sel, rows, field) => {
+          if (!sel) return;
+          const values = [...new Set(rows.map((r) => r[field]).filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b));
+          UI.fillSelect(sel, values, { head: "(any subcategory)" });
+          sel.disabled = !values.length;
+        };
+        // each list excludes only itself (a subcategory also excludes its own
+        // subordinate value); fillSelect keeps a still-valid selection
+        fillCat(el.cmpM1Cat, rowsExcept(["m1cat", "m1sub"]), "member1_category");
+        fillCat(el.cmpM2Cat, rowsExcept(["m2cat", "m2sub"]), "member2_category");
+        fillSub(el.cmpM1Sub, rowsExcept(["m1sub"]), "member1_subcategory");
+        fillSub(el.cmpM2Sub, rowsExcept(["m2sub"]), "member2_subcategory");
+      };
+      refreshCompoundOptions();
+      const onCompoundChange = () => { refreshCompoundOptions(); renderCompoundPanel(); };
+      [el.cmpWork, el.cmpM1Cat, el.cmpM2Cat, el.cmpM1Sub, el.cmpM2Sub].forEach((c) => {
+        if (c) c.addEventListener("change", onCompoundChange);
+      });
+      // one adaptive combo per member slot, fed live by the members compatible
+      // with the other slot's current choices (substring matching, with -abc /
+      // abc# suffix and #abc prefix anchors, Beta Code, and English)
+      const wireMember = (input, menu, slot) => {
         UI.greekCombo(input, menu, {
-          items() { return items; },
-          onSelect(it) { input.value = it.display; renderCompoundPanel(); }
+          mode: "substring",
+          items() { return memberItemsFor(slot); },
+          onSelect(it) { input.value = it.display; onCompoundChange(); }
         });
         let t2 = null;
-        input.addEventListener("input", () => { clearTimeout(t2); t2 = setTimeout(renderCompoundPanel, 250); });
-        input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); renderCompoundPanel(); } });
+        input.addEventListener("input", () => { clearTimeout(t2); t2 = setTimeout(onCompoundChange, 250); });
+        input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); onCompoundChange(); } });
       };
-      wireMember(el.cmpM1, el.cmpM1Menu, m1List);
-      wireMember(el.cmpM2, el.cmpM2Menu, m2List);
+      wireMember(el.cmpM1, el.cmpM1Menu, "m1");
+      wireMember(el.cmpM2, el.cmpM2Menu, "m2");
       wireCompoundCombo();
     } catch (e) {
       compoundsOk = false;

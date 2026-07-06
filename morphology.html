@@ -73,20 +73,22 @@
       <div class="grid-3" style="margin-top:1rem;">
         <div class="field">
           <label for="qfFormLike"><strong>Form contains</strong></label>
-          <input type="text" id="qfFormLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. οιο or oio">
+          <input type="text" id="qfFormLike" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional) or Beta Code, e.g. οιο or oio; #οιο = starts with, οιο# = ends with">
         </div>
         <div class="field">
           <label for="qfLemmaLike"><strong>Lemma contains</strong></label>
-          <input type="text" id="qfLemmaLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul">
+          <input type="text" id="qfLemmaLike" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul; #δακτυλ = starts with, δακτυλ# = ends with">
         </div>
         <div class="field">
           <label for="qfLemmaExact"><strong>Lemma matches exactly</strong></label>
           <div class="combo">
-            <input type="text" id="qfLemmaExact" autocomplete="off" spellcheck="false" placeholder="e.g. ῥοδοδάκτυλος or Beta Code like rododaktulos; click to browse">
+            <input type="text" id="qfLemmaExact" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional), Beta Code (rododaktulos), or English (finger); click to browse">
             <div id="qfLemmaExactMenu" class="combo-menu" hidden></div>
           </div>
         </div>
       </div>
+      <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> anchors the start of the word, <code>abc#</code> the end, <code>#abc#</code> matches exactly.
+        <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="qfRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as JavaScript regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
       <div class="btn-row">
         <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply filter</button>
         <button id="btnResetFilter" class="btn">Reset</button>
@@ -174,6 +176,14 @@
           <div id="exLemmaMenu" class="combo-menu" hidden></div>
         </div>
       </div>
+      <div class="field" id="exLemmataWrap">
+        <label for="exLemmata"><strong>Restrict to lemma(s)</strong> <span class="help">(optional; one lemma, or several separated by commas)</span></label>
+        <div class="combo">
+          <input type="text" id="exLemmata" autocomplete="off" spellcheck="false" placeholder="e.g. μῆνις, χόλος, κότος — Greek (accents optional), Beta Code, or English; click to browse">
+          <div id="exLemmataMenu" class="combo-menu" hidden></div>
+        </div>
+        <p class="help" style="margin:.25rem 0 0;">Charts the distribution of just these lemmata — one alone, or several together. Set <em>Count by</em> (or <em>Break down by</em>) to <em>Lemma</em> to compare them side by side, or to <em>Book / work</em>, <em>Case</em>, etc. to see where and how they occur.</p>
+      </div>
       <div class="field" id="exSemanticWrap" hidden>
         <label for="exSemantic"><strong>Search by lemma</strong> <span class="help">(optional)</span></label>
         <div class="combo">
@@ -217,10 +227,11 @@
   <div class="tab-meta-row"><button class="info-btn" data-info="mtCmpInfo">What is this?</button></div>
   <div id="mtCmpInfo" class="info-panel" hidden>
     <h4>Nominal compounds panel</h4>
-    <p>Filter the analyzed compounds by first member, second member, member category, stem subcategory (s-stem, thematic, and so on), or attesting work; see which members are commonest, how the member categories pair up, and where the matching compounds sit in the verse.</p>
+    <p>Filter the analyzed compounds by first member, second member, member category, stem subcategory (s-stem, thematic, and so on), or attesting work. The matching compounds are listed first (each with its segmentation and, for both slots, the exact compound member alongside its lemma and category); the category-pairing figure and its table follow, then the commonest members and the metrical localization.</p>
     <ul>
-      <li><strong>Members</strong>: pick a specific member (type Greek with or without accents, or Beta Code, or click to browse the attested members) <em>or</em> a member category; a specific member fixes its category anyway, so use whichever is handier. A stem subcategory (s-stem, thematic, and so on) narrows a slot further wherever the analysis records one, and its list adapts to the chosen category. The member values come from the compound analysis itself, and the slots combine freely.</li>
-      <li><strong>Lookup</strong>: choosing one compound shows its members, every metrical position it takes in the verse (form, shape, feet, princeps or biceps start), every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
+      <li><strong>Members</strong>: pick a specific member (type Greek with or without accents, Beta Code, or English; <code>-abc</code> / <code>abc#</code> matches member endings, <code>#abc</code> beginnings; or click to browse) <em>or</em> a member category or subcategory. The two slots stay mutually compatible: choosing a first member (or its category or subcategory) narrows the second-member lists to the values that actually combine with it, and vice versa.</li>
+      <li><strong>Attested in</strong>: any corpus work (Iliad, Odyssey, Theogony, Works and Days) — a compound counts as attested in a work when its lemma occurs among that work's tokens (lemma matching across the database).</li>
+      <li><strong>Lookup</strong>: type Greek (accents optional), Beta Code, or English; substrings match anywhere, <code>-μων</code> / <code>mwn#</code> finds compounds ending in ‑μων (Beta Code writes long o as w and long e as h, so <code>ths#</code> = ‑της). Choosing one compound shows its members (exact member and lemma), every metrical position it takes in the verse, every occurrence in the corpus with its line text, and a button that shows all of its lines scanned word by word.</li>
     </ul>
   </div>
   <div class="mt-controls">
@@ -250,26 +261,33 @@
       <div class="field"><label for="mtCmpWork"><strong>Attested in</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
     </div>
     <div class="field">
-      <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">(optional)</span></label>
+      <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">(optional; Greek with or without accents, Beta Code, or English; <code>-μων</code> / <code>mwn#</code> = ends in ‑μων, <code>ths#</code> = ends in ‑της, <code>#ἀγα</code> = starts with)</span></label>
       <div class="combo">
-        <input id="mtCmpSearch" type="text" autocomplete="off" spellcheck="false" placeholder="type Greek (accents optional) or Beta Code, e.g. ῥοδοδάκτυλος or rododaktulos, or click to browse…">
+        <input id="mtCmpSearch" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ῥοδοδάκτυλος, rododaktulos, finger, μαχ (contains), -μων or mwn# (ends with)…; click to browse">
         <div id="mtCmpSearchMenu" class="combo-menu" hidden></div>
       </div>
       <div id="mtCmpDetail" style="margin-top:.5rem;"></div>
     </div>
   </div>
+  <div id="mtCmpMatchesSec">
+    <h3 style="margin-top:1rem;">Matching compounds</h3>
+    <div id="mtCmpMatches" style="margin-top:.3rem;"></div>
+  </div>
   <div id="mtCmpPairSec">
-    <p id="mtCmpDesc" class="help" style="margin-top:.4rem;"></p>
+    <h3 style="margin-top:1rem;">Compound member categories</h3>
     <div class="viz-wrap"><div id="mtCmpChart"></div></div>
+    <p id="mtCmpDesc" class="fig-caption" style="margin-top:.25rem;"></p>
     <div id="mtCmpTable" style="margin-top:.8rem;"></div>
   </div>
   <div id="mtCmpMembersSec">
     <h3 style="margin-top:1rem;">Members of the matching compounds</h3>
-    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Pick a category and this shows which members carry it.</p>
+    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Each lexeme's bar is split by allomorph (variants differing only in accent or capitalization count as one; hover a segment for its share), so the common and rare allomorphs of each member can be read off directly.</p>
     <div class="grid-2">
       <div class="viz-wrap" id="mtCmpM1Wrap"><div id="mtCmpM1Chart"></div></div>
       <div class="viz-wrap" id="mtCmpM2Wrap"><div id="mtCmpM2Chart"></div></div>
     </div>
+    <div class="viz-wrap" style="margin-top:.6rem;"><div id="mtCmpFlowChart"></div></div>
+    <p id="mtCmpFlowNote" class="fig-caption" style="margin-top:.25rem;"></p>
   </div>
   <div id="mtCmpLocSec" hidden>
     <h3 style="margin-top:1rem;">Metrical localization</h3>
@@ -299,10 +317,10 @@
       <p>This card searches the allomorphs of the infinitive. Every infinitive in the corpus carries its conjugation class and the ending morpheme its form shows, so variant endings — -ειν beside -έμεν and -έμεναι, -ναι, -σθαι, and the rest — can be pulled up directly and compared across works.</code>).</p>
       <ul>
         <li><strong>Scope</strong>: pick a work to reveal its books and a verse box that takes a single verse (212) or a range (212-415).</li>
-        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation, or ending morpheme; every list offers the values attested among the corpus infinitives.</li>
+        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation class (athematic, thematic, contract, sigmatic), or ending morpheme; every list offers the values attested among the corpus infinitives. Voice offers active and passive; medial and mediopassive infinitives are currently being processed. Each result row carries the infinitive's tense, voice, conjugation class, ending morpheme, lemma, and the metrical shape of its stem and whole form in situ — so ζευγνύμεναι comes back present-tense, athematic, with the ‑μεναι allomorph, lemma ζεύγνυμι, and stem shape HL.</li>
         <li><strong>Metrical filters</strong>: restrict by the metrical shape of the whole form or of its stem (H = heavy/long, L = light/short, one letter per syllable); type a shape and the menu narrows to the attested ones, or click to browse.</li>
-        <li><strong>Word searches</strong>: <em>Form contains</em> and <em>Lemma contains</em> find substrings, accent-insensitively; <em>Lemma matches exactly</em> pins down one verb and offers the corpus lemma list as you type. All three accept Greek (accents optional) or Beta Code.</li>
-        <li><strong>Custom queries</strong>: for advanced users, custom SQL queries can be written.</li>
+        <li><strong>Word searches</strong>: <em>Form contains</em> and <em>Lemma contains</em> find substrings, accent-insensitively; <code>#abc</code> anchors the start, <code>abc#</code> the end, and a toggle switches both boxes to regular expressions. <em>Lemma matches exactly</em> pins down one verb and offers only the lemmata with attested infinitives as you type. All accept Greek (accents optional), Beta Code, or English.</li>
+        <li><strong>Custom queries</strong>: for advanced users, custom SQL queries can be written (<code>REGEXP</code> is available).</li>
       </ul>
     </div>
     </div>
@@ -329,7 +347,7 @@
       <select id="infTense"><option value="">(any)</option></select>
     </div>
     <div class="field">
-      <label for="infVoice"><strong>Voice</strong></label>
+      <label for="infVoice"><strong>Voice</strong> <span class="info-tip" tabindex="0" data-tip="Medial and mediopassive infinitives are currently being processed">&#9432;</span></label>
       <select id="infVoice"><option value="">(any)</option></select>
     </div>
     <div class="field">
@@ -361,20 +379,22 @@
   <div class="grid-3" style="margin-top:1rem;">
     <div class="field">
       <label for="infFormLike"><strong>Form contains</strong></label>
-      <input type="text" id="infFormLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. εμεν or emen">
+      <input type="text" id="infFormLike" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional) or Beta Code, e.g. εμεν or emen; μεναι# = ends with, #ζευγ = starts with">
     </div>
     <div class="field">
       <label for="infLemmaLike"><strong>Lemma contains</strong></label>
-      <input type="text" id="infLemmaLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul">
+      <input type="text" id="infLemmaLike" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional) or Beta Code, e.g. ζευγ or zeug; #ζευγ = starts with, νυμι# = ends with">
     </div>
     <div class="field">
       <label for="infLemmaExact"><strong>Lemma matches exactly</strong></label>
       <div class="combo">
-        <input type="text" id="infLemmaExact" autocomplete="off" spellcheck="false" placeholder="e.g. λύω or Beta Code like luw; click to browse">
+        <input type="text" id="infLemmaExact" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional), Beta Code (luw), or English (yoke); only verbs with attested infinitives are offered">
         <div id="infLemmaExactMenu" class="combo-menu" hidden></div>
       </div>
     </div>
   </div>
+  <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> anchors the start of the word, <code>abc#</code> the end, <code>#abc#</code> matches exactly.
+    <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="infRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as JavaScript regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
   <div class="btn-row">
     <button id="btnInfApply" class="btn btn-primary" disabled>Apply filter</button>
     <button id="btnInfReset" class="btn">Reset</button>
@@ -609,6 +629,7 @@
   <script src="https://cdn.jsdelivr.net/npm/beta-code-js@3.1.0/bundle/beta-code.js"></script>
   <script src="assets/js/papa-fallback.js"></script>
   <script src="assets/js/mopsos-text.js"></script>
+  <script src="assets/js/mopsos-semantics.js"></script>
   <script src="assets/js/mopsos-shared.js"></script>
   <script src="assets/js/morphology-standalone.js"></script>
   <script src="assets/js/morphotactics.js"></script>

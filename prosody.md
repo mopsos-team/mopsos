@@ -114,7 +114,7 @@ section: prosody
     <ul>
       <li><strong>Scope</strong>: pick a work to reveal its books and a verse box that takes a single verse (212) or a range (212-415).</li>
       <li><strong>Metrical filters</strong>: type a shape (the menu narrows the attested shapes as you type, or click to browse), and pin the starting or ending foot and the position within it.</li>
-      <li><strong>Word searches</strong>: <em>Lemma contains</em> and <em>Form contains</em> find parts of the word, accent-insensitively; <em>Exact lemma</em> pins down one dictionary form and offers the corpus lemma list as you type. All three accept Greek (accents optional) or Beta Code.</li>
+      <li><strong>Word searches</strong>: <em>Lemma contains</em> and <em>Form contains</em> find parts of the word, accent-insensitively; <code>#abc</code> anchors the start, <code>abc#</code> the end, and a toggle switches both to regular expressions. <em>Exact lemma</em> pins down one dictionary form and offers the corpus lemma list as you type. All three accept Greek (accents optional), Beta Code, or English.</li>
       <li><strong>SQL</strong>: the controls write an ordinary read-only query you can inspect and edit by hand.</li>
     </ul>
   </div>
@@ -167,20 +167,22 @@ section: prosody
   <div class="grid-3" style="margin-top:1rem;">
     <div class="field">
       <label for="psFormLike"><strong>Form contains</strong></label>
-      <input type="text" id="psFormLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. οιο or oio">
+      <input type="text" id="psFormLike" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional) or Beta Code, e.g. οιο or oio; #οιο = starts with, οιο# = ends with">
     </div>
     <div class="field">
       <label for="psLemmaLike"><strong>Lemma contains</strong></label>
-      <input type="text" id="psLemmaLike" autocomplete="off" spellcheck="false" placeholder="substring: Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul">
+      <input type="text" id="psLemmaLike" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional) or Beta Code, e.g. δακτυλ or daktul; #δακτυλ = starts with, δακτυλ# = ends with">
     </div>
     <div class="field">
       <label for="psLemmaExact"><strong>Lemma matches exactly</strong></label>
       <div class="combo">
-        <input type="text" id="psLemmaExact" autocomplete="off" spellcheck="false" placeholder="e.g. ῥοδοδάκτυλος or Beta Code like rododaktulos; click to browse">
+        <input type="text" id="psLemmaExact" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional), Beta Code (rododaktulos), or English (finger); click to browse">
         <div id="psLemmaExactMenu" class="combo-menu" hidden></div>
       </div>
     </div>
   </div>
+  <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> anchors the start of the word, <code>abc#</code> the end, <code>#abc#</code> matches exactly.
+    <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="psRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as JavaScript regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
   <div class="btn-row">
     <button id="btnPsApply" class="btn btn-primary" disabled>Apply filter</button>
     <button id="btnPsReset" class="btn">Reset</button>
