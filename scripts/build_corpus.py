@@ -60,7 +60,7 @@ NUMERIC_PARSERS = {"INTEGER": int, "REAL": float}
 #                    the source column is coerced; appended as TEXT columns
 TABLES = [
     dict(
-        file_path=os.path.join(DATA, "morphology.csv"),
+        file_path=os.path.join(DATA, "morphology", "morphology.csv"),
         table_name="morphology",
         columns=None,
         column_mapping={},
