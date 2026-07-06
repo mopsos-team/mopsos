@@ -453,22 +453,27 @@
 
   // One member box per slot. The search is a SUBSTRING search over the member
   // as it surfaces in the segmentation — the string before the "+" for the
-  // first slot, after it for the second — with the usual anchors (#abc / abc-
-  // = starts with, abc# / -abc = ends with, #abc# = exactly abc), accent-
-  // insensitive for Greek input or via Beta Code for Latin input. Because it
-  // runs on the subset of strings under or after the "+", an ending search is
-  // effectively a stem-class search: "-της"/"ths#" on the second member finds
-  // the compounds in ‑της, and "-ο"/"o#" on the first member the linking ‑ο.
-  // A pick from the browse fills the member's LEMMA, so an exact lemma match
-  // (accent-insensitive) is kept alongside the surface search.
-  function memberNeedle(inputEl) {
+  // first slot, after it for the second. The "+" itself anchors the
+  // morphological boundary: in the first-member box "ο+" matches first
+  // members ENDING in ‑ο (the string immediately preceding the +, so the
+  // linking ‑ο), and in the second-member box "+μων" matches second members
+  // BEGINNING with μων (immediately following the +). "#" anchors the word
+  // edge: "#ἀγα" a first member beginning the word, "μων#" a second member
+  // ending it; "#abc+" / "+abc#" match a member exactly. (No hyphen
+  // notation here.) Greek is accent-insensitive; Latin input goes through
+  // Beta Code. A pick from the browse fills the member's LEMMA, so an
+  // unanchored input also matches the member lemma exactly.
+  function memberNeedle(inputEl, slot) {
     const raw = (inputEl.value || "").trim();
     if (!raw) return null;
     let start = false, end = false, core = raw;
-    if (core.charAt(0) === "#") { start = true; core = core.slice(1); }
-    if (core.slice(-1) === "#") { end = true; core = core.slice(0, -1); }
-    if (core.charAt(0) === "-") { end = true; core = core.slice(1); }
-    if (core.slice(-1) === "-") { start = true; core = core.slice(0, -1); }
+    if (slot === 1) {
+      if (core.charAt(0) === "#") { start = true; core = core.slice(1); }
+      if (core.slice(-1) === "+") { end = true; core = core.slice(0, -1); }
+    } else {
+      if (core.charAt(0) === "+") { start = true; core = core.slice(1); }
+      if (core.slice(-1) === "#") { end = true; core = core.slice(0, -1); }
+    }
     if (!core) return null;
     const T = window.MopsosText;
     const isGreek = T && T.hasGreek ? T.hasGreek(core) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(core);
@@ -496,8 +501,8 @@
   function compoundFilters() {
     return {
       work: el.cmpWork.value,
-      m1: memberNeedle(el.cmpM1),
-      m2: memberNeedle(el.cmpM2),
+      m1: memberNeedle(el.cmpM1, 1),
+      m2: memberNeedle(el.cmpM2, 2),
       m1cat: el.cmpM1Cat.value,
       m2cat: el.cmpM2Cat.value,
       m1sub: el.cmpM1Sub ? el.cmpM1Sub.value : "",
@@ -1267,11 +1272,14 @@
 
   function wireCompoundCombo() {
     // Substring matching: typing μαχ (or max) finds every compound containing
-    // it; -μων / mwn# finds the compounds ENDING in -μων (Beta Code: w = long
-    // o, h = long e, so ths# = -της), #abc anchors the start, and an English
-    // word (e.g. "finger") finds the compounds the LSJ bridge maps it to.
+    // it; mwn# / μων# finds the compounds ENDING in ‑μων (Beta Code: w = long
+    // o, h = long e, so ths# = -της), #abc anchors the start — # marks the
+    // word edge, i.e. the beginning of the first member or the end of the
+    // second (no hyphen notation) — and an English word (e.g. "finger")
+    // finds the compounds the LSJ bridge maps it to.
     UI.greekCombo(el.cmpSearch, el.cmpSearchMenu, {
       mode: "substring",
+      hashOnly: true,
       items() {
         buildCompoundData();
         // browse only the compounds the current filters allow, so the list
@@ -1425,11 +1433,13 @@
         if (c) c.addEventListener("change", onCompoundChange);
       });
       // one adaptive combo per member slot, fed live by the members compatible
-      // with the other slot's current choices (substring matching, with -abc /
-      // abc# suffix and #abc prefix anchors, Beta Code, and English)
+      // with the other slot's current choices (substring matching over the
+      // member lemmata; the filter itself reads the +/# anchors, see
+      // memberNeedle)
       const wireMember = (input, menu, slot) => {
         UI.greekCombo(input, menu, {
           mode: "substring",
+          hashOnly: true,
           items() { return memberItemsFor(slot); },
           onSelect(it) { input.value = it.display; onCompoundChange(); }
         });

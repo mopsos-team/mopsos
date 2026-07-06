@@ -228,9 +228,9 @@
     <h4>Nominal compounds panel</h4>
     <p>Filter the analyzed compounds by first member, second member, member category, stem subcategory (s-stem, thematic, and so on), or attesting work. The matching compounds are listed first (each with its segmentation and, for both slots, the exact compound member alongside its lemma and category); the category-pairing figure and its table follow, then the commonest members and the metrical localization.</p>
     <ul>
-      <li><strong>Members</strong>: search a substring of the member as it surfaces in the compound — the string before the <code>+</code> for the first member, after it for the second (type Greek with or without accents or Beta Code; <code>-abc</code> / <code>abc#</code> matches member endings, <code>#abc</code> beginnings; or click to browse a member). Because the search runs on just that side of the <code>+</code>, an ending search is effectively a stem-class search: <code>-της</code> on the second member finds the compounds in ‑της, and <code>-ο</code> on the first member the linking ‑ο. Alternatively pick a member category or subcategory. The two slots stay mutually compatible: choosing a first member (or its category or subcategory) narrows the second-member lists to the values that actually combine with it, and vice versa.</li>
+      <li><strong>Members</strong>: search a substring of the member as it surfaces in the compound — the string before the <code>+</code> for the first member, after it for the second (Greek with or without accents, or Beta Code; or click to browse a member). The <code>+</code> anchors the morphological boundary and <code>#</code> the word edge: in the first-member box <code>ο+</code> = first members ending in ‑ο right before the boundary (the linking ‑ο) and <code>#ἀγα</code> = beginning the word; in the second-member box <code>+μων</code> = second members beginning with μων right after the boundary and <code>μων#</code> = ending the word. Because the search runs on just that side of the <code>+</code>, an anchored search is effectively a stem-class search. Alternatively pick a member category or subcategory. The two slots stay mutually compatible: choosing a first member (or its category or subcategory) narrows the second-member lists to the values that actually combine with it, and vice versa.</li>
       <li><strong>Attested in</strong>: any corpus work (Iliad, Odyssey, Theogony, Works and Days) — a compound counts as attested in a work when its lemma occurs among that work's tokens (lemma matching across the database).</li>
-      <li><strong>Lookup</strong>: type Greek (accents optional), Beta Code, or English; substrings match anywhere, <code>-μων</code> / <code>mwn#</code> finds compounds ending in ‑μων (Beta Code writes long o as w and long e as h, so <code>ths#</code> = ‑της). Choosing one compound shows its members (exact member and lemma), every metrical position it takes in the verse, every occurrence in the corpus with its line text, and a button that shows all of its lines scanned word by word.</li>
+      <li><strong>Lookup</strong>: type Greek (accents optional), Beta Code, or English; substrings match anywhere, and <code>#</code> anchors the word edge — <code>#ἀγα</code> = starts with, <code>μων</code><code>#</code> / <code>mwn#</code> = ends in ‑μων (Beta Code writes long o as w and long e as h, so <code>ths#</code> = ‑της). Choosing one compound shows its members (exact member and lemma), every metrical position it takes in the verse, every occurrence in the corpus with its line text, and a button that shows all of its lines scanned word by word.</li>
     </ul>
   </div>
   <div class="mt-controls">
@@ -238,7 +238,7 @@
       <div class="field">
         <label for="mtCmpM1"><strong>First member</strong></label>
         <div class="combo">
-          <input id="mtCmpM1" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ἀ/ἀν, εὐ, or a substring of the part before the +: -ο = ends in ‑ο; click to browse">
+          <input id="mtCmpM1" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ἀ/ἀν, εὐ, or a substring of the part before the +: ο+ = ends right before the +, #ἀγα = begins the word; click to browse">
           <div id="mtCmpM1Menu" class="combo-menu" hidden></div>
         </div>
       </div>
@@ -249,7 +249,7 @@
       <div class="field">
         <label for="mtCmpM2"><strong>Second member</strong></label>
         <div class="combo">
-          <input id="mtCmpM2" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. μάχομαι, or a substring of the part after the +: -της / ths# = ends in ‑της; click to browse">
+          <input id="mtCmpM2" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. μάχομαι, or a substring of the part after the +: +μαχ = begins right after the +, της# / ths# = ends the word; click to browse">
           <div id="mtCmpM2Menu" class="combo-menu" hidden></div>
         </div>
       </div>
@@ -260,9 +260,9 @@
       <div class="field"><label for="mtCmpWork"><strong>Attested in</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
     </div>
     <div class="field">
-      <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">(optional; Greek with or without accents, Beta Code, or English; <code>-μων</code> / <code>mwn#</code> = ends in ‑μων, <code>ths#</code> = ends in ‑της, <code>#ἀγα</code> = starts with)</span></label>
+      <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">(optional; Greek with or without accents, Beta Code, or English; <code>#</code> = word edge: <code>μων#</code> / <code>mwn#</code> = ends in ‑μων, <code>ths#</code> = ends in ‑της, <code>#ἀγα</code> = starts with)</span></label>
       <div class="combo">
-        <input id="mtCmpSearch" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ῥοδοδάκτυλος, rododaktulos, finger, μαχ (contains), -μων or mwn# (ends with)…; click to browse">
+        <input id="mtCmpSearch" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ῥοδοδάκτυλος, rododaktulos, finger, μαχ (contains), μων# or mwn# (ends with)…; click to browse">
         <div id="mtCmpSearchMenu" class="combo-menu" hidden></div>
       </div>
       <div id="mtCmpDetail" style="margin-top:.5rem;"></div>

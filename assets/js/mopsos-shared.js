@@ -754,8 +754,9 @@
       const limit = opts.limit || 200;
       const T = window.MopsosText;
       // "prefix" (default) or "substring". Independent of the mode, the input
-      // accepts explicit anchors: #abc (or abc-) = starts with, abc# (or -abc)
-      // = ends with, #abc# = exactly abc.
+      // accepts explicit anchors: #abc = starts with, abc# = ends with, #abc#
+      // = exactly abc. Unless opts.hashOnly, the linguist's hyphen notation
+      // also works: abc- = starts with, -abc = ends with.
       const mode = opts.mode || "prefix";
 
       // For a multi-value box (opts.multi), only the text after the final
@@ -771,8 +772,10 @@
         let start = false, end = false, core = q;
         if (core.charAt(0) === "#") { start = true; core = core.slice(1); }
         if (core.slice(-1) === "#") { end = true; core = core.slice(0, -1); }
-        if (core.charAt(0) === "-") { end = true; core = core.slice(1); }      // "-μων": a suffix, the linguist's notation
-        if (core.slice(-1) === "-") { start = true; core = core.slice(0, -1); } // "ἀγα-": a prefix
+        if (!opts.hashOnly) {
+          if (core.charAt(0) === "-") { end = true; core = core.slice(1); }      // "-μων": a suffix, the linguist's notation
+          if (core.slice(-1) === "-") { start = true; core = core.slice(0, -1); } // "ἀγα-": a prefix
+        }
         return { core: core, start: start, end: end };
       }
       function keyMatch(key, needle, a) {
