@@ -228,7 +228,7 @@
     <h4>Nominal compounds panel</h4>
     <p>Filter the analyzed compounds by first member, second member, member category, stem subcategory (s-stem, thematic, and so on), or attesting work. The matching compounds are listed first (each with its segmentation and, for both slots, the exact compound member alongside its lemma and category); the category-pairing figure and its table follow, then the commonest members and the metrical localization.</p>
     <ul>
-      <li><strong>Members</strong>: pick a specific member (type Greek with or without accents, Beta Code, or English; <code>-abc</code> / <code>abc#</code> matches member endings, <code>#abc</code> beginnings; or click to browse) <em>or</em> a member category or subcategory. The two slots stay mutually compatible: choosing a first member (or its category or subcategory) narrows the second-member lists to the values that actually combine with it, and vice versa.</li>
+      <li><strong>Members</strong>: search a substring of the member as it surfaces in the compound — the string before the <code>+</code> for the first member, after it for the second (type Greek with or without accents or Beta Code; <code>-abc</code> / <code>abc#</code> matches member endings, <code>#abc</code> beginnings; or click to browse a member). Because the search runs on just that side of the <code>+</code>, an ending search is effectively a stem-class search: <code>-της</code> on the second member finds the compounds in ‑της, and <code>-ο</code> on the first member the linking ‑ο. Alternatively pick a member category or subcategory. The two slots stay mutually compatible: choosing a first member (or its category or subcategory) narrows the second-member lists to the values that actually combine with it, and vice versa.</li>
       <li><strong>Attested in</strong>: any corpus work (Iliad, Odyssey, Theogony, Works and Days) — a compound counts as attested in a work when its lemma occurs among that work's tokens (lemma matching across the database).</li>
       <li><strong>Lookup</strong>: type Greek (accents optional), Beta Code, or English; substrings match anywhere, <code>-μων</code> / <code>mwn#</code> finds compounds ending in ‑μων (Beta Code writes long o as w and long e as h, so <code>ths#</code> = ‑της). Choosing one compound shows its members (exact member and lemma), every metrical position it takes in the verse, every occurrence in the corpus with its line text, and a button that shows all of its lines scanned word by word.</li>
     </ul>
@@ -238,7 +238,7 @@
       <div class="field">
         <label for="mtCmpM1"><strong>First member</strong></label>
         <div class="combo">
-          <input id="mtCmpM1" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ἀ/ἀν, εὐ, πολύς, or Beta Code like eu…; click to browse">
+          <input id="mtCmpM1" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ἀ/ἀν, εὐ, or a substring of the part before the +: -ο = ends in ‑ο; click to browse">
           <div id="mtCmpM1Menu" class="combo-menu" hidden></div>
         </div>
       </div>
@@ -249,7 +249,7 @@
       <div class="field">
         <label for="mtCmpM2"><strong>Second member</strong></label>
         <div class="combo">
-          <input id="mtCmpM2" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. μάχομαι, ἵππος, or Beta Code like maxomai…; click to browse">
+          <input id="mtCmpM2" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. μάχομαι, or a substring of the part after the +: -της / ths# = ends in ‑της; click to browse">
           <div id="mtCmpM2Menu" class="combo-menu" hidden></div>
         </div>
       </div>
@@ -313,10 +313,10 @@
     </div>
     <div id="infInfo" class="info-panel" hidden>
       <h4>Infinitive Search Card</h4>
-      <p>This card searches the allomorphs of the infinitive. Every infinitive in the corpus carries its conjugation class and the ending morpheme its form shows, so variant endings — -ειν beside -έμεν and -έμεναι, -ναι, -σθαι, and the rest — can be pulled up directly and compared across works.</code>).</p>
+      <p>This card searches the allomorphs of the infinitive. Every infinitive in the corpus carries its conjugation class and its ending-morpheme allomorph, recorded as a number (1, 2, 3 …; descriptive labels will be assigned to the numbers later), so the variant endings can be pulled up directly and compared across works.</p>
       <ul>
         <li><strong>Scope</strong>: pick a work to reveal its books and a verse box that takes a single verse (212) or a range (212-415).</li>
-        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation class (athematic, thematic, contract, sigmatic), or ending morpheme; every list offers the values attested among the corpus infinitives. Voice offers active and passive; medial and mediopassive infinitives are currently being processed. Each result row carries the infinitive's tense, voice, conjugation class, ending morpheme, lemma, and the metrical shape of its stem and whole form in situ — so ζευγνύμεναι comes back present-tense, athematic, with the ‑μεναι allomorph, lemma ζεύγνυμι, and stem shape HL.</li>
+        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation class (athematic, thematic, contract, sigmatic), or ending morpheme; every list offers the values attested among the corpus infinitives. Voice offers active and passive; medial and mediopassive infinitives are currently being processed. Each result row carries the infinitive's tense, voice, conjugation class, ending-morpheme allomorph number, lemma, and the metrical shape of its stem and whole form in situ — so ζευγνύμεναι comes back present-tense, athematic, with its allomorph number, lemma ζεύγνυμι, and stem shape HL.</li>
         <li><strong>Metrical filters</strong>: restrict by the metrical shape of the whole form or of its stem (H = heavy/long, L = light/short, one letter per syllable); type a shape and the menu narrows to the attested ones, or click to browse.</li>
         <li><strong>Word searches</strong>: <em>Form contains</em> and <em>Lemma contains</em> find substrings, accent-insensitively; <code>#abc</code> anchors the start, <code>abc#</code> the end, and a toggle switches both boxes to regular expressions. <em>Lemma matches exactly</em> pins down one verb and offers only the lemmata with attested infinitives as you type. All accept Greek (accents optional), Beta Code, or English.</li>
         <li><strong>Custom queries</strong>: for advanced users, custom SQL queries can be written (<code>REGEXP</code> is available).</li>

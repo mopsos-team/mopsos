@@ -451,25 +451,47 @@
     return { s1: seg.slice(0, i), s2: seg.slice(i + 1) };
   }
 
-  // One member box per slot. The values are the member1 / member2 attributes
-  // of the compound analysis themselves: the combo browses them, and the
-  // filter is an exact match against the chosen value (accent-insensitive
-  // for Greek input, or via its Beta Code for Latin input).
+  // One member box per slot. The search is a SUBSTRING search over the member
+  // as it surfaces in the segmentation — the string before the "+" for the
+  // first slot, after it for the second — with the usual anchors (#abc / abc-
+  // = starts with, abc# / -abc = ends with, #abc# = exactly abc), accent-
+  // insensitive for Greek input or via Beta Code for Latin input. Because it
+  // runs on the subset of strings under or after the "+", an ending search is
+  // effectively a stem-class search: "-της"/"ths#" on the second member finds
+  // the compounds in ‑της, and "-ο"/"o#" on the first member the linking ‑ο.
+  // A pick from the browse fills the member's LEMMA, so an exact lemma match
+  // (accent-insensitive) is kept alongside the surface search.
   function memberNeedle(inputEl) {
     const raw = (inputEl.value || "").trim();
     if (!raw) return null;
+    let start = false, end = false, core = raw;
+    if (core.charAt(0) === "#") { start = true; core = core.slice(1); }
+    if (core.slice(-1) === "#") { end = true; core = core.slice(0, -1); }
+    if (core.charAt(0) === "-") { end = true; core = core.slice(1); }
+    if (core.slice(-1) === "-") { start = true; core = core.slice(0, -1); }
+    if (!core) return null;
     const T = window.MopsosText;
-    const isGreek = T && T.hasGreek ? T.hasGreek(raw) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(raw);
-    return { raw: raw, greek: isGreek ? normalizeGreek(raw) : "", beta: (!isGreek && T) ? T.looseBetaKey(raw) : "" };
+    const isGreek = T && T.hasGreek ? T.hasGreek(core) : /[\u0370-\u03ff\u1f00-\u1fff]/.test(core);
+    return { raw: raw, start: start, end: end,
+      greek: isGreek ? normalizeGreek(core) : "",
+      beta: (!isGreek && T) ? T.looseBetaKey(core) : "" };
   }
-  function memberHits(needle, member) {
-    if (!needle || !member) return !needle;
-    if (needle.greek) return normalizeGreek(member) === needle.greek;
-    if (needle.beta) {
-      const T = window.MopsosText;
-      return T.looseBetaKey(T.toBetaCode(member)) === needle.beta;
-    }
-    return false;
+  function memberHits(needle, surface, lemma) {
+    if (!needle) return true;
+    const T = window.MopsosText;
+    const n = needle.greek || needle.beta;
+    if (!n) return false;
+    const keyOf = (v) => needle.greek ? normalizeGreek(v)
+      : (T ? T.looseBetaKey(T.toBetaCode(v)) : "");
+    const hit = (key) => {
+      if (!key) return false;
+      if (needle.start && needle.end) return key === n;
+      if (needle.start) return key.indexOf(n) === 0;
+      if (needle.end) return key.length >= n.length && key.lastIndexOf(n) === key.length - n.length;
+      return key.indexOf(n) >= 0;
+    };
+    if (surface && hit(keyOf(surface))) return true;
+    return !needle.start && !needle.end && !!lemma && keyOf(lemma) === n;
   }
   function compoundFilters() {
     return {
@@ -500,8 +522,8 @@
     if (f.m2cat) rows = rows.filter((r) => r.member2_category === f.m2cat);
     if (f.m1sub) rows = rows.filter((r) => r.member1_subcategory === f.m1sub);
     if (f.m2sub) rows = rows.filter((r) => r.member2_subcategory === f.m2sub);
-    if (f.m1) rows = rows.filter((r) => memberHits(f.m1, r.member1));
-    if (f.m2) rows = rows.filter((r) => memberHits(f.m2, r.member2));
+    if (f.m1) rows = rows.filter((r) => memberHits(f.m1, memberSurfaces(r).s1, r.member1));
+    if (f.m2) rows = rows.filter((r) => memberHits(f.m2, memberSurfaces(r).s2, r.member2));
     if (f.work) {
       const attested = attestedSetFor(f.work);
       rows = rows.filter((r) => attested.has(r.lemma_search));
