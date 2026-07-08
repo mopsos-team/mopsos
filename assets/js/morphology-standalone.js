@@ -518,6 +518,523 @@
     });
   }
 
+  /* ------------------------------------------------------------------------
+   *  INFINITIVE VISUALIZATIONS
+   *  Descriptive figures of allomorph choice, drawn straight from the corpus.
+   *  Each figure is a live query over the same infinitive slice the Filter
+   *  card uses; the classifier-derived diagnostics are deliberately not here.
+   *  Endings are bucketed by the SAME (conjugation, tense, morpheme) -> tag
+   *  map the Filter card uses (infEndingClass / INF_ENDING_TAGS), with the two
+   *  descriptive numbers ("5"/"6") shown as Analogical / Contracted.
+   * ---------------------------------------------------------------------- */
+  const VIZ_BASE = INF_WHERE + " AND match_status <> \"CONFLICT_NO_MATCH\"" +
+    " AND (conjugation IS NOT NULL OR morpheme IS NOT NULL)";
+  const WORK_ORDER = ["Iliad", "Odyssey", "Theogony", "Works and Days"];
+  const CONJ_NAME = { t: "Thematic", a: "Athematic", s: "Sigmatic", c: "Contract" };
+  const TENSE_NAME = { p: "Present", a: "Aorist", r: "Perfect", f: "Future" };
+  const VOICE_NAME = { a: "Active", p: "Passive" };
+
+  /* Canonical allomorph buckets: display order + the fixed colours used in the
+   * paper's figures (edit a colour here and every figure follows). */
+  const ALLO = [
+    ["\u2011ειν", "#1f9bd6"], ["\u2011έειν", "#8fcdea"], ["\u2011έμεν", "#2f9e44"],
+    ["\u2011έμεναι", "#95d4a3"], ["\u2011μεν", "#7d2a86"], ["\u2011μεναι", "#e493c3"],
+    ["\u2011ναι", "#f2ce5b"], ["\u2011σαι", "#d21f26"], ["\u2011σειν", "#9c2c1c"],
+    ["\u2011σέμεν", "#cd8a78"], ["\u2011σέμεναι", "#efc9c2"],
+    ["Contracted", "#a6a6a6"], ["Analogical", "#111111"]
+  ];
+  const ALLO_ORDER = ALLO.map((a) => a[0]);
+  const ALLO_COLOR = Object.fromEntries(ALLO);
+
+  function chartAllo(conj, tense, m) {
+    const cls = INF_ENDING_TAGS[infEndingClass(String(conj || ""), String(tense || ""))];
+    const raw = cls && cls.tags[String(m)];
+    if (!raw) return null;
+    if (/analog/i.test(raw)) return "Analogical";
+    if (/contract/i.test(raw)) return "Contracted";
+    return raw;
+  }
+
+  /* dark ink on light fills, white on dark fills, chosen by luminance */
+  function idealText(hex) {
+    const c = hex.replace("#", "");
+    const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.62 ? "#1f2937" : "#ffffff";
+  }
+
+  /* "Lemma/Form contains" for the viz filters: same accent-insensitive,
+   * #-anchored substring match the Filter card runs against the diacritic-free
+   * *_search columns (reuses MopsosSearch.searchKey for the normalisation). */
+  function vizLikeCond(col, el) {
+    const raw = el ? String(el.value || "").trim() : "";
+    if (!raw) return null;
+    let start = false, end = false, core = raw;
+    if (core.charAt(0) === "#") { start = true; core = core.slice(1); }
+    if (core.slice(-1) === "#") { end = true; core = core.slice(0, -1); }
+    const k = (Search && Search.searchKey) ? Search.searchKey(core) : core.toLowerCase();
+    if (!k) return null;
+    if (start && end) return q(col) + " = " + sqlStr(k);
+    if (start) return q(col) + " LIKE " + sqlStr(k + "%");
+    if (end) return q(col) + " LIKE " + sqlStr("%" + k);
+    return q(col) + " LIKE " + sqlStr("%" + k + "%");
+  }
+
+  /* The optional pre-viz filters (tense, voice, conjugation, ending type,
+   * lemma, form), mirroring the Filter card. Returns an AND-joined fragment
+   * that narrows the slice fed to every preset figure, or "" when nothing is
+   * set. Injected once, in vizRows, so all figures honour it. */
+  function vizFilterWhere() {
+    const out = [];
+    [["infVizTense", "tense"], ["infVizVoice", "voice"], ["infVizConjugation", "conjugation"]]
+      .forEach(([id, col]) => { const v = $(id) && $(id).value; if (v) out.push(q(col) + " = " + sqlStr(v)); });
+    const em = $("infVizMorpheme") && $("infVizMorpheme").value;
+    if (em) {
+      const i = em.indexOf("|");
+      const cls = em.slice(0, i), m = em.slice(i + 1), cj = cls.charAt(0);
+      out.push(q("morpheme") + " = " + sqlStr(m));
+      out.push(q("conjugation") + " = " + sqlStr(cj));
+      if (cls.length > 1) out.push(q("tense") + " = 'f'");
+      else if (cj === "s" || cj === "c") out.push(q("tense") + " <> 'f'");
+    }
+    const lc = vizLikeCond("lemma_search", $("infVizLemmaLike")); if (lc) out.push(lc);
+    const fc = vizLikeCond("form_search", $("infVizFormLike")); if (fc) out.push(fc);
+    return out.join(" AND ");
+  }
+
+  /* pull grouped (conjugation, tense, morpheme, …extra) counts over the slice */
+  function vizRows(extraWhere, extraCols) {
+    const cols = ["conjugation cj", "tense t", "morpheme m"].concat(extraCols || []);
+    const grp = cols.map((s) => q(s.split(" ")[0])).join(", ");
+    const w = andWhere(VIZ_BASE, vizFilterWhere(), extraWhere);
+    return SQL.objects("SELECT " + cols.map((s) => {
+      const p = s.split(" "); return p.length > 1 ? q(p[0]) + " " + p[1] : q(p[0]);
+    }).join(", ") + ", COUNT(*) c FROM " + q(TABLE) + " WHERE " + w + " GROUP BY " + grp + ";");
+  }
+
+  /* rows -> [{label, n, counts:{allo:n}}], grouped by keyFn(row) */
+  function accumulate(rows, keyFn) {
+    const map = new Map();
+    rows.forEach((r) => {
+      const label = keyFn(r);
+      if (label == null || label === "") return;
+      const a = chartAllo(r.cj, r.t, r.m);
+      if (!a) return;
+      let g = map.get(label);
+      if (!g) { g = { label: label, n: 0, counts: {} }; map.set(label, g); }
+      g.counts[a] = (g.counts[a] || 0) + r.c; g.n += r.c;
+    });
+    return [...map.values()];
+  }
+  function orderGroups(groups, orderArr) {
+    const idx = new Map(orderArr.map((l, i) => [l, i]));
+    return groups.filter((g) => idx.has(g.label))
+      .sort((x, y) => idx.get(x.label) - idx.get(y.label));
+  }
+
+  function vizWorkFilter() {
+    const w = ($("infVizWork") && $("infVizWork").value) || "";
+    return w ? q("work") + " = " + sqlStr(w) : "";
+  }
+  function andWhere() {
+    return [...arguments].filter(Boolean).join(" AND ");
+  }
+
+  function vizClear(msg) {
+    const el = $("infVizWrap");
+    el.innerHTML = '<div class="small-muted" style="padding:.6rem;">' + (msg || "No infinitives match this selection.") + "</div>";
+    return el;
+  }
+
+  /* attach a themed, downloadable <svg class="d3-svg"> the way the shared
+   * charts do (so it gets the PNG / SVG / enlarge toolbar for free) */
+  function mkSvg(el, w, h) {
+    const s = window.d3.select(el).append("svg")
+      .attr("viewBox", "0 0 " + w + " " + h)
+      .attr("preserveAspectRatio", "xMidYMid meet")
+      .attr("class", "d3-svg")
+      .style("width", "100%").style("height", "auto")
+      .style("--nat-w", w + "px");
+    Chart.addToolbar(el);
+    return s;
+  }
+
+  /* Horizontal stacked bars: one bar per group, coloured by allomorph.
+   *   mode 'percent' -> 100 % bars; 'count' -> shared count axis.
+   *   opts: { title, mode, allos (subset), unit } */
+  function stackFig(el, groups, opts) {
+    opts = opts || {};
+    const d3 = window.d3;
+    const mode = opts.mode || "percent";
+    // which allomorphs actually occur (canonical order), optionally restricted
+    const present = new Set();
+    groups.forEach((g) => Object.keys(g.counts).forEach((a) => present.add(a)));
+    let keys = ALLO_ORDER.filter((a) => present.has(a));
+    if (opts.allos) keys = keys.filter((a) => opts.allos.indexOf(a) >= 0);
+
+    const width = 850;
+    const M = { top: opts.title ? 30 : 12, right: 16, left: 168 };
+    const rowH = 30, barH = 21;
+    const plotW = width - M.left - M.right;
+    const plotTop = M.top;
+    const plotBottom = plotTop + groups.length * rowH;
+    const axisY = plotBottom + 16;
+
+    // legend geometry (wrap swatches across the width)
+    const legTop = axisY + 20;
+    const legItemH = 18;
+    let lx = M.left, ly = legTop, legRows = 1;
+    const legPos = keys.map((k) => {
+      const wpx = 20 + String(k).length * 7.2 + 14;
+      if (lx + wpx > width - M.right) { lx = M.left; ly += legItemH; legRows++; }
+      const p = { k: k, x: lx, y: ly }; lx += wpx; return p;
+    });
+    const height = legTop + legRows * legItemH + 8;
+
+    const root = mkSvg(el, width, height);
+    if (opts.title) root.append("text").attr("x", width / 2).attr("y", 18)
+      .attr("text-anchor", "middle").attr("font-size", 14).attr("font-weight", 600)
+      .attr("fill", "#1f2937").text(opts.title);
+
+    const maxN = d3.max(groups, (g) => g.n) || 1;
+    const x = d3.scaleLinear().domain([0, mode === "percent" ? 100 : maxN]).range([M.left, M.left + plotW]);
+
+    // x-axis ticks + gridlines
+    const ticks = mode === "percent" ? [0, 25, 50, 75, 100] : x.ticks(6);
+    ticks.forEach((t) => {
+      root.append("line").attr("x1", x(t)).attr("x2", x(t)).attr("y1", plotTop - 2).attr("y2", plotBottom)
+        .attr("stroke", "#e5e7eb").attr("stroke-width", 1);
+      root.append("text").attr("x", x(t)).attr("y", axisY).attr("text-anchor", "middle")
+        .attr("font-size", 10).attr("fill", "#6b7280").text(mode === "percent" ? t + "%" : t);
+    });
+
+    groups.forEach((g, i) => {
+      const y = plotTop + i * rowH + (rowH - barH) / 2;
+      const lab = root.append("text").attr("x", M.left - 10).attr("text-anchor", "end").attr("fill", "#374151");
+      lab.append("tspan").attr("x", M.left - 10).attr("y", y + barH / 2 - 3)
+        .attr("font-size", 11.5).attr("font-weight", 600).text(g.label);
+      lab.append("tspan").attr("x", M.left - 10).attr("y", y + barH / 2 + 10)
+        .attr("font-size", 9.5).attr("fill", "#94a3b8").text("N = " + g.n);
+
+      let cursor = 0;
+      keys.forEach((a) => {
+        const cnt = g.counts[a] || 0;
+        if (!cnt) return;
+        const frac = cnt / g.n;
+        const val = mode === "percent" ? frac * 100 : cnt;
+        const x0 = mode === "percent" ? x(cursor) : x(cursor);
+        const x1 = mode === "percent" ? x(cursor + frac * 100) : x(cursor + cnt);
+        const wpx = Math.max(0, x1 - x0);
+        const fill = ALLO_COLOR[a] || "#cccccc";
+        const rect = root.append("rect").attr("x", x0).attr("y", y).attr("width", wpx).attr("height", barH)
+          .attr("fill", fill);
+        rect.append("title").text(g.label + " · " + a + ": " + cnt + " (" + (frac * 100).toFixed(1) + "%)");
+        const pct = frac * 100;
+        if (wpx >= 24 && pct >= 4) {
+          root.append("text").attr("x", x0 + wpx / 2).attr("y", y + barH / 2)
+            .attr("text-anchor", "middle").attr("dominant-baseline", "central")
+            .attr("font-size", 10).attr("fill", idealText(fill)).attr("pointer-events", "none")
+            .text(mode === "percent" ? Math.round(pct) + "%" : cnt);
+        }
+        cursor += mode === "percent" ? frac * 100 : cnt;
+      });
+    });
+
+    // legend
+    legPos.forEach((p) => {
+      root.append("rect").attr("x", p.x).attr("y", p.y - 9).attr("width", 12).attr("height", 12)
+        .attr("rx", 2).attr("fill", ALLO_COLOR[p.k] || "#ccc");
+      root.append("text").attr("x", p.x + 17).attr("y", p.y).attr("font-size", 10.5)
+        .attr("fill", "#475569").text(p.k);
+    });
+  }
+
+  /* Metrical localization heatmap: allomorph (rows) × hexameter position
+   * (cols), cell = share of that allomorph's tokens landing there. */
+  function metricalFig(el, extraWhere) {
+    const d3 = window.d3;
+    const POS = { "1": "Princeps", "2": "Biceps 1", "3": "Biceps 2" };
+    const rows = vizRows(andWhere(extraWhere, q("foot_end") + " IS NOT NULL", q("foot_end_pos") + " IS NOT NULL"),
+      ["foot_end fe", "foot_end_pos fp"]);
+    const perAllo = new Map();     // allo -> {total, cells:Map(colKey->n)}
+    const colSet = new Map();      // colKey -> sortKey
+    rows.forEach((r) => {
+      const a = chartAllo(r.cj, r.t, r.m); if (!a) return;
+      const posName = POS[String(r.fp)] || ("pos " + r.fp);
+      const col = "Foot " + r.fe + " " + posName;
+      colSet.set(col, Number(r.fe) * 10 + Number(r.fp));
+      let e = perAllo.get(a); if (!e) { e = { total: 0, cells: new Map() }; perAllo.set(a, e); }
+      e.cells.set(col, (e.cells.get(col) || 0) + r.c); e.total += r.c;
+    });
+    if (!perAllo.size) return vizClear();
+    const cols = [...colSet.keys()].sort((x, y) => colSet.get(x) - colSet.get(y));
+    const alloRows = ALLO_ORDER.filter((a) => perAllo.has(a));
+    const rowLabels = alloRows.map((a) => a + " (" + perAllo.get(a).total + ")");
+    const matrix = alloRows.map((a) => {
+      const e = perAllo.get(a);
+      return cols.map((c) => { const n = e.cells.get(c) || 0; return n ? (100 * n / e.total) : NaN; });
+    });
+    Chart.heatmap(el, matrix, rowLabels, cols, {
+      interpolator: d3.interpolateBlues, showValues: true, min: 0,
+      valueFormat: (v) => Math.round(v), valueLabel: "Share of the allomorph's tokens (%)",
+      title: "Metrical localization of infinitive endings",
+      xLabel: "Metrical position where the ending falls"
+    });
+  }
+
+  function renderInfViz() {
+    const el = $("infVizWrap");
+    el.innerHTML = "";
+    const chart = $("infVizChart").value;
+    const minN = Math.max(0, parseInt($("infVizMinN").value, 10) || 0);
+    const wf = vizWorkFilter();
+
+    if (chart === "byText") {
+      const g = orderGroups(accumulate(vizRows("", ["work"]), (r) => r.work), WORK_ORDER);
+      if (!g.length) return vizClear();
+      return stackFig(el, g, { title: "Distribution of infinitive endings by text" });
+    }
+    if (chart === "present" || chart === "aorist") {
+      const isPres = chart === "present";
+      const tense = isPres ? "p" : "a";
+      const conjs = isPres ? [["t", "Thematic"], ["a", "Athematic"], ["c", "Contract"]]
+                           : [["t", "Thematic"], ["a", "Athematic"], ["s", "Sigmatic"]];
+      const allow = new Set(conjs.map((c) => c[0]));
+      const cName = Object.fromEntries(conjs);
+      const rows = vizRows(q("tense") + " = " + sqlStr(tense), ["work", "conjugation"]);
+      const groups = accumulate(rows, (r) => allow.has(String(r.conjugation))
+        ? r.work + " \u00b7 " + cName[String(r.conjugation)] : null);
+      const order = [];
+      WORK_ORDER.forEach((w) => conjs.forEach(([, cn]) => order.push(w + " \u00b7 " + cn)));
+      const g = orderGroups(groups, order);
+      if (!g.length) return vizClear();
+      return stackFig(el, g, { title: (isPres ? "Present" : "Aorist") + " infinitives: allomorph by conjugation and text" });
+    }
+    if (chart === "perfect") {
+      const rows = vizRows(q("tense") + " = 'r'", ["metrical_stem_shape mss", "lemma"]);
+      const byShape = accumulate(rows, (r) => (r.mss && r.mss !== "-") ? r.mss : null)
+        .sort((a, b) => b.n - a.n);
+      const byLemma = accumulate(rows, (r) => (r.lemma && r.lemma !== "-" && r.lemma !== "") ? r.lemma : null)
+        .sort((a, b) => b.n - a.n).slice(0, 16);
+      if (!byShape.length && !byLemma.length) return vizClear("No perfect infinitives in this selection.");
+      el.innerHTML = "";
+      const head = document.createElement("p");
+      head.className = "help"; head.style.margin = "0 0 .4rem";
+      head.textContent = "Perfect infinitives are a near-closed \u2011μεν / \u2011μεναι system. Counts, not shares.";
+      el.appendChild(head);
+      if (byShape.length) {
+        const w1 = document.createElement("div"); w1.className = "viz-wrap"; w1.style.marginBottom = ".7rem"; el.appendChild(w1);
+        stackFig(w1, byShape, { title: "By metrical stem shape", mode: "count", allos: ["\u2011μεν", "\u2011μεναι"] });
+      }
+      if (byLemma.length) {
+        const w2 = document.createElement("div"); w2.className = "viz-wrap"; el.appendChild(w2);
+        stackFig(w2, byLemma, { title: "By lemma", mode: "count", allos: ["\u2011μεν", "\u2011μεναι"] });
+      }
+      return;
+    }
+    if (chart === "metrical") return metricalFig(el, wf);
+    if (chart === "stemShape") {
+      const rows = vizRows(andWhere(wf, naGuard("metrical_stem_shape")), ["metrical_stem_shape mss"]);
+      const g = accumulate(rows, (r) => r.mss).filter((x) => x.n >= minN).sort((a, b) => b.n - a.n)
+        .map((x) => (x.label = "Stem " + x.label, x));
+      if (!g.length) return vizClear("No stem shapes reach the minimum token count.");
+      return stackFig(el, g, { title: "Allomorph choice by metrical stem shape" });
+    }
+    if (chart === "lemma") {
+      const rows = vizRows(andWhere(wf, q("lemma") + " NOT IN ('','-')"), ["lemma"]);
+      const g = accumulate(rows, (r) => r.lemma).filter((x) => x.n >= minN)
+        .sort((a, b) => b.n - a.n).slice(0, 24);
+      if (!g.length) return vizClear("No lemmata reach the minimum token count.");
+      return stackFig(el, g, { title: "Lexical idiosyncrasies in infinitive allomorphy" });
+    }
+    if (chart === "byTense") {
+      const g = orderGroups(accumulate(vizRows(wf, []), (r) => TENSE_NAME[String(r.t)] || null),
+        ["Present", "Aorist", "Perfect", "Future"]);
+      if (!g.length) return vizClear();
+      return stackFig(el, g, { title: "Allomorph by tense" });
+    }
+    if (chart === "byVoice") {
+      const g = orderGroups(accumulate(vizRows(andWhere(wf, naGuard("voice")), ["voice"]),
+        (r) => VOICE_NAME[String(r.voice)] || null), ["Active", "Passive"]);
+      if (!g.length) return vizClear();
+      return stackFig(el, g, { title: "Allomorph by voice" });
+    }
+    if (chart === "byConjugation") {
+      const g = orderGroups(accumulate(vizRows(andWhere(wf, naGuard("conjugation")), []),
+        (r) => CONJ_NAME[String(r.cj)] || null), ["Thematic", "Athematic", "Sigmatic", "Contract"]);
+      if (!g.length) return vizClear();
+      return stackFig(el, g, { title: "Allomorph by conjugation class" });
+    }
+    if (chart === "byBook") {
+      const w = ($("infVizWork") && $("infVizWork").value) || "";
+      if (!w) return vizClear("Choose a work under \u201cRestrict to work\u201d to break its endings down by book.");
+      const rows = vizRows(andWhere(q("work") + " = " + sqlStr(w), naGuard("book")), ["book"]);
+      const g = accumulate(rows, (r) => r.book).filter((x) => x.n >= minN)
+        .sort((a, b) => (parseInt(a.label, 10) || 0) - (parseInt(b.label, 10) || 0))
+        .map((x) => (x.label = "Book " + x.label, x));
+      if (!g.length) return vizClear("No books reach the minimum token count.");
+      return stackFig(el, g, { title: "Infinitive endings by book \u00b7 " + w });
+    }
+  }
+
+  const VIZ_NOTES = {
+    byText: "Share of each ending allomorph within each work. (Work restriction not applied.)",
+    present: "Present infinitives only, split by work × conjugation class. (Work restriction not applied.)",
+    aorist: "Aorist infinitives only, split by work × conjugation class. (Work restriction not applied.)",
+    perfect: "Perfect infinitives: the \u2011μεν / \u2011μεναι split by stem shape and by lemma (raw counts).",
+    metrical: "For each allomorph, where in the hexameter its final syllable lands. Honours the work restriction.",
+    stemShape: "Ending share by the metrical shape of the bare stem. Honours the work restriction and minimum count.",
+    lemma: "Ending share for individual verbs (top 24 by frequency). Honours the work restriction and minimum count.",
+    byTense: "Ending share within each tense. Honours the work restriction.",
+    byVoice: "Ending share within each voice. Honours the work restriction.",
+    byConjugation: "Ending share within each conjugation class. Honours the work restriction.",
+    byBook: "Requires a work: ending share across that work's books. Honours the minimum count."
+  };
+  function updateVizNote() {
+    const n = $("infVizNote"); if (!n) return;
+    let t = VIZ_NOTES[$("infVizChart").value] || "";
+    if (vizFilterWhere()) t += (t ? " " : "") + "Extra filters (tense / voice / conjugation / ending / lemma / form) are applied to the slice.";
+    n.textContent = t;
+  }
+
+  /* Ending-type list for the viz filter: attested (class, number) pairs,
+   * narrowed to the chosen conjugation, shown by tag — same as the Filter
+   * card's list but writing into the viz control. */
+  function fillVizEndingSelect() {
+    const sel = $("infVizMorpheme"); if (!sel) return;
+    const conj = ($("infVizConjugation") && $("infVizConjugation").value) || "";
+    const prev = sel.value;
+    const rows = SQL.objects("SELECT conjugation cj, tense t, morpheme m, COUNT(*) c FROM " + q(TABLE) +
+      " WHERE " + INF_WHERE + " AND " + naGuard("morpheme") + " AND " + naGuard("conjugation") +
+      " GROUP BY cj, t, m;");
+    const opts = new Map();
+    rows.forEach((r) => {
+      if (conj && String(r.cj) !== conj) return;
+      const cls = infEndingClass(String(r.cj), String(r.t));
+      const key = cls + "|" + r.m;
+      const o = opts.get(key) || { cls: cls, m: String(r.m), n: 0 };
+      o.n += r.c; opts.set(key, o);
+    });
+    const order = ["t", "a", "s", "sf", "c", "cf"];
+    const list = [...opts.values()].sort((x, y) =>
+      (order.indexOf(x.cls) - order.indexOf(y.cls)) || (Number(x.m) - Number(y.m)));
+    sel.innerHTML = '<option value="">(any)</option>';
+    list.forEach((o) => {
+      const cls = INF_ENDING_TAGS[o.cls];
+      const opt = document.createElement("option");
+      opt.value = o.cls + "|" + o.m;
+      opt.textContent = ((cls && cls.tags[o.m]) || ("morpheme " + o.m)) + (cls ? " \u00b7 " + cls.name : "");
+      sel.appendChild(opt);
+    });
+    if ([...sel.options].some((op) => op.value === prev)) sel.value = prev;
+  }
+
+  /* ------------------------------------------------------------------------
+   *  ADVANCED: chart the result of a user's own read-only SQL.
+   *  Two shapes are auto-detected:
+   *    (a) allomorph stack — result carries conjugation + tense + morpheme
+   *        (+ optional count column c/n/count/freq); each row is bucketed into
+   *        its ending allomorph and bars are grouped by the first other column.
+   *    (b) generic — (category, value) -> bars; (group, series, value) -> stack.
+   * ---------------------------------------------------------------------- */
+  function vizSqlStatus(msg) { const s = $("infVizSqlStatus"); if (s) s.textContent = msg; }
+  function numOr1(v) { const n = Number(v); return Number.isFinite(n) ? n : 1; }
+
+  function renderInfVizSql() {
+    const wrap = $("infVizSqlWrap"); if (wrap) wrap.innerHTML = "";
+    const sql = ($("infVizSqlInput") && $("infVizSqlInput").value) || "";
+    if (!sql.trim()) return vizSqlStatus("Write a SELECT and press Run & chart.");
+    if (SQL.isReadOnly && !SQL.isReadOnly(sql)) return vizSqlStatus("Read-only: only SELECT / WITH / EXPLAIN / PRAGMA are allowed.");
+    let res;
+    try { res = SQL.query(sql); }
+    catch (e) { return vizSqlStatus("SQL error: " + e.message); }
+    const columns = (res.columns || []).map(String), values = res.values || [];
+    if (!values.length) return vizSqlStatus("Query ran but returned no rows.");
+    const lc = columns.map((c) => c.toLowerCase());
+    const find = (names) => { for (const nm of names) { const i = lc.indexOf(nm); if (i >= 0) return i; } return -1; };
+    const ci = find(["conjugation", "cj", "conj"]), ti = find(["tense", "t"]), mi = find(["morpheme", "m"]);
+    const mode = ($("infVizSqlMode") && $("infVizSqlMode").value) || "percent";
+
+    // (a) allomorph stack
+    if (ci >= 0 && ti >= 0 && mi >= 0) {
+      const ni = find(["c", "n", "count", "freq"]);
+      const used = new Set([ci, ti, mi, ni].filter((x) => x >= 0));
+      const li = columns.findIndex((_, idx) => !used.has(idx));
+      const map = new Map();
+      values.forEach((row) => {
+        const a = chartAllo(row[ci], row[ti], row[mi]); if (!a) return;
+        const label = li >= 0 ? String(row[li]) : "All";
+        const w = ni >= 0 ? numOr1(row[ni]) : 1;
+        let g = map.get(label); if (!g) { g = { label: label, n: 0, counts: {} }; map.set(label, g); }
+        g.counts[a] = (g.counts[a] || 0) + w; g.n += w;
+      });
+      const groups = [...map.values()].filter((g) => g.n > 0);
+      if (!groups.length) return vizSqlStatus("No rows bucketed into a known allomorph. Check that conjugation / tense / morpheme carry the corpus codes (e.g. t, p, 1).");
+      stackFig(wrap, groups, { mode: mode, title: "Custom query \u00b7 allomorph " + (mode === "percent" ? "shares" : "counts") });
+      return vizSqlStatus("Charted " + groups.length + " group(s) from " + values.length + " row(s) as an allomorph stack" + (li < 0 ? " (no label column; grouped as \u201cAll\u201d)." : "."));
+    }
+
+    // (b) generic: find a numeric value column (prefer the rightmost)
+    let numIdx = -1;
+    for (let j = columns.length - 1; j >= 0; j--) {
+      if (values.every((r) => r[j] === null || Number.isFinite(Number(r[j])))) { numIdx = j; break; }
+    }
+    if (numIdx < 0) return vizSqlStatus("To chart, return conjugation + tense + morpheme (allomorph stack), or 1\u20132 label columns plus a numeric value column.");
+    const labelIdxs = columns.map((_, j) => j).filter((j) => j !== numIdx);
+    if (labelIdxs.length === 1) {
+      const gi = labelIdxs[0];
+      const items = values.map((r) => ({ label: String(r[gi]), value: Number(r[numIdx]) })).filter((d) => Number.isFinite(d.value));
+      Chart.bars(wrap, items, { preserveOrder: true, labelWidth: 200 });
+      return vizSqlStatus("Charted " + items.length + " bar(s): " + columns[gi] + " \u00d7 " + columns[numIdx] + ".");
+    }
+    const gi = labelIdxs[0], si = labelIdxs[1];
+    const rowsL = [], cset = [], rmap = new Map();
+    values.forEach((r) => {
+      const rk = String(r[gi]), ck = String(r[si]), v = Number(r[numIdx]) || 0;
+      if (!rmap.has(rk)) { rmap.set(rk, new Map()); rowsL.push(rk); }
+      if (cset.indexOf(ck) < 0) cset.push(ck);
+      rmap.get(rk).set(ck, (rmap.get(rk).get(ck) || 0) + v);
+    });
+    const matrix = rowsL.map((rk) => cset.map((ck) => rmap.get(rk).get(ck) || 0));
+    Chart.stackedBars(wrap, matrix, rowsL, cset, { title: columns[gi] + " \u00d7 " + columns[si] });
+    return vizSqlStatus("Charted " + rowsL.length + " \u00d7 " + cset.length + " stacked bars: " + columns[gi] + " \u00d7 " + columns[si] + " (" + columns[numIdx] + ").");
+  }
+
+  function initInfinitiveViz() {
+    const wrap = $("infVizWrap"), sel = $("infVizChart"), btn = $("btnInfViz");
+    if (!wrap || !sel || !btn) return;
+    if ($("infVizWork")) UI.fillSelect($("infVizWork"), SQL.distinct("work"), { head: "(all works)" });
+    // pre-viz filter drop-downs, populated exactly like the Filter card
+    [["infVizTense", "tense"], ["infVizVoice", "voice"], ["infVizConjugation", "conjugation"]].forEach(([id, col]) => {
+      if (!$(id)) return;
+      let vals = SQL.objects("SELECT DISTINCT " + q(col) + " AS v FROM " + q(TABLE) +
+        " WHERE " + INF_WHERE + " AND " + naGuard(col) + " ORDER BY v;").map((r) => String(r.v));
+      if (col === "voice") vals = vals.filter((v) => v === "a" || v === "p");
+      UI.fillSelect($(id), vals, { head: "(any)", field: col });
+    });
+    fillVizEndingSelect();
+    if ($("infVizConjugation")) $("infVizConjugation").addEventListener("change", fillVizEndingSelect);
+    btn.disabled = false;
+    const run = () => {
+      try { renderInfViz(); }
+      catch (e) { wrap.innerHTML = '<div class="small-muted" style="padding:.6rem;">Could not draw this figure: ' + UI.esc(e.message) + "</div>"; }
+    };
+    btn.addEventListener("click", run);
+    sel.addEventListener("change", updateVizNote);
+    // keep the note's "filters applied" hint live as filters change
+    ["infVizTense", "infVizVoice", "infVizConjugation", "infVizMorpheme", "infVizLemmaLike", "infVizFormLike"]
+      .forEach((id) => { if ($(id)) $(id).addEventListener("input", updateVizNote); });
+    $("infVizMinN").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); run(); } });
+    const reset = $("btnInfVizReset");
+    if (reset) reset.addEventListener("click", () => {
+      ["infVizTense", "infVizVoice", "infVizConjugation", "infVizMorpheme", "infVizLemmaLike", "infVizFormLike"]
+        .forEach((id) => { if ($(id)) $(id).value = ""; });
+      fillVizEndingSelect(); updateVizNote(); run();
+    });
+    const sqlRun = $("infVizSqlRun");
+    if (sqlRun) sqlRun.addEventListener("click", renderInfVizSql);
+    updateVizNote();
+  }
+
   async function init() {
     UI.wireInfoButtons();
     UI.wireAdvancedToggles();
@@ -554,6 +1071,7 @@
       onReset() { qf.reset(); }
     });
     initInfinitiveCard();
+    initInfinitiveViz();
 
     UI.fillSelect($("exDim1"), DIMENSIONS.map((d) => d[0]), { head: null });
     UI.fillSelect($("exDim2"), DIMENSIONS.map((d) => d[0]), { head: "(none)" });

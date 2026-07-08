@@ -411,6 +411,92 @@
 
   <div id="infResults" style="margin-top:.7rem;"></div>
 </div>
+
+<div class="card">
+  <h2>2. Visualizations</h2>
+  <p class="help" style="margin-top:-.35rem;">Build descriptive figures of infinitive allomorphy straight from the corpus. Pick a figure, optionally restrict to one work and set a minimum token count for the per-row breakdowns, then Generate. Every figure can be enlarged and downloaded as PNG or SVG.</p>
+  <div class="grid-3">
+    <div class="field">
+      <label for="infVizChart"><strong>Figure</strong></label>
+      <select id="infVizChart">
+        <option value="byText">Distribution of endings by text</option>
+        <option value="present">Present infinitives · allomorph by conjugation &amp; text</option>
+        <option value="aorist">Aorist infinitives · allomorph by conjugation &amp; text</option>
+        <option value="perfect">Perfect infinitives · ‑μεν vs ‑μεναι (a closed Aeolic system)</option>
+        <option value="metrical">Metrical localization of endings (heatmap)</option>
+        <option value="stemShape">Allomorph choice by metrical stem shape</option>
+        <option value="lemma">Lexical idiosyncrasies · allomorph by lemma</option>
+        <option value="byTense">Allomorph by tense</option>
+        <option value="byVoice">Allomorph by voice</option>
+        <option value="byConjugation">Allomorph by conjugation class</option>
+        <option value="byBook">Endings by book (within a work)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="infVizWork"><strong>Restrict to work</strong></label>
+      <select id="infVizWork"><option value="">(all works)</option></select>
+    </div>
+    <div class="field">
+      <label for="infVizMinN"><strong>Minimum tokens per row</strong> <span class="info-tip" tabindex="0" data-tip="Rows (stem shapes, lemmata, books) with fewer attested infinitives than this are dropped, so tiny, noisy bars don't clutter the figure">&#9432;</span></label>
+      <input type="text" id="infVizMinN" autocomplete="off" spellcheck="false" value="10">
+    </div>
+  </div>
+  <hr />
+  <p class="help" style="margin:.2rem 0 .5rem;">Optionally restrict which infinitives feed the figure, exactly as in the Filter card above. These narrow the slice before it is charted; leave them at <em>(any)</em> to chart everything.</p>
+  <div class="grid-3">
+    <div class="field">
+      <label for="infVizTense"><strong>Tense</strong></label>
+      <select id="infVizTense"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="infVizVoice"><strong>Voice</strong> <span class="info-tip" tabindex="0" data-tip="Medial and mediopassive infinitives are currently being processed">&#9432;</span></label>
+      <select id="infVizVoice"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="infVizConjugation"><strong>Conjugation</strong></label>
+      <select id="infVizConjugation"><option value="">(any)</option></select>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="field">
+      <label for="infVizMorpheme"><strong>Ending type</strong></label>
+      <select id="infVizMorpheme"><option value="">(any)</option></select>
+    </div>
+    <div class="field">
+      <label for="infVizLemmaLike"><strong>Lemma contains</strong></label>
+      <input type="text" id="infVizLemmaLike" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional) or Beta Code, e.g. ζευγ or zeug; #ζευγ = starts with, νυμι# = ends with">
+    </div>
+    <div class="field">
+      <label for="infVizFormLike"><strong>Form contains</strong></label>
+      <input type="text" id="infVizFormLike" autocomplete="off" spellcheck="false" placeholder="Greek (accents optional) or Beta Code, e.g. εμεν or emen; μεναι# = ends with, #ζευγ = starts with">
+    </div>
+  </div>
+  <div class="btn-row">
+    <button id="btnInfViz" class="btn btn-primary" disabled>Generate figure</button>
+    <button id="btnInfVizReset" class="btn">Reset filters</button>
+    <button class="adv-toggle btn" data-adv="infVizSqlPanel">🐉 SQL (for advanced users) ▾</button>
+  </div>
+
+  <div id="infVizSqlPanel" class="adv-panel" hidden>
+    <p class="help" style="margin-top:0;">Chart the result of your own read-only SQL over table <code>morphology</code> instead of a preset figure. Two result shapes are recognised:</p>
+    <ul class="help" style="margin:.1rem 0 .5rem 1.1rem;">
+      <li><strong>Allomorph stack</strong> (the paper's figures): return a label column plus <code>conjugation</code>, <code>tense</code>, <code>morpheme</code>, optionally a count column named <code>c</code>, <code>n</code>, <code>count</code> or <code>freq</code>. Each row is bucketed into its ending allomorph by the same (class, tense, number) map the presets use, and bars are grouped by the first non-count column. Example: <code>SELECT work AS label, conjugation, tense, morpheme FROM morphology WHERE pos='v' AND mood='n' AND voice='p'</code>.</li>
+      <li><strong>Generic bars</strong>: return exactly two columns <code>(category, value)</code> for a bar chart, or three <code>(group, series, value)</code> for a stacked bar. Reserved-word columns must be quoted, e.g. <code>"case"</code>.</li>
+    </ul>
+    <textarea class="sqlInput" id="infVizSqlInput" spellcheck="false" placeholder="SELECT work AS label, conjugation, tense, morpheme&#10;FROM morphology&#10;WHERE pos='v' AND mood='n' AND voice='p'"></textarea>
+    <div class="btn-row" style="margin-top:.5rem;">
+      <button id="infVizSqlRun" class="btn btn-primary">Run &amp; chart</button>
+      <label class="regex-toggle" style="margin-left:.2rem;">Bars <select id="infVizSqlMode" style="margin-left:.3rem;"><option value="percent">as % shares</option><option value="count">as counts</option></select></label>
+    </div>
+    <pre id="infVizSqlStatus" class="status" style="margin-top:.55rem;">Ready: write SQL and press Run &amp; chart.</pre>
+    <div class="viz-wrap" id="infVizSqlWrap" style="margin-top:.6rem;"></div>
+  </div>
+
+  <p id="infVizNote" class="help" style="margin:.4rem 0 0;"></p>
+  <div class="viz-wrap" id="infVizWrap" style="margin-top:.7rem;min-height:120px;">
+    <div class="small-muted" style="padding:.6rem;">Choose a figure and press Generate.</div>
+  </div>
+</div>
     </div>
   </section>
 
