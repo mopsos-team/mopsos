@@ -8,7 +8,7 @@
  *  metrical record (foot_end / foot_end_pos, verse), the tab can measure the
  *  syntax-metre interface directly: where sentences end inside the verse,
  *  how much enjambment there is, and how many dependency arcs cross a line
- *  boundary. A manual TSV mode remains for pasting external trees.
+ *  boundary.
  * ========================================================================== */
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -21,9 +21,9 @@
   const el = {};
   function grab() {
     ["syntaxLoadStatus", "syntaxWork", "syntaxBook", "syntaxLine", "btnSyntaxDraw", "syntaxSentSel", "syntaxSentWrap",
-     "syntaxInput", "btnSyntaxTsv", "syntaxTreeMode",
+     "syntaxTreeMode",
      "syntaxSummary", "syntaxTree", "syntaxPhrase", "syntaxTable",
-     "syntaxMetreWork", "syntaxMetreBook", "btnSyntaxMetre", "syntaxMetreSummary", "syntaxSentEnd", "syntaxHeadDir", "syntaxDepLen", "syntaxMetreNote"]
+     "syntaxMetreWork", "syntaxMetreBook", "btnSyntaxMetre", "syntaxMetreSummary", "syntaxSentEnd", "syntaxHeadDirHead", "syntaxHeadDir", "syntaxDepLen", "syntaxMetreNote"]
       .forEach((id) => { el[id] = $(id); });
   }
 
@@ -49,25 +49,6 @@
     return SQL.objects("SELECT DISTINCT sentence_id s FROM morphology WHERE work = " + sqlStr(work) +
       " AND book = " + sqlStr(String(book)) + " AND verse = " + sqlStr(String(line)) +
       " ORDER BY CAST(sentence_id AS INTEGER);").map((r) => r.s);
-  }
-
-  /* ----- manual TSV fallback ---------------------------------------------- */
-  function parseInputTsv(text) {
-    const sentences = [];
-    let cur = [];
-    for (const raw of String(text || "").split(/\r?\n/)) {
-      const line = raw.trim();
-      if (!line) { if (cur.length) { sentences.push(cur); cur = []; } continue; }
-      const p = line.split(/\t+/);
-      if (p.length < 4) continue;
-      const id = parseInt(p[0], 10);
-      if (!Number.isFinite(id)) continue;
-      cur.push({ id, form: p[1] || "", lemma: p[2] || "", pos: p[3] || "",
-        head: Number.isFinite(parseInt(p[4], 10)) ? parseInt(p[4], 10) : 0,
-        deprel: p[5] || "", distance: Number.isFinite(parseInt(p[6], 10)) ? parseInt(p[6], 10) : null });
-    }
-    if (cur.length) sentences.push(cur);
-    return sentences;
   }
 
   /* ----- renderers --------------------------------------------------------- */
@@ -242,17 +223,6 @@
     drawSentence(work, sids.length > 1 ? el.syntaxSentSel.value : sids[0]);
   }
 
-  function drawFromTsv() {
-    const sentences = parseInputTsv(el.syntaxInput.value);
-    if (!sentences.length) return;
-    const rows = sentences[0];
-    rows.forEach((r) => { r.orphan = false; });
-    state.lastRows = rows;
-    renderSummary(rows, "manual");
-    renderTree(rows, el.syntaxTreeMode.value);
-    renderTable(rows);
-  }
-
   /* ----- syntax meets the metre -------------------------------------------
    * All computed live from the corpus: sentence ends located by the metrical
    * position of the sentence-final token; enjambment as the share of lines
@@ -309,16 +279,39 @@
         " AND a.distance IS NOT NULL AND a.distance <> 0 AND b.verse IS NOT NULL;")[0] || {};
       M.arcTotal = arcs.total || 0;
       M.arcCross = arcs.crossing || 0;
-      // head direction and dependency length by part of speech
-      M.byPos = SQL.objects(
-        "SELECT pos, SUM(CASE WHEN distance > 0 THEN 1 ELSE 0 END) before, " +
-        "SUM(CASE WHEN distance < 0 THEN 1 ELSE 0 END) after, AVG(ABS(distance)) mlen " +
-        "FROM morphology WHERE " + scope + " AND distance IS NOT NULL AND distance <> 0 " +
-        "AND pos IS NOT NULL AND pos NOT IN ('','-') GROUP BY pos ORDER BY (before + after) DESC;");
+      // head direction and dependency length by part of speech; the
+      // head-direction rows are computed on demand (per head-POS filter)
+      // in headDirRows() below
+      M.byPosBy = {};
       M.lenHist = SQL.objects(
         "SELECT MIN(CAST(ABS(distance) AS INTEGER), 15) d, COUNT(*) n FROM morphology WHERE " + scope +
         " AND distance IS NOT NULL AND distance <> 0 GROUP BY d ORDER BY d;");
       metreCache[key] = M;
+    }
+    // Head direction by the dependent's part of speech, optionally RESTRICTED
+    // TO DEPENDENCIES ON ONE HEAD CATEGORY (the head is recovered as
+    // id - distance and its own row joined in), so e.g. filtering the head to
+    // Preposition shows, in the Noun bars, how often the governing preposition
+    // precedes its noun (PN) versus follows it (NP, anastrophe). distance > 0
+    // means the head precedes the dependent.
+    const headPos = el.syntaxHeadDirHead ? el.syntaxHeadDirHead.value : "";
+    let byPos = M.byPosBy[headPos];
+    if (!byPos) {
+      byPos = headPos
+        ? SQL.objects(
+          "SELECT a.pos pos, SUM(CASE WHEN a.distance > 0 THEN 1 ELSE 0 END) before, " +
+          "SUM(CASE WHEN a.distance < 0 THEN 1 ELSE 0 END) after, AVG(ABS(a.distance)) mlen " +
+          "FROM morphology a JOIN morphology b ON b.work = a.work AND b.sentence_id = a.sentence_id " +
+          "AND b.id = a.id - CAST(a.distance AS INTEGER) " +
+          "WHERE " + metreScope("a") + " AND a.distance IS NOT NULL AND a.distance <> 0 " +
+          "AND a.pos IS NOT NULL AND a.pos NOT IN ('','-') AND b.pos = " + sqlStr(headPos) +
+          " GROUP BY a.pos ORDER BY (before + after) DESC;")
+        : SQL.objects(
+          "SELECT pos, SUM(CASE WHEN distance > 0 THEN 1 ELSE 0 END) before, " +
+          "SUM(CASE WHEN distance < 0 THEN 1 ELSE 0 END) after, AVG(ABS(distance)) mlen " +
+          "FROM morphology WHERE " + scope + " AND distance IS NOT NULL AND distance <> 0 " +
+          "AND pos IS NOT NULL AND pos NOT IN ('','-') GROUP BY pos ORDER BY (before + after) DESC;");
+      M.byPosBy[headPos] = byPos;
     }
     const wlab = (el.syntaxMetreWork.value || "Iliad + Odyssey") + (metreBook() ? " \u00b7 Book " + metreBook() : "");
 
@@ -343,12 +336,18 @@
     ], { preserveOrder: true, valueLabel: "sentence ends", labelWidth: 240,
          title: "Where sentences end in the verse \u00b7 " + wlab });
 
-    const posRows = M.byPos.slice(0, 10);
-    Chart.groupedBars(el.syntaxHeadDir,
+    const posRows = byPos.slice(0, 10);
+    const hdTitle = headPos
+      ? "Where the " + UI.label("pos", headPos) + " head stands, by the dependent's part of speech \u00b7 " + wlab
+      : "Where each word's head stands, by the word's part of speech \u00b7 " + wlab;
+    if (!posRows.length) {
+      el.syntaxHeadDir.innerHTML = '<div class="small-muted" style="padding:.7rem;">No dependencies on a ' +
+        UI.label("pos", headPos) + " head in this scope.</div>";
+    } else Chart.groupedBars(el.syntaxHeadDir,
       posRows.map((r) => [r.before, r.after]),
       posRows.map((r) => UI.label("pos", r.pos)),
       ["its own head precedes it", "its own head follows it"],
-      { valueLabel: "tokens", title: "Where each word's head stands, by the word's part of speech \u00b7 " + wlab,
+      { valueLabel: "tokens", title: hdTitle,
         xLabel: "part of speech of the DEPENDENT word", yLabel: "tokens" });
 
     Chart.bars(el.syntaxDepLen,
@@ -366,7 +365,7 @@
       ["Arcs crossing a line boundary", M.arcCross.toLocaleString() + " (" + crossPct.toFixed(1) + "%)"]
     ].map((c) => '<div class="analysis-card"><div class="metric">' + c[1] + '</div><div class="metric-label">' + esc(c[0]) + "</div></div>").join("") + "</div>";
 
-    el.syntaxMetreNote.textContent = "Sentence boundaries are the treebank's; positions are read from each sentence-final token's metrical record (the 3.1 / 3.2 buckets are the word positions where the caesurae fall; the bucolic bucket is a word end at 4.3). An enjambed line is one whose final word does not end its sentence. Dependency heads are recovered from the stored signed distances. The head-direction chart reads per dependent: the Preposition bars describe where the preposition\u2019s own head (the verb its phrase modifies) stands, not the noun inside the phrase; that noun is counted under Noun, where its prepositional head precedes it 91% of the time (the rest is anastrophe). Note the treebank's attachment conventions when reading the head-direction chart: a preposition HEADS its noun phrase and itself attaches to the verb it modifies, so \u201chead follows\u201d dominating for prepositions reflects Greek's late verbs (the prepositional phrase usually precedes its verb), while nouns governed by a preposition show \u201chead precedes\u201d, the familiar preposition-before-noun order.";
+    el.syntaxMetreNote.textContent = "Sentence boundaries are the treebank's; positions are read from each sentence-final token's metrical record (the 3.1 / 3.2 buckets are the word positions where the caesurae fall; the bucolic bucket is a word end at 4.3).";
   }
 
   /* ----- init -------------------------------------------------------------- */
@@ -402,9 +401,9 @@
     el.syntaxLine.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); drawFromPicker(); } });
     el.syntaxSentSel.addEventListener("change", () => drawSentence(el.syntaxWork.value, el.syntaxSentSel.value));
     el.syntaxWork.addEventListener("change", populateBooks);
-    if (el.btnSyntaxTsv) el.btnSyntaxTsv.addEventListener("click", drawFromTsv);
     el.syntaxTreeMode.addEventListener("change", () => { if (state.lastRows) renderTree(state.lastRows, el.syntaxTreeMode.value); });
     el.btnSyntaxMetre.addEventListener("click", runMetre);
+    if (el.syntaxHeadDirHead) el.syntaxHeadDirHead.addEventListener("change", runMetre);
     el.syntaxMetreWork.addEventListener("change", () => { populateMetreBooks(); runMetre(); });
     if (el.syntaxMetreBook) el.syntaxMetreBook.addEventListener("change", runMetre);
 
@@ -416,6 +415,12 @@
       populateBooks();
       UI.fillSelect(el.syntaxMetreWork, ["Iliad", "Odyssey"].filter((w) => works.includes(w)), { head: "(both poems)" });
       populateMetreBooks();
+      if (el.syntaxHeadDirHead) {
+        UI.fillSelect(el.syntaxHeadDirHead,
+          SQL.objects("SELECT DISTINCT pos FROM morphology WHERE pos IS NOT NULL AND pos NOT IN ('','-') ORDER BY pos;").map((r) => r.pos),
+          { field: "pos", head: "(any part of speech)" });
+        el.syntaxHeadDirHead.disabled = false;
+      }
       el.syntaxWork.disabled = false;
       el.syntaxMetreWork.disabled = false;
       el.btnSyntaxDraw.disabled = false;

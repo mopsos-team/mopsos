@@ -29,7 +29,8 @@ adds the five things this site needs that a plain importer doesn't:
 
 Adding a table is one new dict in TABLES; adding a summary is one new entry in
 VIEWS. Run:  python3 scripts/build_corpus.py   (stdlib only: csv, sqlite3, gzip
--- greek_text.py, imported below, is also stdlib-only)
+-- greek_text.py, imported below, is stdlib-only on this path; its
+to_beta_code lazily imports the beta-code package, unused by this build)
 """
 
 import csv
@@ -68,8 +69,13 @@ TABLES = [
                        is_valid="INTEGER", id="INTEGER"),
         # is_valid is stored as the strings "true"/"false" in the CSV; map to 1/0
         # to match the app's own conversion (buildDatabase in mopsos-shared.js).
+        # form: an elided token must end in an apostrophe AFTER its last letter
+        # (U+2019), never in a combining comma above (U+0313), which fonts
+        # attach to the preceding vowel and display as a smooth breathing.
         data_coercion={"is_valid": lambda v: 1 if v.strip().lower() == "true"
-                       else (0 if v.strip().lower() == "false" else v)},
+                       else (0 if v.strip().lower() == "false" else v),
+                       "form": lambda v: v[:-1] + "\u2019"
+                       if v.endswith("\u0313") else v},
         indexes=["lemma", "form", "work", "author", "sentence_id",
                  "lemma_search", "form_search"],
         # lemma_search: accent/breathing-insensitive key for "ignore accents"

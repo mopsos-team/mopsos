@@ -16,9 +16,9 @@ section: syntax
     <button class="info-btn" data-info="syntaxInfo">What is this?</button>
   <div id="syntaxInfo" class="info-panel" hidden>
     <h4>Syntax tab</h4>
-    <p>Every token in the corpus carries a signed dependency distance to its head (distance = position of the word minus position of its head; 0 marks the root). The workbench recovers each word’s head from that record and draws the sentence’s dependency tree; the trees are unlabelled, because the corpus stores the attachment but not the relation name.</p>
+    <p>Every token in the corpus carries a signed dependency distance to its head (distance = position of the word minus position of its head; 0 marks the root).</p>
     <ul>
-      <li><strong>Pick a sentence</strong>: choose a work, book, and line number; the dependency tree (renderable horizontally, vertically, or as bracketed text) and a token table are drawn for the sentence containing that line (with a selector when two sentences share the line). A manual TSV mode remains for pasting external trees.</li>
+      <li><strong>Pick a sentence</strong>: choose a work, book, and line number; the dependency tree (renderable horizontally, vertically, or as bracketed text) and a token table are drawn for the sentence containing that line (with a selector when two sentences share the line).</li>
       <li><strong>Syntax-Meter Interface Search</strong>: because the same tokens carry their metrical record, the tab measures the syntax-metre interface directly from the corpus: where sentence boundaries fall in the verse (line end, the caesura points, the bucolic diaeresis), how many lines are enjambed, how many dependency arcs cross a line boundary, plus head direction and dependency length by part of speech.</li>
     </ul>
   </div>
@@ -42,18 +42,6 @@ section: syntax
     <label for="syntaxSentSel"><strong>This line holds more than one sentence</strong></label>
     <select id="syntaxSentSel"></select>
   </div>
-  <details style="margin-top:.8rem;">
-    <summary class="small-muted">Or paste a tree manually (TSV)</summary>
-    <p class="help" style="margin-top:.4rem;">One token per line: <code>id[TAB]form[TAB]lemma[TAB]pos[TAB]head[TAB]deprel[TAB]distance(optional)</code>.</p>
-    <div class="field">
-      <textarea id="syntaxInput" class="big-textarea">1	μῆνιν	μῆνις	n	2	obj	1
-2	ἄειδε	ἀείδω	v	0	root	0
-3	θεὰ	θεά	n	2	vocative	-1
-4	Πηληϊάδεω	Πηληϊάδης	n	5	nmod	1
-5	Ἀχιλῆος	Ἀχιλλεύς	n	3	appos	-2</textarea>
-    </div>
-    <div class="btn-row"><button id="btnSyntaxTsv" class="btn btn-sm">Draw from TSV</button></div>
-  </details>
 </div>
 
 <div class="card">
@@ -97,10 +85,20 @@ section: syntax
   <div id="syntaxMetreSummary" class="analysis-wrap" style="margin-top:.6rem;"></div>
   <div class="viz-wrap" style="margin-top:.6rem;"><div id="syntaxSentEnd"></div></div>
   <div class="grid-2" style="margin-top:.6rem;">
-    <div class="viz-wrap"><div id="syntaxHeadDir"></div></div>
+    <div class="viz-wrap">
+      <div class="field" style="max-width:280px;margin:.4rem .4rem 0;">
+        <label for="syntaxHeadDirHead"><strong>Head is a…</strong></label>
+        <select id="syntaxHeadDirHead" disabled><option value="">(any part of speech)</option></select>
+      </div>
+      <div id="syntaxHeadDir"></div>
+    </div>
     <div class="viz-wrap"><div id="syntaxDepLen"></div></div>
   </div>
   <p id="syntaxMetreNote" class="help" style="margin-top:.5rem;"></p>
+  <details class="help" style="margin-top:.4rem;">
+    <summary style="cursor:pointer;"><strong>Numbers in the Visualization</strong></summary>
+    <p style="margin-top:.4rem;">An enjambed line is one whose final word does not end its sentence. Dependency heads are recovered from the stored signed distances. The head-direction chart reads per dependent: the Preposition bars describe where the preposition’s own head (the verb its phrase modifies) stands, not the noun inside the phrase; that noun is counted under Noun, where its prepositional head precedes it 91% of the time (the rest is anastrophe). Note the treebank's attachment conventions when reading the head-direction chart: a preposition HEADS its noun phrase and itself attaches to the verb it modifies, so “head follows” dominating for prepositions reflects Greek's late verbs (the prepositional phrase usually precedes its verb), while nouns governed by a preposition show “head precedes”, the familiar preposition-before-noun order.</p>
+  </details>
 </div>
 
   </div>

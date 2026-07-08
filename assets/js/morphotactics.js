@@ -611,7 +611,7 @@
     const colAxisName = m2BySub ? "second-member subcategory" : "second-member category";
     el.cmpDesc.textContent = "How often each (" + rowAxisName + ", " + colAxisName + ") pairing occurs among the " +
       (label ? "matching" : "analyzed") + " compounds" + (label ? " (" + label + ")" : "") +
-      ". Categories reuse the part-of-speech codes; a \u201c?\u201d marks an uncertain member analysis in the source data" +
+      ". \u201c?\u201d marks an uncertain member analysis in the source data" +
       ((m1BySub || m2BySub) ? ", and a pinned category with its subcategory left open is broken down by stem subcategory" : "") + ".";
 
     /* section visibility: the member charts vanish for a slot whose member
@@ -716,35 +716,25 @@
   }
 
   // Which members the matching compounds are built from, with the SHARE OF
-  // EACH ALLOMORPH inside every lexeme's bar: variants differing only in
-  // case or accent (Πολυ / Πολύ / πολυ) are folded into one allomorph via
-  // the accent-insensitive search key, and each fold gets its own color so
-  // the common and rare allomorphs of a lexeme can be read off directly.
-  // Below the two bar charts, a ribbon diagram connects first-member
-  // allomorphs to second-member allomorphs (ribbon width = how many
-  // compounds join that pair).
+  // EACH ALLOMORPH inside every lexeme's bar. An allomorph is read straight
+  // off the annotation: the segment on its side of the "+" boundary in the
+  // segmentation, keyed exactly as written — no accent stripping, no folding,
+  // no fuzzy matching. Below the two bar charts, a ribbon diagram connects
+  // first-member allomorphs to second-member allomorphs (ribbon width = how
+  // many compounds join that pair).
   function normAllomorph(s) {
-    if (!s) return "";
-    const t = window.MopsosText;
-    return t ? t.stripDiacritics(s) : String(s).toLowerCase();
+    return s ? String(s).trim() : "";
   }
 
-  /* Display form for a folded allomorph: the commonest raw variant, preferring
-   * lowercase-initial ones, lowercased at the head (so Πολυ / Πολύ / πολυ
-   * displays as its accented lowercase πολυ/πολύ, whichever is commoner among
-   * the lowercase variants), leading/trailing hyphens dropped, and a final
-   * sigma written ς as in running Greek text. */
+  /* Display form for an allomorph: leading/trailing hyphens dropped and a
+   * final sigma written ς as in running Greek text. */
   function alloDisplay(variants) {
     let best = null, bestScore = -1;
     variants.forEach((n, raw) => {
-      const head = raw.charAt(0);
-      const lower = head === head.toLowerCase();
-      const score = (lower ? 1e9 : 0) + n;
-      if (score > bestScore) { bestScore = score; best = raw; }
+      if (n > bestScore) { bestScore = n; best = raw; }
     });
     if (!best) return "";
-    let s = best.charAt(0).toLowerCase() + best.slice(1);
-    s = s.replace(/^[-\u2010\u2013]+|[-\u2010\u2013]+$/g, "");
+    let s = best.replace(/^[-\u2010\u2013]+|[-\u2010\u2013]+$/g, "");
     return s.replace(/\u03c3$/, "\u03c2");
   }
 
@@ -781,7 +771,7 @@
       .map(([, a]) => ({ label: alloDisplay(a.variants) || "?", value: a.n }));
     drill.innerHTML = '<p class="fig-caption" style="margin:.4rem 0 .15rem;">Allomorphs of ' + UI.esc(lemma) +
       " as " + slotName + " (" + entry.n + " compound" + (entry.n === 1 ? "" : "s") +
-      "; variants differing only in accent or capitalization are folded, shown in their commonest accented form). Click the lemma again to close.</p>" +
+      "). Click the lemma again to close.</p>" +
       '<div class="allo-drill-chart"></div>';
     Chart.bars(drill.querySelector(".allo-drill-chart"), items,
       { preserveOrder: true, valueLabel: "compounds", labelWidth: 110,
@@ -793,7 +783,7 @@
     const drill = drillHostFor(host); drill.innerHTML = ""; drill.dataset.open = "";
     const d3 = window.d3;
     if (!entries.length) { host.innerHTML = '<div class="small-muted" style="padding:.7rem;">No matching compounds.</div>'; return; }
-    if (!d3) { // graceful fallback: plain bars, lemma + folded allomorphs
+    if (!d3) { // graceful fallback: plain bars, lemma + top allomorphs
       Chart.bars(host, entries.slice(0, 12).map(([k, e]) => ({
         label: k + " (" + [...e.allo.values()].map((a) => alloDisplay(a.variants)).slice(0, 3).join(", ") + ")", value: e.n
       })), { valueLabel: "compounds", labelWidth: 130, title: title });
@@ -948,8 +938,7 @@
     });
     if (el.cmpFlowNote) el.cmpFlowNote.textContent =
       "Which first-member allomorphs combine with which second-member allomorphs among the matching compounds; " +
-      "ribbon width = number of compounds joining that pair. Variants differing only in accent or capitalization " +
-      "count as one allomorph and are labeled by their commonest accented form.";
+      "ribbon width = number of compounds joining that pair.";
   }
 
   function renderMemberCharts(rows, label) {

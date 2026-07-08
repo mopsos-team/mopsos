@@ -86,7 +86,7 @@
           </div>
         </div>
       </div>
-      <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> anchors the start of the word, <code>abc#</code> the end, <code>#abc#</code> matches exactly.
+      <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> searches the start of the word, <code>abc#</code> the end, and <code>#abc#</code> finds an exact sequence match. You can also use regular expressions to query forms and lemmas.
         <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="qfRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as JavaScript regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
       <div class="btn-row">
         <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply filter</button>
@@ -130,7 +130,7 @@
     </div>
     <div class="card">
       <h2>1. Distribution Charts</h2>
-      <p class="help" style="margin-top:-.35rem;">Group words by a particular feature then count them. For example, set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, and count by <em>Book / work</em> to show how many instances there are of aorist verbs in the optative within the works in the corpus.</p>
+      <p class="help" style="margin-top:-.35rem;">Group words by morphosyntactic and textual attributes and visualize their distributions. For example, if you set part of speech to <em>Verb</em>, mood to <em>Optative</em>, tense to <em>Aorist</em>, and count by <em>Book / work</em>, the bar chart will show how many instances there are of aorist verbs in the optative within the works in the current corpus.</p>
       <div class="grid-3">
         <div class="field" hidden>
           <label for="exChartType"><strong>Chart</strong></label>
@@ -260,7 +260,7 @@
       <div class="field"><label for="mtCmpWork"><strong>Attested in</strong></label><select id="mtCmpWork"><option value="">(all works)</option></select></div>
     </div>
     <div class="field">
-      <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">(optional; Greek with or without accents, Beta Code, or English; <code>#</code> = word edge: <code>μων#</code> / <code>mwn#</code> = ends in ‑μων, <code>ths#</code> = ends in ‑της, <code>#ἀγα</code> = starts with)</span></label>
+      <label for="mtCmpSearch"><strong>Look up a compound</strong> <span class="help">using (un)accented Greek, Beta Code, or Roman characters; <code>#</code> = word edge: <code>μων#</code> / <code>mwn#</code> = ends in ‑μων, <code>ths#</code> = ends in ‑της, <code>#ἀγα</code> = starts with; <code>+</code> = morphological boundary</span></label>
       <div class="combo">
         <input id="mtCmpSearch" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. ῥοδοδάκτυλος, rododaktulos, finger, μαχ (contains), μων# or mwn# (ends with)…; click to browse">
         <div id="mtCmpSearchMenu" class="combo-menu" hidden></div>
@@ -280,7 +280,7 @@
   </div>
   <div id="mtCmpMembersSec">
     <h3 style="margin-top:1rem;">Members of the matching compounds</h3>
-    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Each lexeme's bar is split by allomorph in descending order of attestation (variants differing only in accent or capitalization count as one, labeled by their commonest accented form; hover a segment for its exact share). Click a member to open a chart just below with each of its allomorphs counted separately.</p>
+    <p class="help" style="margin-top:.1rem;">The commonest first and second members among the compounds matching the filters above. Each lexeme's bar is split by allomorph in descending order of attestation (hover a segment for its exact share). Click a member to open a chart just below with each of its allomorphs counted separately.</p>
     <div class="grid-2">
       <div class="viz-wrap" id="mtCmpM1Wrap"><div id="mtCmpM1Chart"></div></div>
       <div class="viz-wrap" id="mtCmpM2Wrap"><div id="mtCmpM2Chart"></div></div>
@@ -313,13 +313,12 @@
     </div>
     <div id="infInfo" class="info-panel" hidden>
       <h4>Infinitive Search Card</h4>
-      <p>This card searches the allomorphs of the infinitive. Every infinitive in the corpus carries its conjugation class and its ending-morpheme allomorph, tagged per class — thematic ‑ειν / ‑έμεν / ‑έμεναι / ‑έειν, athematic ‑ναι / ‑μεν / ‑μεναι, sigmatic ‑σαι, future thematic ‑σειν / ‑σέμεν / ‑σέμεναι, and future contract ‑ειν — so the variant endings can be pulled up directly and compared across works.</p>
+      <p>This card searches the allomorphs of the infinitives.</p>
       <ul>
-        <li><strong>Scope</strong>: pick a work to reveal its books and a verse box that takes a single verse (212) or a range (212-415).</li>
-        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation class (athematic, thematic, contract, sigmatic), or ending type; every list offers the values attested among the corpus infinitives. The ending type can be chosen on its own (each option names its class) or after a conjugation, which narrows the list to that class's endings. Voice offers active and passive; medial and mediopassive infinitives are currently being processed. Each result row carries the infinitive's tense, voice, conjugation class, ending type, lemma, and the metrical shape of its stem and whole form in situ — so ζευγνύμεναι comes back present-tense, athematic, with the ‑μεναι ending, lemma ζεύγνυμι, and stem shape HL.</li>
+        <li><strong>Allomorph filters</strong>: restrict by tense, voice, conjugation class (athematic, thematic, contract, sigmatic), or ending type. The ending type can be chosen on its own (each option names its class) or after a conjugation, which narrows the list to that class's endings. We only have active and passive infinitives tagged; medial and mediopassive infinitives are currently being processed. Each result row carries the infinitive's tense, voice, conjugation class, ending type, lemma, and the metrical shape of its stem and whole form in situ. An example search like ζευγνύμεναι would return present-tense, athematic conjugation, ending ‑μεναι, lemma ζεύγνυμι, and stem shape HL.</li>
         <li><strong>Metrical filters</strong>: restrict by the metrical shape of the whole form or of its stem (H = heavy/long, L = light/short, one letter per syllable); type a shape and the menu narrows to the attested ones, or click to browse.</li>
-        <li><strong>Word searches</strong>: <em>Form contains</em> and <em>Lemma contains</em> find substrings, accent-insensitively; <code>#abc</code> anchors the start, <code>abc#</code> the end, and a toggle switches both boxes to regular expressions. <em>Lemma matches exactly</em> pins down one verb and offers only the lemmata with attested infinitives as you type. All accept Greek (accents optional), Beta Code, or English.</li>
-        <li><strong>Custom queries</strong>: for advanced users, custom SQL queries can be written (<code>REGEXP</code> is available).</li>
+        <li><strong>Word searches</strong>: <em>Form contains</em> and <em>Lemma contains</em> find substrings, accent-insensitively; <code>#abc</code> searches the start, <code>abc#</code> the end, and you can toggle to regular expression search by clicking the box. <em>Lemma matches</em> offers only the lemmata with attested infinitives as you type.</li>
+        <li><strong>Custom queries</strong>: for advanced users, custom SQL queries can be written.</li>
       </ul>
     </div>
     </div>
@@ -392,7 +391,7 @@
       </div>
     </div>
   </div>
-  <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> anchors the start of the word, <code>abc#</code> the end, <code>#abc#</code> matches exactly.
+  <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> searches the start of the word, <code>abc#</code> the end, and <code>#abc#</code> finds an exact sequence match. You can also use regular expressions to query forms and lemmas.
     <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="infRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as JavaScript regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
   <div class="btn-row">
     <button id="btnInfApply" class="btn btn-primary" disabled>Apply filter</button>
