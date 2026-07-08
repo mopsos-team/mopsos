@@ -2,7 +2,7 @@
 
 **Database of Ancient Greek Morphology, Phonology, Syntax, and Scansion**
 
-MoPSoS is an open-access, client-hosted corpus tool for Archaic Greek hexameter poetry (Homer, *Iliad* and *Odyssey*; Hesiod, *Theogony* and *Works and Days*). It supports searches over linguistic sub-categories not encoded in comparable databases: morphemes, phonological and syllabic structure, syntactic relations, and meter.
+MoPSoS is an open-access, client-hosted sqlite-based corpus tool for Archaic Greek hexameter poetry (Homer, *Iliad* and *Odyssey*; Hesiod, *Theogony* and *Works and Days*). It supports searches over linguistic sub-categories not encoded in comparable databases: morphemes, phonological and syllabic structure, syntactic relations, and meter.
 
 Live site: **https://mopsos.org**
 
@@ -32,8 +32,8 @@ Load order: `papaparse -> sql-wasm.js -> d3 -> mopsos-shared.js -> page script`.
 
 | Page | Script | What it does |
 | --- | --- | --- |
-| `index.html` | (inline) | Landing page with the four-quadrant logo |
-| `morphology.html` | `morphology-standalone.js` | Form/lemma search with per-POS morphological feature filters, work/book/verse scoping, custom SQL |
+| `index.html` | (inline) | Landing page |
+| `morphology.html` | `morphology-standalone.js` | Form/lemma search with per-POS morphological feature filters, and compounding and infinitive information |
 | `phonology.md` | `phonology.js` | Segment frequencies and positional distributions, bigram phonotactics, functional load, syllable shapes and cluster inventories, sonority contours, weight by nature vs. position, elision and hiatus (work in progress) |
 | `syntax.md` | `syntax.js` | Dependency-based syntactic search over the treebank annotation (work in progress) |
 | `prosody.md` | `prosody.js` | Word-by-word line scansion (¯ / ˘, feet), foot-pattern frequencies, dactyl vs. spondee by position, word localization in the line, per-book summaries |
@@ -71,7 +71,7 @@ bundle exec jekyll serve
 # open http://localhost:4000
 ```
 
-Requires Ruby with Bundler. All corpus loading happens client-side, so a plain Jekyll serve is a complete environment.
+Requires Ruby with Bundler.
 
 ## Rebuilding the database
 
@@ -84,19 +84,12 @@ python3 scripts/build_corpus.py
 Stdlib only (csv, sqlite3, gzip). The builder is config-driven: each table is one dict in `TABLES` (column selection, coercions, indexes, derived columns), each summary is one SQL view in `VIEWS`. Notes:
 
 - **Derived search keys.** SQLite (as shipped in sql.js) has no accent-insensitive Unicode collation, so accent-insensitive search is a precomputed column (`strip_diacritics` in `scripts/greek_text.py`) plus identical query-side normalization in `assets/js/mopsos-text.js`. The two implementations mirror each other exactly; if you change one, change the other.
-- **Beta Code is not stored.** It is a pure function of the Greek, so the browser transliterates at query time to keep the shipped database small.
-- **Views, not copies.** Summary tables (e.g. per-book scansion) are SQL views over one base table.
 
 `scripts/parse_hypotactic.py` documents the scansion provenance: syllable quantities were scraped from hypotactic.com and re-parsed into the line/word schema (greedy hexameter parse; long + short short = dactyl, long + long = spondee).
 
 ## Deployment
 
-Deployed via GitHub Actions to GitHub Pages (`mopsos.org`). Two gotchas encoded in `_config.yml`:
-
-1. **Artifact size.** The Pages artifact must stay small or `actions/deploy-pages` fails. The raw build sources (scansion CSVs, any stale raw `corpus.sqlite`) are excluded from the built site; only `corpus.sqlite.gz` ships.
-2. **Jekyll's exclude semantics.** Jekyll treats each `exclude` entry as a raw string prefix in addition to an fnmatch pattern, so `assets/data/corpus.sqlite` would also swallow `corpus.sqlite.gz`. The bracket glob `corpus.sqlit[e]` matches only the raw file. Keep it that way.
-
-Git LFS pointers cannot be served by GitHub Pages, which is another reason the large scansion CSVs are excluded from the build.
+Deployed via GitHub Actions to GitHub Pages (`mopsos.org`).
 
 ## Data sources
 
