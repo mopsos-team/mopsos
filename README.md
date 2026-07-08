@@ -8,6 +8,21 @@ Live site: **https://mopsos.org**
 
 Work in progress; the text collection is under development.
 
+## Citation
+
+> Migliaretti, Elisa, Spiridon-Iosif Capotos, Zachary Fletcher, and Muhammad Rehan. 2026. "MoPSoS: Introduction to the database of Ancient Greek morphology, prosody, syntax and scansion." Conference presentation, Celtic Conference in Classics, 15 July 2026.
+
+```bibtex
+@misc{mopsos2026,
+  author       = {Migliaretti, Elisa and Capotos, Spiridon-Iosif and Fletcher, Zachary and Rehan, Muhammad},
+  title        = {{MoPSoS: Introduction to the database of Ancient Greek morphology, prosody, syntax and scansion}},
+  year         = {2026},
+  month        = jul,
+  howpublished = {Conference presentation, Celtic Conference in Classics},
+  note         = {Presented 15 July 2026}
+}
+```
+
 ## Architecture
 
 - **Static Jekyll site** (Jekyll ~> 4.3), deployed to GitHub Pages with a custom domain (`CNAME`).
@@ -97,17 +112,3 @@ Deployed via GitHub Actions to GitHub Pages (`mopsos.org`).
 - **Morphology and syntax:** the openly published Ancient Greek dependency treebanks: the Ancient Greek and Latin Dependency Treebank (Celano, Crane, Almas, et al.), Gorman Trees, Harrington Trees, Daphne Trees (Mambrini), and Pedalion Trees (Van Hal and Keersmaekers).
 - **Transliteration:** [perseids-tools/beta-code-js](https://github.com/perseids-tools/beta-code-js) (MIT).
 
-## Citation
-
-> Migliaretti, Elisa, Spiridon-Iosif Capotos, Zachary Fletcher, and Muhammad Rehan. 2026. "MoPSoS: Introduction to the database of Ancient Greek morphology, prosody, syntax and scansion." Conference presentation, Celtic Conference in Classics, 15 July 2026.
-
-```bibtex
-@misc{mopsos2026,
-  author       = {Migliaretti, Elisa and Capotos, Spiridon-Iosif and Fletcher, Zachary and Rehan, Muhammad},
-  title        = {{MoPSoS: Introduction to the database of Ancient Greek morphology, prosody, syntax and scansion}},
-  year         = {2026},
-  month        = jul,
-  howpublished = {Conference presentation, Celtic Conference in Classics},
-  note         = {Presented 15 July 2026}
-}
-```
