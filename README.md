@@ -2,7 +2,9 @@
 
 **Database of Ancient Greek Morphology, Phonology, Syntax, and Scansion**
 
-MoPSoS is an open-access, client-hosted sqlite-based corpus tool for Ancient Greek hexameter poetry (Homer, *Iliad* and *Odyssey*; Hesiod, *Theogony* and *Works and Days*). It supports searches over linguistic sub-categories not encoded in comparable databases: morphemes, phonological and syllabic structure, syntactic relations, and meter.
+MoPSoS is an open-access database of Ancient Greek texts. It supports searches over
+linguistic sub-categories not encoded in comparable databases: morphemes, phonological
+and syllabic structure, syntactic relations, and meter.
 
 Live site: **https://mopsos.org**
 
@@ -23,11 +25,17 @@ Work in progress; the text collection is under development.
 }
 ```
 
+## Data sources
+
+- **Scansion:** Chamberlain, David. "A Reading of Homer (Work in Progress)." *Greek and Roman Verse* (hypotactic.com), re-parsed into the MoPSoS schema.
+- **Morphology and syntax:** the openly published Ancient Greek dependency treebanks: the Ancient Greek and Latin Dependency Treebank (Celano, Crane, Almas, et al.), Gorman Trees, Harrington Trees, Daphne Trees (Mambrini), and Pedalion Trees (Van Hal and Keersmaekers).
+
 ## Architecture
 
 - **Static Jekyll site** (Jekyll ~> 4.3), deployed to GitHub Pages with a custom domain.
-- **In-browser SQLite** via [sql.js](https://sql.js.org/) (WASM, loaded from jsDelivr). On first load, `assets/js/mopsos-shared.js` fetches `assets/data/corpus.sqlite.gz`, decompresses it, and opens it as a single shared read-only database (`window.MopsosSQL`). The decompressed bytes are cached in IndexedDB so subsequent visits skip the network fetch.
-- Every analysis tab queries the same database, so all analyses are SQL-integrated, and each tab's advanced panel accepts read-only custom SQL (`SELECT` / `WITH` / `EXPLAIN` / `PRAGMA`).
+- **In-browser SQLite** via [sql.js](https://sql.js.org/) On first load, the code fetches
+  `assets/data/corpus.sqlite.gz` and then hydrates the full database, which executes in an
+  in-browser SQLite instance.
 
 ## Local development
 
@@ -57,14 +65,6 @@ The site fetches only `assets/data/corpus.sqlite.gz`; the CSVs under `assets/dat
 ```bash
 python3 scripts/build_corpus.py
 ```
-## Deployment
-
-Deployed via GitHub Pages.
-
-## Data sources
-
-- **Scansion:** Chamberlain, David. "A Reading of Homer (Work in Progress)." *Greek and Roman Verse* (hypotactic.com), re-parsed into the MoPSoS schema.
-- **Morphology and syntax:** the openly published Ancient Greek dependency treebanks: the Ancient Greek and Latin Dependency Treebank (Celano, Crane, Almas, et al.), Gorman Trees, Harrington Trees, Daphne Trees (Mambrini), and Pedalion Trees (Van Hal and Keersmaekers).
 
 ## Licenses
 
