@@ -43,8 +43,8 @@ Work in progress; the text collection is under development.
 
 **Requirements**
 
-Most modern version of Ruby should work. Development was done with Ruby 3.4.4 on
-macOS 26.5.
+Most modern version of Ruby should work. Development was done with Ruby 4.0.5 on Windows 11
+Enterprise Version 25H2 and with Ruby 3.4.4 on macOS 26.5.
 
 **How to start the server**
 
@@ -58,7 +58,8 @@ bundle exec jekyll serve
 **Requirements**
 
 Any version of Python 3 should work, as long as it has the `sqlite3` library in the Standard Library.
-Development was done with Python 3.8.16 on macOS 26.5.
+Development was done with Python 3.14.6 on Windows 11 Enterprise Version 25H2 and with Python 3.8.16
+on macOS 26.5.
 
 **How to Build**
 
