@@ -58,7 +58,7 @@ section: cite
 </section>
 
 
-<section class="panel" data-open="true">
+<section class="panel">
   <button class="panel-head" type="button" aria-expanded="false">
     <span class="panel-title">Sources</span>
     <span class="panel-toggle">&rsaquo; Expand</span>
@@ -72,30 +72,21 @@ section: cite
   <h2>Scansion and metre</h2>
   <p class="cite-text">Syllable quantities and the hexameter foot parse are drawn from <a href="https://hypotactic.com" target="_blank" rel="noopener">Hypotactic</a>, re-parsed into the MoPSoS line and word schema.</p>
   <ul class="cite-text" style="margin:.2rem 0 0 1.1rem;">
-    <li>Chamberlain, David. &ldquo;A Reading of Homer (Work in Progress).&rdquo; <em>Greek and Roman Verse</em>. June 17, 2025.</li>
+    <li>Chamberlain, David. <em><a href="https://hypotactic.com/latin/index.html?Use_Id=about" target="_blank" rel="noopener">Greek and Latin Meter</a></em>.</li>
   </ul>
 
   <h2>Syntactic and morphological annotation</h2>
   <p class="cite-text">Per-word morphology (and the syntactic parses behind it) is taken from the openly published Ancient Greek dependency treebanks:</p>
   <ul class="cite-text" style="margin:.2rem 0 0 1.1rem;">
-    <li>Celano, Giuseppe G. A., Gregory Crane, Bridget Almas, et al. <em>The Ancient Greek and Latin Dependency Treebank</em>.</li>
-    <li>Gorman, Vanessa. <em>Gorman Trees</em>.</li>
-    <li>Harrington, J. Matthew. <em>Harrington Trees</em>.</li>
-    <li>Mambrini, Francesco. <em>Daphne Trees</em>.</li>
-    <li>Van Hal, Toon, &amp; Alek Keersmaekers. <em>Pedalion Trees</em>.</li>
+    <li>Celano, Giuseppe G. A., Gregory Crane, Bridget Almas, et al. <em><a href="https://perseusdl.github.io/treebank_data/" target="_blank" rel="noopener">The Ancient Greek and Latin Dependency Treebank</a></em>.</li>
   </ul>
-
-  <h2>Transliteration</h2>
-  <p class="cite-text">Beta Code conversion uses <a href="https://github.com/perseids-tools/beta-code-js" target="_blank" rel="noopener">perseids-tools/beta-code-js</a> (MIT License).</p>
-
-  <p class="help" style="margin-top:1rem;">Full provenance and per-file licensing are documented in the repository (see Download Data).</p>
 </div>
 
   </div>
 </section>
 
 
-<section class="panel" data-open="true">
+<section class="panel">
   <button class="panel-head" type="button" aria-expanded="false">
     <span class="panel-title">Download Data</span>
     <span class="panel-toggle">&rsaquo; Expand</span>
@@ -104,12 +95,12 @@ section: cite
 
 <div class="card cite-page">
   <h2>Repository</h2>
-  <p class="cite-text">The complete corpus, the build scripts, and the site source are openly available on GitHub. The built database (<code>corpus.sqlite.gz</code>) that powers every search on this site lives under <code>assets/data/</code>.</p>
+  <p class="cite-text">The complete corpus, the build scripts, and the site source are openly available on GitHub at <a href="https://github.com/mopsos-team/mopsos" target="_blank" rel="noopener">https://github.com/mopsos-team/mopsos</a>.</p>
 
-  <p class="cite-links" style="margin:.8rem 0 .3rem;">
-    <a class="btn btn-primary" href="https://github.com/mopsos-team/mopsos" target="_blank" rel="noopener">Open the GitHub repository &rarr;</a>
-  </p>
-  <p class="cite-text"><code>https://github.com/mopsos-team/mopsos</code></p>
+  <h2>License</h2>
+  <p class="cite-text">This corpus is licensed as <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.en" target="_blank" rel="noopener">CC BY-SA 4.0</a>. We strongly encourage others to use and reuse the data in their own projects.</p>
+
+  <p class="cite-text">The code is provided as free and open-source software licensed under the GNU General Public License v3.0 (<a href="https://choosealicense.com/licenses/gpl-3.0/" target="_blank" rel="noopener">GNU GPLv3</a>).</p>
 </div>
 
   </div>

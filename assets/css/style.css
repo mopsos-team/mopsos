@@ -827,7 +827,7 @@ table.preview th { background: #f3f7f8; }
 .combo-all option { font-family: var(--greek); }
 .cite-page h2 { font-family: "Fraunces", Georgia, serif; font-size: 1.05rem; color: var(--aegean); margin: 1.1rem 0 .4rem; }
 .cite-page h2:first-child { margin-top: 0; }
-.cite-text { max-width: 72ch; color: var(--text); font-size: .98rem; line-height: 1.6; margin: 0 0 .4rem; }
+.cite-text { color: var(--text); font-size: .98rem; line-height: 1.6; margin: 0 0 .4rem; }
 .cite-bib-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
 .cite-bib-head h2 { margin: 0; }
 .cite-pre { margin: .5rem 0 0; padding: .8rem .9rem; background: var(--card-strong, #fff); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .82rem; line-height: 1.5; color: var(--text); white-space: pre; }
