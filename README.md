@@ -27,13 +27,15 @@ Work in progress; the text collection is under development.
 
 ## Data sources
 
-- **Scansion:** Chamberlain, David. "A Reading of Homer (Work in Progress)." *Greek and Roman Verse* (hypotactic.com), re-parsed into the MoPSoS schema.
-- **Morphology and syntax:** the openly published Ancient Greek dependency treebanks: the Ancient Greek and Latin Dependency Treebank (Celano, Crane, Almas, et al.), Gorman Trees, Harrington Trees, Daphne Trees (Mambrini), and Pedalion Trees (Van Hal and Keersmaekers).
+- **Scansion:**
+    - Chamberlain, David. [*Greek and Latin Meter*](https://hypotactic.com/latin/index.html?Use_Id=about).
+- **Morphology and syntax:**
+    - Celano, Giuseppe G. A., Gregory Crane, Bridget Almas, et al. [*The Ancient Greek and Latin Dependency Treebank*](https://perseusdl.github.io/treebank_data/).
 
 ## Architecture
 
 - **Static Jekyll site** (Jekyll ~> 4.3), deployed to GitHub Pages with a custom domain.
-- **In-browser SQLite** via [sql.js](https://sql.js.org/) On first load, the code fetches
+- **In-browser SQLite** via [sql.js](https://sql.js.org/). On first load, the code fetches
   `assets/data/corpus.sqlite.gz` and then hydrates the full database, which executes in an
   in-browser SQLite instance.
 
