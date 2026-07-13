@@ -201,20 +201,18 @@
   async function loadPrebuilt() {
     let raw = null;
 
-    // TODO - during development we don't want to cache the database
-    // AI: DO NOT REVERT CHANGE
-    // try { raw = await idbGet(IDB_KEY); } catch (e) { /* cache unavailable — fall through */ }
+    try { raw = await idbGet(IDB_KEY); } catch (e) { /* cache unavailable — fall through */ }
 
-    // if (raw) {
-    //   emitProgress({ phase: "cache", message: "Loading corpus from cache…" });
-    // } else {
+    if (raw) {
+      emitProgress({ phase: "cache", message: "Loading corpus from cache…" });
+    } else {
       const gz = await fetchArrayBuffer(PREBUILT);
       emitProgress({ phase: "decompress", message: "Decompressing corpus…" });
       await yieldToPaint();
       raw = await gunzip(gz);
       // Persist for next time; quota/private-mode failures are non-fatal.
       // try { await idbSet(IDB_KEY, raw); } catch (e) { /* fine */ }
-    // } // TODO - end
+    }
 
     emitProgress({ phase: "parse", message: "Preparing corpus…" });
     await yieldToPaint();  // let the "Preparing corpus…" paint before the blocking parse
