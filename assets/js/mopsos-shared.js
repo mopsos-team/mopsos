@@ -1189,9 +1189,9 @@
       let start = false, end = false, core = raw;
       if (core.charAt(0) === "#") { start = true; core = core.slice(1); }
       if (core.slice(-1) === "#") { end = true; core = core.slice(0, -1); }
-      const k = searchKey(core);
+      const k = core.split("*").map((s) => searchKey(s)).join("%");
       if (!k) return null;
-      if (start && end) return niceId(col) + " = " + sqlStr(k);
+      if (start && end) return niceId(col) + " LIKE " + sqlStr(k);
       if (start) return niceId(col) + " LIKE " + sqlStr(k + "%");
       if (end) return niceId(col) + " LIKE " + sqlStr("%" + k);
       return niceId(col) + " LIKE " + sqlStr("%" + k + "%");
