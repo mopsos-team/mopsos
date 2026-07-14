@@ -87,7 +87,7 @@
         </div>
       </div>
       <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> searches the start of the word, <code>abc#</code> the end, and <code>#abc#</code> finds an exact sequence match. <code>ab*c</code> searches for words that contain <code>ab</code> followed by any number of letters then <code>c</code>. You can also use regular expressions to query forms and lemmas.
-        <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="qfRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as SQLite regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
+        <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="qfRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as SQLite (https://sqlite.org/) regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
       <div class="btn-row">
         <button id="btnApplyFilter" class="btn btn-primary" disabled>Apply filter</button>
         <button id="btnResetFilter" class="btn">Reset</button>
@@ -392,7 +392,7 @@
     </div>
   </div>
   <p class="help" style="margin:.3rem 0 0;"><code>#abc</code> searches the start of the word, <code>abc#</code> the end, and <code>#abc#</code> finds an exact sequence match. You can also use regular expressions to query forms and lemmas.
-    <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="infRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as JavaScript regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
+    <label class="regex-toggle" style="margin-left:.6rem;"><input type="checkbox" id="infRegex"> Regular expressions <span class="info-tip" tabindex="0" data-tip="Advanced: the two 'contains' boxes are read as SQLite (https://sqlite.org/) regular expressions and matched against the lowercase, accent-free form/lemma (final ς is σ), e.g. ^ζευγ.*μεναι$">&#9432;</span></label></p>
   <div class="btn-row">
     <button id="btnInfApply" class="btn btn-primary" disabled>Apply filter</button>
     <button id="btnInfReset" class="btn">Reset</button>
