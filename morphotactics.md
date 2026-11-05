@@ -35,7 +35,7 @@ section: morphotactics
     <p>Filter the analyzed compounds by first member, second member, member category, or attesting work; see which members are commonest, how the member categories pair up, and where the matching compounds sit in the verse.</p>
     <ul>
       <li><strong>Members</strong>: pick a specific member (type Greek with or without accents, or Beta Code, or click to browse the attested members) <em>or</em> a member category; a specific member fixes its category anyway, so use whichever is handier. The member values come from the compound analysis itself, and the two slots combine freely.</li>
-      <li><strong>Lookup</strong>: choosing one compound shows its members, every metrical position it takes in the verse (form, shape, feet, princeps or biceps start), every occurrence in the corpus with its line text, and a button that scans all of its lines word by word.</li>
+      <li><strong>Lookup</strong>: choosing one compound shows its members, any other possible analyses, linked compounds, and the derivatives counted with it, then every metrical position it takes in the verse (form, shape, feet, princeps or biceps start), every occurrence in the corpus (derivatives included) with its line text, and a button that scans all of its lines word by word.</li>
     </ul>
   </div>
   <div class="mt-controls">

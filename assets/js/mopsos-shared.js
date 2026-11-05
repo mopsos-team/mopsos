@@ -161,7 +161,7 @@
   }
 
   /* --- one-time cache of the decompressed database in IndexedDB --------- */
-  const IDB_NAME = "mopsos", IDB_STORE = "corpus", IDB_KEY = "corpus.sqlite.v5";
+  const IDB_NAME = "mopsos", IDB_STORE = "corpus", IDB_KEY = "corpus.sqlite.v6";
   function idbOpen() {
     return new Promise((resolve, reject) => {
       if (!window.indexedDB) return reject(new Error("no indexedDB"));
@@ -206,7 +206,10 @@
     if (raw) {
       emitProgress({ phase: "cache", message: "Loading corpus from cache…" });
     } else {
-      const gz = await fetchArrayBuffer(PREBUILT);
+      // The version in the URL is what actually invalidates a returning
+      // browser: the fetch uses force-cache, so without it the HTTP cache keeps
+      // serving the old file, however IDB_KEY changes.
+      const gz = await fetchArrayBuffer(PREBUILT + "?" + IDB_KEY);
       emitProgress({ phase: "decompress", message: "Decompressing corpus…" });
       await yieldToPaint();
       raw = await gunzip(gz);

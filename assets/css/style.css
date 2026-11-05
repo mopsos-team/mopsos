@@ -875,6 +875,7 @@ table.preview th { background: #f3f7f8; }
 /* clickable compound in the matching-compounds table */
 .cmp-open { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 2px; }
 .cmp-open:hover { color: var(--accent, #155b6e); }
+.cmp-warn { color: var(--warn); font-weight: 600; }
 .wip-badge { display: inline-block; vertical-align: middle; margin-left: .5rem; padding: .18rem .55rem; border: 1px solid var(--line); border-radius: 999px; background: var(--card-strong, #fff); font-family: "IBM Plex Sans", sans-serif; font-size: .72rem; font-weight: 600; letter-spacing: .02em; color: var(--muted, #666); white-space: nowrap; }
 
 /* Word-level scansion line (each word under its stored metrical marks) */

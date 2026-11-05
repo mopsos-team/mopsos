@@ -267,29 +267,40 @@
    * shows the category-pairing heatmap, the metrical localization of the
    * matching compounds, and a clickable table of the compounds themselves. */
 
-  // Metrical record per compound (keyed by lemma_search), joined once from
-  // the merged morphology table: token count, starting-foot distribution,
-  // and how many tokens run to the end of the line.
-  let compoundMetrics = null;
+  // Metrical record of every token belonging to a compound or to one of its
+  // Include derivatives, joined once from the merged morphology table. Kept as
+  // token groups rather than per-compound totals because a derivative can
+  // belong to two compounds (Πόλυβος under Πολύβιος and Πολύβους), and a token
+  // must still count only once when both compounds match the filters.
+  let compoundTokens = null, tokenLemmaKeys = null, tokenFormKeys = null;
   function buildCompoundMetrics() {
-    if (compoundMetrics) return;
-    compoundMetrics = new Map();
-    SQL.objects(
-      "SELECT m.lemma_search ls, m.foot_start ft, m.foot_end fe, COUNT(*) n\n" +
-      "FROM " + q(TABLE) + " m\n" +
-      "JOIN (SELECT DISTINCT lemma_search FROM " + q("ncompounds_analysis") + ") a\n" +
-      "  ON a.lemma_search = m.lemma_search\n" +
-      "WHERE m.match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND m.foot_start IS NOT NULL\n" +
-      "GROUP BY ls, ft, fe;").forEach((r) => {
-      let e = compoundMetrics.get(r.ls);
-      if (!e) { e = { tot: 0, start: [0, 0, 0, 0, 0, 0], end6: 0 }; compoundMetrics.set(r.ls, e); }
-      const fi = (parseInt(r.ft, 10) || 0) - 1;
-      if (fi >= 0 && fi <= 5) e.start[fi] += r.n;
-      if (String(r.fe) === "6") e.end6 += r.n;
-      e.tot += r.n;
+    if (compoundTokens) return;
+    buildCompoundData();
+    const lemmaKeys = new Set(), formKeys = new Set();
+    compoundItems.forEach((it) => {
+      lemmaKeys.add(it.key);
+      it.incLemma.forEach((k) => lemmaKeys.add(k));
+      it.incForm.forEach((k) => formKeys.add(k));
     });
+    compoundTokens = SQL.objects(
+      "SELECT m.lemma_search ls, m.form_search fs, m.foot_start ft, m.foot_end fe, COUNT(*) n\n" +
+      "FROM " + q(TABLE) + " m\n" +
+      "WHERE m.match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND m.foot_start IS NOT NULL\n" +
+      "  AND (m.lemma_search IN (SELECT lemma_search FROM " + q("ncompounds_analysis") + ")\n" +
+      "    OR m.lemma_search IN (SELECT include_search FROM " + q("ncompounds_include") + ")\n" +
+      "    OR m.form_search IN (SELECT include_search FROM " + q("ncompounds_include") + "))\n" +
+      "GROUP BY ls, fs, ft, fe;").filter((g) => lemmaKeys.has(g.ls) || formKeys.has(g.fs));
+    tokenLemmaKeys = new Set(compoundTokens.map((g) => g.ls));
+    tokenFormKeys = new Set(compoundTokens.map((g) => g.fs));
   }
-  const CATLABEL = { "?": "uncertain", "a/n?": "adjective or noun (?)" };
+  function compoundHasTokens(it) {
+    return tokenLemmaKeys.has(it.key) ||
+      [...it.incLemma].some((k) => tokenLemmaKeys.has(k)) ||
+      [...it.incForm].some((k) => tokenFormKeys.has(k));
+  }
+  const CATLABEL = { v: "verb", n: "noun", a: "adjective", p: "pronoun", d: "adverb",
+    r: "preposition", m: "numeral", "?": "uncertain", "a/n?": "adjective or noun (?)" };
+  const UNCERTAIN_NOTE = "This analysis is uncertain. Exercise caution.";
   // A clickable Greek word: opens the site-wide attestation popup.
   function wlink(w) { return w ? '<span class="wlink" data-word="' + UI.esc(w) + '">' + UI.esc(w) + "</span>" : "\u2013"; }
   // Parse a line's concatenated H/L syllable string into "DDSDDS" etc.
@@ -369,7 +380,7 @@
     return plan;
   }
   function renderLineScan(work, book, verse, hitKey) {
-    const toks = SQL.objects("SELECT form, metrical_shape shp, foot_start ft, foot_start_pos fsp, foot_end fe, foot_end_pos fep, match_status ms, lemma_search ls, form_search fs FROM " +
+    const toks = SQL.objects("SELECT form, metrical_shape shp, foot_start ft, foot_start_pos fsp, foot_end fe, foot_end_pos fep, match_status ms, lemma lem, lemma_search ls, form_search fs FROM " +
       q(TABLE) + " WHERE work = " + sqlStr(work) + " AND book = " + sqlStr(String(book)) +
       " AND verse = " + sqlStr(String(verse)) + " ORDER BY CAST(sentence_id AS INTEGER), id;");
     let allShp = "", bad = 0;
@@ -381,7 +392,7 @@
     const spans = toks.map((t) => {
       const ok = /^OK/.test(String(t.ms || "")) && t.ft != null;
       const hit = hitKey && (typeof hitKey === "string" ? t.ls === hitKey
-        : tokenIsCompound(t, hitKey.key, hitKey.ck));
+        : tokenIsCompound(t, hitKey.ck));
       const cls = "scan-w" + (ok ? (t.shp ? "" : " elided") : " unk") + (hit ? " hit" : "");
       const marks = ok ? (t.shp ? wordMarks(t.shp, t.ft, t.fsp, patt) : "\u2019") : "?";
       const feet = ok ? (t.fe && t.fe !== t.ft ? t.ft + "\u2013" + t.fe : String(t.ft)) : "";
@@ -428,14 +439,19 @@
   function attestedSetFor(work) {
     if (attSetCache.has(work)) return attSetCache.get(work);
     // Lemma matching against the merged morphology table: a compound counts
-    // as attested in a work when its lemma_search occurs among that work's
-    // tokens — so every corpus work (Iliad, Odyssey, Theogony, Works and
-    // Days) is selectable, not only the works the catalogue itself cites.
-    const s = new Set(SQL.objects(
-      "SELECT DISTINCT m.lemma_search k FROM " + q(TABLE) + " m\n" +
-      "WHERE m.work = " + sqlStr(work) + "\n" +
-      "  AND m.lemma_search IN (SELECT lemma_search FROM " + q("ncompounds_analysis") + ");")
-      .map((r) => r.k).filter(Boolean));
+    // as attested in a work when its lemma_search, or one of its Include
+    // derivatives, occurs among that work's tokens — so every corpus work
+    // (Iliad, Odyssey, Theogony, Works and Days) is selectable, not only the
+    // works the catalogue itself cites.
+    const lemmas = new Set(SQL.objects("SELECT DISTINCT lemma_search k FROM " + q(TABLE) +
+      " WHERE work = " + sqlStr(work) + ";").map((r) => r.k));
+    const forms = new Set(SQL.objects("SELECT DISTINCT form_search k FROM " + q(TABLE) +
+      " WHERE work = " + sqlStr(work) +
+      " AND form_search IN (SELECT include_search FROM " + q("ncompounds_include") + ");").map((r) => r.k));
+    const s = new Set(compoundItems
+      .filter((it) => lemmas.has(it.key) || [...it.incLemma].some((k) => lemmas.has(k)) ||
+        [...it.incForm].some((k) => forms.has(k)))
+      .map((it) => it.lemma));
     attSetCache.set(work, s);
     return s;
   }
@@ -509,13 +525,14 @@
       m2sub: el.cmpM2Sub ? el.cmpM2Sub.value : ""
     };
   }
+  const withArticle = (w) => (/^[aeiou]/.test(w) ? "an " : "a ") + w;
   function filterLabel(f) {
     const bits = [];
     if (f.m1) bits.push("with first member \u201c" + f.m1.raw + "\u201d");
-    if (f.m1cat) bits.push("with first member a " + catLabel(f.m1cat));
+    if (f.m1cat) bits.push("with first member " + withArticle(catLabel(f.m1cat)));
     if (f.m1sub) bits.push("with first member of the \u201c" + f.m1sub + "\u201d subcategory");
     if (f.m2) bits.push("with second member \u201c" + f.m2.raw + "\u201d");
-    if (f.m2cat) bits.push("with second member a " + catLabel(f.m2cat));
+    if (f.m2cat) bits.push("with second member " + withArticle(catLabel(f.m2cat)));
     if (f.m2sub) bits.push("with second member of the \u201c" + f.m2sub + "\u201d subcategory");
     if (f.work) bits.push("attested in the " + f.work);
     return bits.join(", ");
@@ -531,7 +548,7 @@
     if (f.m2) rows = rows.filter((r) => memberHits(f.m2, memberSurfaces(r).s2, r.member2));
     if (f.work) {
       const attested = attestedSetFor(f.work);
-      rows = rows.filter((r) => attested.has(r.lemma_search));
+      rows = rows.filter((r) => attested.has(r.lemma));
     }
     return rows;
   }
@@ -543,7 +560,7 @@
     const rows = filteredCompounds(f);
     const label = filterLabel(f);
 
-    if (compoundDetailActive && compoundDetailKey && !rows.some((r) => r.lemma_search === compoundDetailKey)) {
+    if (compoundDetailActive && compoundDetailKey && !rows.some((r) => r.lemma === compoundDetailKey)) {
       compoundDetailActive = false;
       compoundDetailKey = null;
       el.cmpDetail.innerHTML = "";
@@ -561,12 +578,15 @@
     renderCompoundMatches(rows, label);
 
     el.cmpSql.textContent =
-      "SELECT lemma, lemma_search, segmentation, member1, member1_category, member1_subcategory, member2, member2_category, member2_subcategory\n" +
+      "SELECT lemma, lemma_search, inferred, segmentation, member1, member1_category, member1_subcategory, member2, member2_category, member2_subcategory, link_to, uncertain\n" +
       "FROM " + q("ncompounds_analysis") + ";\n\n" +
-      "SELECT m.lemma_search, m.foot_start, m.foot_end, COUNT(*)\n" +
-      "FROM " + q(TABLE) + " m JOIN " + q("ncompounds_analysis") + " a ON a.lemma_search = m.lemma_search\n" +
+      "SELECT m.lemma_search, m.form_search, m.foot_start, m.foot_end, COUNT(*)\n" +
+      "FROM " + q(TABLE) + " m\n" +
       "WHERE m.match_status IN ('OK','OK_ELIDED','OK_FUZZY') AND m.foot_start IS NOT NULL\n" +
-      "GROUP BY m.lemma_search, m.foot_start, m.foot_end;" +
+      "  AND (m.lemma_search IN (SELECT lemma_search FROM " + q("ncompounds_analysis") + ")\n" +
+      "    OR m.lemma_search IN (SELECT include_search FROM " + q("ncompounds_include") + ")\n" +
+      "    OR m.form_search IN (SELECT include_search FROM " + q("ncompounds_include") + "))\n" +
+      "GROUP BY m.lemma_search, m.form_search, m.foot_start, m.foot_end;" +
       (label ? "\n-- filtered in-browser to compounds " + label : "");
 
     /* Category-pairing heatmap over the filtered compounds.
@@ -626,14 +646,23 @@
     if (!catOrMember) { renderMemberCharts(rows, label); return; }
 
     /* metrical localization of the matching compounds */
-    const keys = new Set(rows.map((r) => r.lemma_search));
-    const agg = [0, 0, 0, 0, 0, 0];
-    let tot = 0, end6 = 0, withTok = 0;
-    keys.forEach((k) => {
-      const m = compoundMetrics.get(k); if (!m) return;
-      withTok++; tot += m.tot; end6 += m.end6;
-      for (let i = 0; i < 6; i++) agg[i] += m.start[i];
+    const matched = new Set(rows.map((r) => compoundByLemma.get(r.lemma)));
+    const lemmaSet = new Set(), formSet = new Set();
+    matched.forEach((it) => {
+      lemmaSet.add(it.key);
+      it.incLemma.forEach((k) => lemmaSet.add(k));
+      it.incForm.forEach((k) => formSet.add(k));
     });
+    const agg = [0, 0, 0, 0, 0, 0];
+    let tot = 0, end6 = 0;
+    compoundTokens.forEach((g) => {
+      if (!lemmaSet.has(g.ls) && !formSet.has(g.fs)) return;
+      const fi = (parseInt(g.ft, 10) || 0) - 1;
+      if (fi >= 0 && fi <= 5) agg[fi] += g.n;
+      if (String(g.fe) === "6") end6 += g.n;
+      tot += g.n;
+    });
+    const withTok = [...matched].filter(compoundHasTokens).length;
     if (tot) {
       Chart.bars(el.cmpLocChart, agg.map((v, i) => ({ label: "Foot " + (i + 1), value: v })),
         { preserveOrder: true, valueLabel: "tokens", labelWidth: 90,
@@ -641,7 +670,7 @@
       let best = 0;
       for (let i = 1; i < 6; i++) if (agg[i] > agg[best]) best = i;
       el.cmpLocNote.textContent = "Where " + (label ? "the matching" : "all analyzed") + " compounds sit in the verse: " +
-        tot.toLocaleString() + " metrically aligned tokens of " + withTok + " compounds (of " + keys.size +
+        tot.toLocaleString() + " metrically aligned tokens of " + withTok + " compounds (of " + matched.size +
         " matching), counted by the foot each token begins in. " + Math.round(100 * agg[best] / tot) +
         "% begin in foot " + (best + 1) + "; " + Math.round(100 * end6 / tot) + "% run to the line end (last foot = 6).";
     } else {
@@ -653,21 +682,18 @@
   }
 
   /* The compounds matching the filters, listed FIRST (before the category
-   * figure): each row gives the compound (click to open its record), its
-   * segmentation, and, for each slot, both the exact compound member (from
-   * the segmentation) and the lemma it corresponds to, with its category. */
+   * figure): each row gives the compound (click to open its record) and, for
+   * each slot, the member with its category and subcategory. */
   function renderCompoundMatches(rows, label) {
     const host = el.cmpMatches;
     if (!host) return;
     const PAGE = 25;
     let page = 0;
     const pages = Math.max(1, Math.ceil(rows.length / PAGE));
-    const memberCell = (surface, lemma, cat) => {
-      if (!surface && !lemma) return "\u2013";
-      let s = surface ? "<strong>" + UI.esc(surface) + "</strong>" : "";
-      if (lemma) s += (s ? " \u00b7 " : "") + wlink(lemma);
-      if (cat) s += ' <span class="small-muted">(' + UI.esc(catLabel(cat)) + ")</span>";
-      return s;
+    const memberCell = (lemma, cat, sub) => {
+      if (!lemma) return "\u2013";
+      const tags = [cat ? catLabel(cat) : "", sub || ""].filter(Boolean).join(", ");
+      return wlink(lemma) + (tags ? ' <span class="small-muted">(' + UI.esc(tags) + ")</span>" : "");
     };
     const draw = () => {
       const slice = rows.slice(page * PAGE, page * PAGE + PAGE);
@@ -677,15 +703,17 @@
         '<button class="btn btn-sm" data-m="csv" title="Download every matching compound as CSV">\u2913 CSV (' + rows.length + ")</button>" +
         '</span><span class="pager-info">' + rows.length + " compound" + (rows.length === 1 ? "" : "s") +
         (label ? " " + UI.esc(label) : "") + " \u00b7 page " + (page + 1) + " / " + pages +
-        " \u00b7 click a compound to open its record</span></div>";
+        " \u00b7 click a compound to open its record \u00b7 * = inferred form</span></div>";
       html += '<div class="table-wrap"><table class="preview"><thead><tr>' +
-        "<th>Compound</th><th>Segmentation</th><th>First member (\u00b7 lemma)</th><th>Second member (\u00b7 lemma)</th></tr></thead><tbody>";
+        "<th>Compound</th><th>First member</th><th>Second member</th></tr></thead><tbody>";
       slice.forEach((r) => {
-        const sf = memberSurfaces(r);
-        html += '<tr><td><span class="cmp-open" data-key="' + UI.esc(r.lemma_search) + '">' + UI.esc(r.lemma) + "</span></td>" +
-          "<td>" + UI.esc(r.segmentation || "") + "</td>" +
-          "<td>" + memberCell(sf.s1, r.member1, r.member1_category) + "</td>" +
-          "<td>" + memberCell(sf.s2, r.member2, r.member2_category) + "</td></tr>";
+        const it = compoundByLemma.get(r.lemma);
+        const caseTag = caseLabel(it);
+        html += "<tr><td>" + compoundLink(it) +
+          (caseTag ? ' <span class="small-muted">(' + caseTag + ")</span>" : "") +
+          (isUncertain(r) ? ' <span class="cmp-warn" title="' + UI.esc(UNCERTAIN_NOTE) + '">\u26a0</span>' : "") + "</td>" +
+          "<td>" + memberCell(r.member1, r.member1_category, r.member1_subcategory) + "</td>" +
+          "<td>" + memberCell(r.member2, r.member2_category, r.member2_subcategory) + "</td></tr>";
       });
       html += "</tbody></table></div>";
       host.innerHTML = html;
@@ -695,17 +723,15 @@
         else if (act === "next") { page = Math.min(pages - 1, page + 1); draw(); }
         else if (act === "csv") {
           UI.downloadCsv("mopsos_matching_compounds",
-            ["Compound", "Segmentation", "First member", "First-member lemma", "First-member category",
-             "Second member", "Second-member lemma", "Second-member category"],
-            rows.map((r) => {
-              const sf = memberSurfaces(r);
-              return [r.lemma, r.segmentation || "", sf.s1, r.member1 || "", catLabel(r.member1_category || ""),
-                      sf.s2, r.member2 || "", catLabel(r.member2_category || "")];
-            }));
+            ["Compound", "First member", "First-member category", "First-member subcategory",
+             "Second member", "Second-member category", "Second-member subcategory"],
+            rows.map((r) => [compoundByLemma.get(r.lemma).display,
+              r.member1 || "", catLabel(r.member1_category || ""), r.member1_subcategory || "",
+              r.member2 || "", catLabel(r.member2_category || ""), r.member2_subcategory || ""]));
         }
       }));
       host.querySelectorAll(".cmp-open").forEach((sp) => sp.addEventListener("click", () => {
-        const it = compoundByKey.get(sp.dataset.key);
+        const it = compoundByLemma.get(sp.dataset.lemma);
         if (!it) return;
         el.cmpSearch.value = it.display;
         renderCompoundDetail(it);
@@ -990,22 +1016,82 @@
    * the Greek lemma in the browser via betaOf() (see scripts/greek_text.py for
    * the equivalent Python). ------------------------------------------------- */
   let compoundItems = null, compoundAttestations = null, infinitiveItems = null;
-  let compoundRows = null, compoundByKey = null;
+  let compoundRows = null, compoundByLemma = null, compoundByKey = null;
   let compoundDetailActive = false;
   let compoundDetailKey = null;
 
   function buildCompoundData() {
     if (compoundItems) return;
     compoundRows = SQL.objects(
-      "SELECT lemma, lemma_search, segmentation, member1, member1_category, member1_subcategory, member2, member2_category, member2_subcategory\n" +
+      "SELECT lemma, lemma_search, inferred, segmentation, member1, member1_category, member1_subcategory, member2, member2_category, member2_subcategory, link_to, uncertain\n" +
       "FROM " + q("ncompounds_analysis") + " ORDER BY lemma;");
-    compoundItems = compoundRows.map((r) => ({
-      key: r.lemma_search, display: r.lemma, beta: betaOf(r.lemma),
-      meta: (r.member1 || "?") + " + " + (r.member2 || "?"), row: r
-    }));
+    // One item per exact headword, however many analyses it has. Headwords that
+    // differ only in capitalization share a lemma_search but stay separate
+    // records (Εὔμηλος the name, εὔμηλος the adjective).
+    compoundByLemma = new Map();
+    compoundRows.forEach((r) => {
+      let it = compoundByLemma.get(r.lemma);
+      if (!it) {
+        it = { key: r.lemma_search, lemma: r.lemma, display: r.lemma, beta: betaOf(r.lemma), rows: [],
+          inferred: false, include: [], incLemma: new Set(), incForm: new Set(), twin: null };
+        compoundByLemma.set(r.lemma, it);
+      }
+      it.rows.push(r);
+    });
+    compoundItems = [...compoundByLemma.values()];
     compoundByKey = new Map();
-    compoundItems.forEach((it) => { if (!compoundByKey.has(it.key)) compoundByKey.set(it.key, it); });
+    compoundItems.forEach((it) => {
+      // a lemma any row records as attested is not inferred
+      it.inferred = it.rows.every((r) => String(r.inferred) === "1");
+      if (it.inferred) it.display = it.lemma + "*";
+      const other = compoundByKey.get(it.key);
+      if (other) { it.twin = other; other.twin = it; } else compoundByKey.set(it.key, it);
+    });
+
+    // Include: derivatives counted in the compound's attestation search. An
+    // entry is a corpus lemma where it can be, otherwise a surface form
+    // (ἀτρεκέως is lemmatized under ἀτρεκής); some match neither.
+    const INC = q("ncompounds_include");
+    const asLemma = new Set(SQL.objects("SELECT DISTINCT include_search k FROM " + INC +
+      " WHERE include_search IN (SELECT lemma_search FROM " + q(TABLE) + ");").map((r) => r.k));
+    const asForm = new Set(SQL.objects("SELECT DISTINCT include_search k FROM " + INC +
+      " WHERE include_search IN (SELECT form_search FROM " + q(TABLE) + ");").map((r) => r.k));
+    SQL.objects("SELECT lemma, include, include_search FROM " + INC + " ORDER BY lemma, include;").forEach((r) => {
+      const it = compoundByLemma.get(r.lemma);
+      if (!it) return;
+      it.include.push({ form: r.include, key: r.include_search, attested: asLemma.has(r.include_search) || asForm.has(r.include_search) });
+      if (asLemma.has(r.include_search)) it.incLemma.add(r.include_search);
+      else if (asForm.has(r.include_search)) it.incForm.add(r.include_search);
+    });
+
+    compoundItems.forEach((it) => {
+      const r = it.rows[0], n = distinctAnalyses(it).length, tag = caseLabel(it);
+      it.meta = (r.member1 || "?") + " + " + (r.member2 || "?") + (n > 1 ? " \u00b7 " + n + " analyses" : "") +
+        (tag ? " \u00b7 " + tag : "");
+    });
     compoundAttestations = SQL.objects("SELECT compound, work, book, line_num FROM " + q("ncompounds_attestations") + ";");
+  }
+  const isUncertain = (r) => String(r.uncertain) === "1";
+  const isCapitalized = (w) => w.charAt(0) !== w.charAt(0).toLowerCase();
+  // "capitalized" / "lowercase", for a headword whose twin differs only in that
+  function caseLabel(it) {
+    if (!it || !it.twin) return "";
+    return isCapitalized(it.lemma) ? "capitalized" : "lowercase";
+  }
+  function compoundLink(it) {
+    return '<span class="cmp-open" data-lemma="' + UI.esc(it.lemma) + '">' + UI.esc(it.display) + "</span>";
+  }
+  // A compound's analyses as displayed: rows that read the same once the
+  // segmentation is out of the picture collapse into one.
+  function distinctAnalyses(it) {
+    const seen = new Map();
+    it.rows.forEach((r) => {
+      const k = [r.member1, r.member1_category, r.member1_subcategory, r.member2, r.member2_category, r.member2_subcategory].join("\u0000");
+      const prev = seen.get(k);
+      if (prev) prev.uncertain = prev.uncertain || isUncertain(r);
+      else seen.set(k, { row: r, uncertain: isUncertain(r) });
+    });
+    return [...seen.values()];
   }
 
   /* The catalogue's citation form does not always coincide with the corpus
@@ -1015,20 +1101,25 @@
    * (the catalogue form is itself an inflected token), then (2) under a
    * RELATED CORPUS LEMMA sharing its stem (a fixed ending list, plus final
    * ψ/ξ unpacked to π / κ γ χ, prefix-matched with a length guard). Only
-   * when all three fail does the record fall back to catalogue citations. */
+   * when all three fail does the record fall back to catalogue citations.
+   * A headword with a capitalization twin matches the corpus lemma exactly
+   * instead, and the Include derivatives are added on top in every case. */
   const corpusKeyCache = new Map();
   const STEM_ENDINGS = ["οισιν", "ησιν", "εντων", "εσσα", "οισι", "οιο", "ουσ", "εισ", "οσ", "ον", "ου",
     "ων", "οι", "ησ", "ην", "ασ", "αι", "εσ", "ισ", "ιν", "υσ", "ωσ", "ωρ", "εν", "η", "α", "ω", "υ"];
-  function corpusKeyInfo(key) {
-    if (corpusKeyCache.has(key)) return corpusKeyCache.get(key);
-    let info = null;
-    if (SQL.scalar("SELECT COUNT(*) FROM " + q(TABLE) + " WHERE lemma_search = " + sqlStr(key) + ";")) {
-      info = { cond: "lemma_search = " + sqlStr(key), keys: [key], byForm: false, note: "" };
+  function corpusKeyInfo(item) {
+    if (corpusKeyCache.has(item.lemma)) return corpusKeyCache.get(item.lemma);
+    const key = item.key;
+    let exact = null, keys = [], forms = [], note = "";
+    if (item.twin) {
+      if (SQL.scalar("SELECT COUNT(*) FROM " + q(TABLE) + " WHERE lemma = " + sqlStr(item.lemma) + ";")) exact = item.lemma;
+    } else if (SQL.scalar("SELECT COUNT(*) FROM " + q(TABLE) + " WHERE lemma_search = " + sqlStr(key) + ";")) {
+      keys = [key];
     } else if (SQL.scalar("SELECT COUNT(*) FROM " + q(TABLE) + " WHERE form_search = " + sqlStr(key) + ";")) {
       const lem = SQL.objects("SELECT DISTINCT lemma FROM " + q(TABLE) + " WHERE form_search = " + sqlStr(key) + " LIMIT 3;")
         .map((x) => x.lemma).join(", ");
-      info = { cond: "form_search = " + sqlStr(key), keys: null, byForm: true,
-        note: "matched as a surface form (the corpus lemmatizes it under " + lem + ")" };
+      forms = [key];
+      note = "matched as a surface form (the corpus lemmatizes it under " + lem + ")";
     } else {
       const stems = [];
       STEM_ENDINGS.forEach((e) => { if (key.endsWith(e) && key.length - e.length >= 5) stems.push(key.slice(0, key.length - e.length)); });
@@ -1039,48 +1130,76 @@
           " WHERE lemma_search LIKE " + sqlStr(st + "%") + " GROUP BY k;")
           .filter((c) => Math.abs(c.k.length - key.length) <= 4);
         if (cands.length) {
-          info = { cond: "lemma_search IN (" + cands.map((c) => sqlStr(c.k)).join(", ") + ")",
-            keys: cands.map((c) => c.k), byForm: false,
-            note: "matched under the related corpus lemma" + (cands.length > 1 ? "ta " : " ") + cands.map((c) => c.l).join(", ") };
+          keys = cands.map((c) => c.k);
+          note = "matched under the related corpus lemma" + (cands.length > 1 ? "ta " : " ") + cands.map((c) => c.l).join(", ");
           break;
         }
       }
     }
-    corpusKeyCache.set(key, info);
+    const allKeys = new Set([...keys, ...item.incLemma]), allForms = new Set([...forms, ...item.incForm]);
+    const conds = [];
+    if (exact) conds.push("lemma = " + sqlStr(exact));
+    if (allKeys.size) conds.push("lemma_search IN (" + [...allKeys].map(sqlStr).join(", ") + ")");
+    if (allForms.size) conds.push("form_search IN (" + [...allForms].map(sqlStr).join(", ") + ")");
+    const derivs = item.include.filter((i) => i.attested).map((i) => i.form);
+    if (derivs.length) note += (note ? "; " : "") + "includes the derivative" + (derivs.length > 1 ? "s " : " ") + derivs.join(", ");
+    const info = conds.length ? { cond: "(" + conds.join(" OR ") + ")", exact: exact, keys: allKeys, forms: allForms, note: note } : null;
+    corpusKeyCache.set(item.lemma, info);
     return info;
   }
 
-  // Does a token row (with lemma_search ls and form_search fs) belong to the
-  // compound resolved by corpusKeyInfo?
-  function tokenIsCompound(t, key, ck) {
+  // Does a token row (with lemma lem, lemma_search ls, and form_search fs)
+  // belong to the compound resolved by corpusKeyInfo?
+  function tokenIsCompound(t, ck) {
     if (!ck) return false;
-    return ck.byForm ? t.fs === key : ck.keys.indexOf(t.ls) >= 0;
+    return ck.keys.has(t.ls) || ck.forms.has(t.fs) || (!!ck.exact && t.lem === ck.exact);
   }
 
   function renderCompoundDetail(item) {
     compoundDetailActive = true;
-    compoundDetailKey = item.key;
+    compoundDetailKey = item.lemma;
     if (el.cmpMembersSec) el.cmpMembersSec.hidden = true;
     if (el.cmpPairSec) el.cmpPairSec.hidden = true;
     if (el.cmpMatchesSec) el.cmpMatchesSec.hidden = true;
     buildCompoundMetrics();
-    const r = item.row;
-    const ck = corpusKeyInfo(item.key);
+    const r = item.rows[0];
+    const ck = corpusKeyInfo(item);
+    const citeKeys = new Set([item.key, ...item.include.map((i) => i.key)]);
     const attested = compoundAttestations
-      .filter((a) => normalizeGreek(a.compound) === item.key)
+      .filter((a) => citeKeys.has(normalizeGreek(a.compound)))
       .sort((a, b) => a.work.localeCompare(b.work) || Number(a.book) - Number(b.book) || Number(a.line_num) - Number(b.line_num));
 
     let html = '<table class="paradigm-table"><tbody>';
-    html += "<tr><th>Compound</th><td>" + UI.esc(r.lemma) + "</td></tr>";
+    html += "<tr><th>Compound</th><td>" + UI.esc(item.display) +
+      (item.inferred ? ' <span class="small-muted">(inferred from its derivatives)</span>' : "") + "</td></tr>";
     html += "<tr><th>Beta Code</th><td><code>" + UI.esc(betaOf(r.lemma)) + "</code></td></tr>";
-    if (r.segmentation) html += "<tr><th>Segmentation</th><td>" + UI.esc(r.segmentation) + "</td></tr>";
-    const sf = memberSurfaces(r);
-    html += "<tr><th>First member</th><td>" + (sf.s1 ? "<strong>" + UI.esc(sf.s1) + "</strong> \u00b7 lemma " : "") +
-      wlink(r.member1) + " (" + UI.esc(catLabel(r.member1_category)) + ")</td></tr>";
-    if (r.member1_subcategory) html += "<tr><th>First-member subcategory</th><td>" + UI.esc(r.member1_subcategory) + "</td></tr>";
-    html += "<tr><th>Second member</th><td>" + (sf.s2 ? "<strong>" + UI.esc(sf.s2) + "</strong> \u00b7 lemma " : "") +
-      wlink(r.member2) + " (" + UI.esc(catLabel(r.member2_category)) + ")</td></tr>";
-    if (r.member2_subcategory) html += "<tr><th>Second-member subcategory</th><td>" + UI.esc(r.member2_subcategory) + "</td></tr>";
+    if (item.twin) {
+      html += "<tr><th>Capitalization</th><td>" + (isCapitalized(item.lemma) ? "Capitalized" : "Lowercase") +
+        "; a separate headword from the " + caseLabel(item.twin) + " " + compoundLink(item.twin) + "</td></tr>";
+    }
+    const analyses = distinctAnalyses(item);
+    analyses.forEach((a, i) => {
+      const x = a.row;
+      if (analyses.length > 1) html += '<tr><th colspan="2">Analysis ' + (i + 1) + " of " + analyses.length + "</th></tr>";
+      if (a.uncertain) html += '<tr><td colspan="2" class="cmp-warn">' + UI.esc(UNCERTAIN_NOTE) + "</td></tr>";
+      html += "<tr><th>First member</th><td>" + wlink(x.member1) + " (" + UI.esc(catLabel(x.member1_category)) + ")</td></tr>";
+      if (x.member1_subcategory) html += "<tr><th>First-member subcategory</th><td>" + UI.esc(x.member1_subcategory) + "</td></tr>";
+      html += "<tr><th>Second member</th><td>" + wlink(x.member2) + " (" + UI.esc(catLabel(x.member2_category)) + ")</td></tr>";
+      if (x.member2_subcategory) html += "<tr><th>Second-member subcategory</th><td>" + UI.esc(x.member2_subcategory) + "</td></tr>";
+    });
+    // Link to: a compound opens its record, anything else its word detail
+    const links = [...new Set(item.rows.flatMap((x) => String(x.link_to || "").split(",").map((t) => t.trim()).filter(Boolean)))];
+    if (links.length) {
+      html += "<tr><th>Linked compounds</th><td>" + links.map((t) => {
+        const target = compoundByLemma.get(t) || compoundByKey.get(normalizeGreek(t));
+        return target ? compoundLink(target) : wlink(t);
+      }).join(", ") + "</td></tr>";
+    }
+    if (item.include.length) {
+      html += "<tr><th>Derivatives counted here</th><td>" + item.include.map((i) => i.attested
+        ? '<span class="wlink" data-word="' + UI.esc(i.form.replace(/\?$/, "")) + '">' + UI.esc(i.form) + "</span>"
+        : '<span class="small-muted" title="Not found in the corpus">' + UI.esc(i.form) + "</span>").join(", ") + "</td></tr>";
+    }
     html += "</tbody></table>";
 
     /* every occurrence in the corpus (all works), with rebuilt line text —
@@ -1173,6 +1292,12 @@
     }
 
     el.cmpDetail.innerHTML = html;
+    el.cmpDetail.querySelectorAll(".cmp-open").forEach((sp) => sp.addEventListener("click", () => {
+      const it = compoundByLemma.get(sp.dataset.lemma);
+      if (!it) return;
+      el.cmpSearch.value = it.display;
+      renderCompoundDetail(it);
+    }));
     renderCompoundLocalization(item, occ, ck);
     if (m && m.tot) {
       const det = document.getElementById("mtCmpDetChart");
@@ -1200,7 +1325,7 @@
     const lines = occ.slice(0, cap);
     // one query for every token of every line containing the compound
     const toks = SQL.objects(
-      "SELECT m.work w, m.book b, CAST(m.verse AS INTEGER) v, m.metrical_shape shp, m.foot_start ft, m.foot_end fe, m.match_status ms, m.lemma_search ls, m.form_search fs\n" +
+      "SELECT m.work w, m.book b, CAST(m.verse AS INTEGER) v, m.metrical_shape shp, m.foot_start ft, m.foot_end fe, m.match_status ms, m.lemma lem, m.lemma_search ls, m.form_search fs\n" +
       "FROM " + q(TABLE) + " m JOIN (SELECT DISTINCT work, book, verse FROM " + q(TABLE) +
       " WHERE " + ck.cond + " AND verse IS NOT NULL AND verse <> '') L\n" +
       "  ON m.work = L.work AND m.book = L.book AND m.verse = L.verse\n" +
@@ -1212,7 +1337,7 @@
       if (!L2) { L2 = { shp: "", bad: 0, ft: null, fe: null }; perLine.set(k2, L2); }
       if (!(/^OK/.test(String(t.ms || "")) && t.ft != null)) L2.bad++;
       if (t.shp) L2.shp += t.shp;
-      if (tokenIsCompound(t, item.key, ck) && L2.ft == null) { L2.ft = parseInt(t.ft, 10); L2.fe = parseInt(t.fe, 10) || parseInt(t.ft, 10); }
+      if (tokenIsCompound(t, ck) && L2.ft == null) { L2.ft = parseInt(t.ft, 10); L2.fe = parseInt(t.fe, 10) || parseInt(t.ft, 10); }
     });
     const tally = new Map();
     let und = 0;
@@ -1275,8 +1400,8 @@
         // refreshes with every option change; unfiltered = the full catalogue
         const rows = filteredCompounds(compoundFilters());
         if (rows.length === compoundRows.length) return compoundItems;
-        const allowed = new Set(rows.map((r) => r.lemma_search));
-        return compoundItems.filter((it) => allowed.has(it.key));
+        const allowed = new Set(rows.map((r) => r.lemma));
+        return compoundItems.filter((it) => allowed.has(it.lemma));
       },
       onSelect(it) { el.cmpSearch.value = it.display; renderCompoundDetail(it); }
     });

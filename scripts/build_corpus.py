@@ -109,7 +109,7 @@ TABLES = [
         columns=["lemma", "inferred", "segmentation", "member1",
                  "member1_category", "member1_subcategory", "member2",
                  "member2_category", "member2_subcategory",
-                 "analysis_count", "member_count"],
+                 "analysis_count", "member_count", "link_to", "uncertain"],
         column_mapping={},
         sql_types={},
         data_coercion={},
@@ -122,6 +122,22 @@ TABLES = [
         # don't always match the analysis headword byte-for-byte).
         derived_columns={
             "lemma_search": ("lemma", greek_text.strip_diacritics),
+        },
+    ),
+    # Derivatives whose tokens count toward a compound's attestations, one row
+    # per (compound, derivative). include_search is what gets matched against
+    # the morphology table (see buildCompoundData in morphotactics.js).
+    dict(
+        file_path=os.path.join(DATA, "ncompounds", "ncompounds_include.csv"),
+        table_name="ncompounds_include",
+        columns=["lemma", "include"],
+        column_mapping={},
+        sql_types={},
+        data_coercion={},
+        indexes=["lemma_search", "include_search"],
+        derived_columns={
+            "lemma_search": ("lemma", greek_text.strip_diacritics),
+            "include_search": ("include", greek_text.strip_diacritics),
         },
     ),
     dict(
