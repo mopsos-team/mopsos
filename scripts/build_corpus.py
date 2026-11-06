@@ -40,6 +40,7 @@ import shutil
 import sqlite3
 import sys
 
+import build_encoder_data
 import greek_text
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -289,6 +290,8 @@ def main():
     print("Reminder: bump IDB_KEY in assets/js/mopsos-shared.js when the DATA")
     print("changes (e.g. when the compound tables are added) so returning")
     print("browsers fetch the rebuilt database instead of their cached copy.")
+
+    build_encoder_data.main()
 
 
 if __name__ == "__main__":

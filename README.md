@@ -69,6 +69,8 @@ The site fetches only `assets/data/corpus.sqlite.gz`; the CSVs under `assets/dat
 python3 scripts/build_corpus.py
 ```
 
+This also refreshes `assets/data/encoder/lexicon.json`, the catalogue and lemma list that the compound encoder reads.
+
 ## Licenses
 
 The code is licensed under the GNU General Public License v3.0 ([GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)).

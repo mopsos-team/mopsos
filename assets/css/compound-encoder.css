@@ -1,0 +1,58 @@
+/* Compound encoder: only what style.css has no class for. Every value is one of
+   its tokens; the word states borrow the Scansion, Phonology and clustering
+   palettes. */
+.enc-toast[hidden] { display: none; }
+.enc-toprow { display: flex; flex-wrap: wrap; align-items: end; gap: .55rem .8rem; }
+.enc-toprow .field { flex: 1 1 240px; margin-bottom: 0; }
+.enc-grid { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: .8rem; align-items: start; margin-top: .6rem; }
+.enc-lines { max-height: calc(100vh - 5rem); min-height: 420px; padding: .55rem .7rem .9rem; }
+.enc-form { position: sticky; top: .6rem; min-width: 0; }
+.enc-body { max-height: calc(100vh - 11rem); min-height: 300px; overflow-y: auto; padding: .1rem .45rem .1rem .1rem; }
+.enc-ln { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: .45rem; font-family: var(--greek); font-size: 1.16rem; line-height: 1.62; }
+.enc-no { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; font-size: .74rem; line-height: 1.95rem; color: var(--muted); text-align: right; user-select: none; }
+.enc-tx { min-width: 0; overflow-wrap: anywhere; }
+.w { cursor: pointer; border-radius: 3px; padding: 0 .07em; }
+.w:hover { background: var(--pgbg); }
+.w.new { background: #fbedbc; box-shadow: inset 0 -2px 0 #f9dc78; }
+.w.known { box-shadow: inset 0 -2px 0 #239938; }
+.w.check { box-shadow: inset 0 -2px 0 #a61c00; }
+.w.done { color: #1d7e2f; text-decoration: underline dotted #91cc9b; text-underline-offset: 3px; }
+.w.skip { color: var(--muted); text-decoration: line-through; }
+.w.cur { outline: 2px solid var(--acc); outline-offset: 1px; }
+.help .w { cursor: default; font-family: var(--greek); }
+.enc-greek, .enc-form input.enc-greek { font-family: var(--greek); font-size: 1.08rem; }
+.enc-form .field { margin-bottom: .5rem; }
+.enc-form .field label { margin-bottom: .15rem; font-size: .88rem; }
+.enc-form input[type="text"], .enc-form select { padding: .36rem .5rem; border-radius: 8px; }
+.enc-form input#hw { font-family: var(--greek); font-size: 1.45rem; font-weight: 700; padding: .28rem .55rem; }
+.enc-form input.auto, .enc-form select.auto { background: var(--pgbg); }
+.enc-mem { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr); gap: .45rem; }
+.enc-ctx { font-family: var(--greek); font-size: 1.04rem; line-height: 1.45; margin: 0 0 .5rem; }
+.enc-ctx mark { background: #fbedbc; color: #000; border-radius: 2px; padding: 0 .05em; }
+.enc-note { margin: 0 0 .5rem; }
+.enc-sub { margin: .55rem 0 .25rem; font-weight: 700; font-size: .92rem; }
+.enc-form .paradigm-table { margin-bottom: .3rem; }
+.enc-props tbody tr { cursor: pointer; }
+.enc-props tbody tr:hover td { background: var(--pgbg); }
+.enc-props tbody tr.on td { background: var(--pgbg); box-shadow: inset 0 1px 0 var(--acc), inset 0 -1px 0 var(--acc); }
+.enc-props td:first-child { width: 1.7rem; text-align: center; }
+.enc-props td:last-child { width: 2rem; text-align: center; }
+.enc-form .word-inline { margin-top: .55rem; }
+.enc-form .word-inline .enc-end { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.enc-chips { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; margin-bottom: .45rem; }
+.enc-keys { margin: .35rem 0 0; font-size: .78rem; }
+.enc-table { max-height: 420px; }
+.enc-table td.enc-greek { font-size: 1.04rem; }
+.enc-menu { position: fixed; top: 0; left: 0; right: auto; }
+.enc-menu .combo-item.on { background: var(--pgbg); }
+.enc-toast { position: fixed; z-index: 40; left: 1.2rem; bottom: 1rem; display: flex; gap: .8rem; align-items: center; max-width: calc(100% - 2.4rem);
+  background: #fff; color: #000; border: 1.5px solid var(--acc); border-radius: 10px; box-shadow: 0 8px 18px rgba(0, 0, 0, .18); padding: .45rem .75rem; font-size: .92rem; }
+.enc-toast button { background: none; border: 0; padding: 0; color: var(--acc-ink); text-decoration: underline; cursor: pointer; font-weight: 700; font-size: inherit; }
+.enc-pre { max-height: 190px; }
+textarea.big-textarea.enc-greek { font-family: var(--greek); font-size: 1.08rem; min-height: 130px; }
+@media (max-width: 900px) {
+  .enc-grid { grid-template-columns: minmax(0, 1fr); }
+  .enc-lines { max-height: 50vh; min-height: 260px; }
+  .enc-form { position: static; }
+  .enc-body { max-height: none; min-height: 0; overflow: visible; }
+}
