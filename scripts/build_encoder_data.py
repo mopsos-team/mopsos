@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build assets/data/encoder/lexicon.json for the compound encoder page.
+"""Build the data files for the compound and infinitive encoder pages.
 
-The encoder suggests analyses from the compound catalogue and from the corpus
-lemmas and their forms, so it needs both in the browser. Run after changing a
-source CSV (build_corpus.py runs this too):
+lexicon.json: the compound catalogue plus the corpus lemmas and their forms.
+infinitives.json: every encoded corpus infinitive, and the forms that need
+care. Run after changing a source CSV (build_corpus.py runs this too):
 
     python3 scripts/build_encoder_data.py
 
@@ -22,6 +22,7 @@ import greek_text
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "assets", "data")
 OUT = os.path.join(DATA, "encoder", "lexicon.json")
+OUT_INF = os.path.join(DATA, "encoder", "infinitives.json")
 COLUMNS = ["lemma", "inferred", "segmentation", "member1", "member1_category", "member1_subcategory",
            "member2", "member2_category", "member2_subcategory", "analysis_count", "member_count",
            "link_to", "uncertain"]
@@ -64,6 +65,39 @@ def corpus_lemmas():
              " ".join(k for k, _ in a["forms"].most_common())] for lemma, a in sorted(seen.items())]
 
 
+def shape_text(value):
+    """Metrical shapes use Latin H and L; a Greek capital eta has slipped in once."""
+    return (value or "").replace("\u0397", "H").strip()
+
+
+def infinitives():
+    """known: form -> encodings with counts. partial: corpus infinitives with no
+    encoding yet (only active and passive are encoded). others: encoded forms that
+    are also other words, with how often."""
+    known = collections.defaultdict(collections.Counter)
+    partial, other = {}, collections.Counter()
+    rows = read("morphology", "morphology.csv")
+    for r in rows:
+        k = key(r["form"])
+        if not k or r["pos"] != "v" or r["mood"] != "n":
+            continue
+        if r["morpheme"] and r["conjugation"]:
+            known[k][(r["lemma"].strip(), r["tense"], r["voice"], r["conjugation"], r["morpheme"],
+                      shape_text(r["metrical_stem_shape"]), shape_text(r["metrical_shape"]))] += 1
+        elif r["voice"] in ("a", "p"):
+            partial.setdefault(k, [r["lemma"].strip(), r["tense"], r["voice"]])
+    for r in rows:
+        k = key(r["form"])
+        if k in known and not (r["pos"] == "v" and r["mood"] == "n"):
+            other[k] += 1
+    return dict(
+        built=datetime.date.today().isoformat(),
+        known={k: [list(a) + [n] for a, n in c.most_common()] for k, c in sorted(known.items())},
+        partial={k: v for k, v in sorted(partial.items()) if k not in known},
+        others=dict(sorted(other.items())),
+    )
+
+
 def main():
     out = dict(
         built=datetime.date.today().isoformat(),
@@ -77,6 +111,11 @@ def main():
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print(f"Wrote {os.path.relpath(OUT, ROOT)}: {os.path.getsize(OUT) / 1e6:.2f} MB, "
           f"{len(out['compounds'])} analyses, {len(out['lemmas'])} lemmas")
+    inf = infinitives()
+    with open(OUT_INF, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(inf, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"Wrote {os.path.relpath(OUT_INF, ROOT)}: {os.path.getsize(OUT_INF) / 1e3:.0f} KB, "
+          f"{len(inf['known'])} encoded forms")
 
 
 if __name__ == "__main__":

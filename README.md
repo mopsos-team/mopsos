@@ -69,7 +69,7 @@ The site fetches only `assets/data/corpus.sqlite.gz`; the CSVs under `assets/dat
 python3 scripts/build_corpus.py
 ```
 
-This also refreshes `assets/data/encoder/lexicon.json`, the catalogue and lemma list that the compound encoder reads.
+This also refreshes the files in `assets/data/encoder/` that the compound and infinitive encoders read.
 
 ## Licenses
 

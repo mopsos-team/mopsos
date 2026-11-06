@@ -1,184 +1,36 @@
 /* ============================================================================
  *  COMPOUND ENCODER: the unlisted page for encoding nominal compounds from texts
- *  outside the corpus. Every decision is written to this browser, then sent to the
- *  team's Google Sheet (scripts/encoder_sheet.gs), whose web app address is in the
- *  page's data-sheet-url. See compound-engine.js for the logic.
+ *  outside the corpus. Saving is in encoder-store.js, the logic in compound-engine.js.
  * ========================================================================== */
 (function () {
   "use strict";
   const E = window.CompoundEngine;
+  const { $, esc, plural, hash, toGreek, toast, saveFile, copy, csv, createStore } = window.EncoderKit;
   let D = null, ix = null;
-  const $ = (id) => document.getElementById(id);
-  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const CATS = [["n", "noun"], ["a", "adjective"], ["a/n", "adjective or noun"], ["v", "verb"], ["d", "adverb"], ["r", "preposition"], ["m", "numeral"], ["p", "pronoun"], ["u", "uncertain"]];
   const CATLABEL = Object.fromEntries(CATS);
   const SUBS = ["", "thematic", "athematic", "-ā/a", "s-stem", "n-stem", "r-stem", "l-stem", "i-stem", "u-stem", "C-stem"];
-  const plural = (n, one, many) => n + " " + (n === 1 ? one : (many || one + "s"));
   const LOCAL_KEY = "mopsos-encoder-v1";
   const WORK_ORDER = (a) => E.strip(a.lemma);
 
-  function hash(str) {
-    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-    for (let i = 0; i < str.length; i++) {
-      const c = str.charCodeAt(i);
-      h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677);
-    }
-    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-    return (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0");
-  }
-  function toGreek(v) {
-    const s = String(v == null ? "" : v);
-    if (!s || E.hasGreek(s) || !/[a-z*]/i.test(s) || !window.BetaCode) return s;
-    try { return window.BetaCode.betaCodeToGreek(s).normalize("NFC"); } catch (e) { return s; }
-  }
-
-  /* ---- store ----------------------------------------------------------
-   * The site is static, so a decision is first kept in this browser and then
-   * sent to the Google Sheet. The outbox holds what the sheet has not confirmed;
-   * it survives a reload, so a dropped connection loses nothing. Sending is safe
-   * to repeat, because the sheet replaces a record by its id. */
-  const SHEET_URL = document.body.dataset.sheetUrl || "";
-  let outbox = {}, sheetState = SHEET_URL ? "connecting" : "off";
-  let sendTimer = null, sending = false, retryDelay = 5000, lastPull = 0, sheetJoined = false;
-  const store = { ent: new Map(), att: new Map(), not: new Map(), txt: new Map() };
+  /* ---- store ---------------------------------------------------------- */
   const COLLECTIONS = ["ent", "att", "not", "txt"];
-  let unbacked = 0, storageOk = true, saveTimer = null;
-
-  function writeLocal() {
-    clearTimeout(saveTimer);
-    try {
-      const o = { unbacked, outbox, sheetJoined, textId: S.text && S.text.id, onlyTodo: S.onlyTodo, pos: S.pos };
-      COLLECTIONS.forEach((k) => { o[k] = [...store[k].entries()]; });
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(o));
-      storageOk = true;
-    } catch (e) { storageOk = false; }
-    refreshSync();
-  }
-  function saveLocal() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(writeLocal, 200);
-  }
-  function loadLocal() {
-    try {
-      const raw = localStorage.getItem(LOCAL_KEY);
-      if (!raw) return {};
-      const o = JSON.parse(raw);
-      COLLECTIONS.forEach((k) => { (o[k] || []).forEach(([id, v]) => store[k].set(id, v)); });
-      unbacked = o.unbacked || 0;
-      outbox = o.outbox || {};
-      sheetJoined = !!o.sheetJoined;
-      return o;
-    } catch (e) { return {}; }
-  }
-  function put(kind, id, value) {
-    if (value == null) store[kind].delete(id); else store[kind].set(id, value);
-    unbacked++;
-    if (SHEET_URL) { outbox[kind + "|" + id] = { kind, id, value: value == null ? null : value }; queueSend(400); }
-    saveLocal();
-  }
+  const kit = createStore({
+    key: LOCAL_KEY, kinds: COLLECTIONS, url: document.body.dataset.sheetUrl || "",
+    ui: () => ({ textId: S.text && S.text.id, onlyTodo: S.onlyTodo, pos: S.pos }),
+    onRemote: (kinds) => {
+      rebuildDerived();
+      if (kinds.has("ent")) classifyAll();
+      populateTexts();
+      renderReader();
+      renderCounts();
+      if (panelOpen("panelEntries")) renderEntries();
+      if (panelOpen("panelExport")) renderExport();
+    },
+  });
+  const store = kit.rows, put = kit.put, saveLocal = kit.save, SHEET_URL = kit.url;
   const putEntry = (id, v) => put("ent", id, v);
   const putNot = (id, v) => put("not", id, v);
-  function refreshSync() {
-    const el = $("sync"), waiting = Object.keys(outbox).length;
-    const late = !storageOk || sheetState === "waiting";
-    el.className = late ? "small-muted cmp-warn" : "small-muted";
-    if (!storageOk && sheetState !== "saved") el.textContent = "This browser is not keeping your work. Save a backup under Export before you close this page.";
-    else if (sheetState === "off") el.textContent = unbacked ? "Saved in this browser · " + plural(unbacked, "change") + " since your last backup" : "Saved in this browser";
-    else if (sheetState === "waiting") el.textContent = "Saved in this browser · " + plural(waiting, "change") + " waiting to reach the team sheet. Keep working; they will send on their own.";
-    else if (sheetState === "sending") el.textContent = "Saving to the team sheet…";
-    else if (sheetState === "connecting") el.textContent = "Connecting to the team sheet…";
-    else el.textContent = "Saved to the team sheet";
-  }
-  function setSheet(state) { sheetState = state; refreshSync(); }
-  function queueSend(ms) {
-    if (!SHEET_URL) return;
-    clearTimeout(sendTimer);
-    sendTimer = setTimeout(send, ms);
-  }
-  async function send() {
-    if (!SHEET_URL || sending) return;
-    const keys = Object.keys(outbox).slice(0, 250);
-    if (!keys.length) { setSheet("saved"); return; }
-    const batch = keys.map((k) => outbox[k]);
-    sending = true;
-    setSheet("sending");
-    try {
-      // text/plain keeps this a simple request, which Apps Script can answer.
-      const r = await fetch(SHEET_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ changes: batch }) });
-      const o = await r.json();
-      if (!o.ok) throw new Error(o.error || "refused");
-      // A record changed again while this was in flight goes out in the next batch.
-      keys.forEach((k, i) => { if (outbox[k] === batch[i]) delete outbox[k]; });
-      retryDelay = 5000;
-      sending = false;
-      saveLocal();
-      if (Object.keys(outbox).length) queueSend(50); else setSheet("saved");
-    } catch (e) {
-      sending = false;
-      setSheet("waiting");
-      queueSend(retryDelay);
-      retryDelay = Math.min(retryDelay * 2, 120000);
-    }
-  }
-  // Bring in what others have saved. Records with unsent changes here are left alone.
-  async function pull() {
-    if (!SHEET_URL) return;
-    lastPull = Date.now();
-    try {
-      const r = await fetch(SHEET_URL);
-      const o = await r.json();
-      if (!o.ok) throw new Error(o.error || "refused");
-      let changed = false, entries = false;
-      COLLECTIONS.forEach((kind) => (o[kind] || []).forEach(([id, v]) => {
-        if (outbox[kind + "|" + id] || JSON.stringify(store[kind].get(id)) === JSON.stringify(v)) return;
-        store[kind].set(id, v);
-        changed = true;
-        if (kind === "ent") entries = true;
-      }));
-      (o.deleted || []).forEach(([kind, id]) => {
-        if (!store[kind] || outbox[kind + "|" + id] || !store[kind].delete(id)) return;
-        changed = true;
-        if (kind === "ent") entries = true;
-      });
-      if (changed) {
-        saveLocal();
-        rebuildDerived();
-        if (entries) classifyAll();
-        populateTexts();
-        renderReader();
-        renderCounts();
-        if (panelOpen("panelEntries")) renderEntries();
-        if (panelOpen("panelExport")) renderExport();
-      }
-      // The first time a browser connects, send anything saved here before the
-      // sheet existed. Only once, so a row removed from the sheet stays removed.
-      if (!sheetJoined) {
-        sheetJoined = true;
-        const there = new Set();
-        COLLECTIONS.forEach((kind) => (o[kind] || []).forEach(([id]) => there.add(kind + "|" + id)));
-        COLLECTIONS.forEach((kind) => store[kind].forEach((value, id) => {
-          const k = kind + "|" + id;
-          if (!there.has(k) && !outbox[k]) outbox[k] = { kind, id, value };
-        }));
-        saveLocal();
-        queueSend(100);
-      }
-      if (sheetState === "connecting") setSheet(Object.keys(outbox).length ? "sending" : "saved");
-    } catch (e) {
-      if (sheetState === "connecting") setSheet("waiting");
-    }
-  }
-  function sendOnLeaving() {
-    const list = Object.values(outbox).slice(0, 250);
-    if (SHEET_URL && list.length && navigator.sendBeacon) {
-      navigator.sendBeacon(SHEET_URL, new Blob([JSON.stringify({ changes: list })], { type: "text/plain;charset=utf-8" }));
-    }
-  }
-  addEventListener("online", () => queueSend(0));
-  addEventListener("pagehide", sendOnLeaving);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && D && Date.now() - lastPull > 60000) pull(); });
-  addEventListener("pagehide", writeLocal);
 
   /* ---- state ---------------------------------------------------------- */
   const S = { text: null, lines: [], flat: [], pos: -1, onlyTodo: false, rendered: null };
@@ -527,15 +379,6 @@
   }
 
   /* ---- saving --------------------------------------------------------- */
-  let toastTimer = null;
-  function toast(msg, undo) {
-    const el = $("toast");
-    el.innerHTML = "<span>" + esc(msg) + "</span>" + (undo ? '<button type="button" id="undoBtn">Undo</button>' : "");
-    el.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.hidden = true; }, undo ? 7000 : 3200);
-    if (undo) $("undoBtn").onclick = () => { el.hidden = true; undo(); };
-  }
   function logAtt(lemma, a) {
     const id = attId(lemma, a);
     const had = store.att.get(id) || null;
@@ -974,8 +817,6 @@
   });
 
   /* ---- export --------------------------------------------------------- */
-  function csvCell(v) { const s = String(v == null ? "" : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
-  const csv = (rows) => rows.map((r) => r.map(csvCell).join(",")).join("\n");
   function analysisRows() {
     const out = [];
     [...store.ent.values()].sort((a, b) => WORK_ORDER(a).localeCompare(WORK_ORDER(b), "el")).forEach((e) => {
@@ -1019,28 +860,13 @@
     COLLECTIONS.forEach((k) => { o[k] = [...store[k].entries()]; });
     return JSON.stringify(o);
   }
-  function saveFile(filename, data) {
-    const url = URL.createObjectURL(new Blob([data], { type: "text/plain;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast("Saved " + filename);
-  }
-  async function copy(text, el) {
-    try { await navigator.clipboard.writeText(text); toast("Copied"); }
-    catch (e) {
-      if (el) { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
-      toast("Press Ctrl+C to copy the selected rows.");
-    }
-  }
   $("exportIn").addEventListener("click", (ev) => {
     const t = ev.target;
     if (t.dataset.copy) { const f = FILES[t.dataset.copy]; copy(csv(f.rows()), $("pre-" + t.dataset.copy)); }
     else if (t.dataset.save) { const f = FILES[t.dataset.save]; saveFile(f.name, csv([f.head()].concat(f.rows())) + "\n"); }
     else if (t.id === "backupBtn") {
       saveFile("mopsos-compounds-backup-" + new Date().toISOString().slice(0, 10) + ".json", backupData());
-      unbacked = 0; writeLocal();
+      kit.markBackedUp();
     }
     else if (t.id === "restoreBtn") $("restoreFile").click();
   });
@@ -1062,16 +888,15 @@
 
   /* ---- boot ----------------------------------------------------------- */
   function boot() {
-    const saved = loadLocal();
+    const saved = kit.load();
     S.onlyTodo = !!saved.onlyTodo;
     $("onlyTodo").checked = S.onlyTodo;
     rebuildDerived();
     populateTexts();
     renderCounts();
     loadText(saved.textId || "hh2", saved.pos);
-    refreshSync();
+    kit.start();
     $("encLoad").hidden = true;
-    if (SHEET_URL) { pull(); queueSend(300); setInterval(() => { if (!document.hidden) pull(); }, 120000); }
   }
   const load = (name) => fetch("assets/data/encoder/" + name + ".json").then((r) => {
     if (!r.ok) throw new Error(name);

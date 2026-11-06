@@ -1,5 +1,5 @@
-/* MoPSoS compound encoder: receives each save from the encoder page and keeps it
- * in this spreadsheet. Lives in the spreadsheet under Extensions > Apps Script,
+/* MoPSoS encoders: receives each save from the compound and infinitive encoder
+ * pages and keeps it in this spreadsheet. Lives in the spreadsheet under Extensions > Apps Script,
  * deployed as a web app (Execute as: Me; Who has access: Anyone).
  *
  * One tab per kind of record, in the same columns as the site's CSV files, so the
@@ -25,6 +25,14 @@ const TABS = {
     rows: (v) => [[v.lemma + (v.star ? " (*)" : ""), v.work, v.book, v.line, v.form]],
   },
   not: { title: "Not compounds", head: ["form"], rows: (v) => [[v.form]] },
+  inf: {
+    title: "Infinitives",
+    head: ["work", "book", "verse", "form", "lemma", "tense", "voice", "conjugation", "morpheme", "ending",
+      "metrical_shape", "metrical_stem_shape", "uncertain", "note"],
+    rows: (v) => [[v.work, v.book, v.line, v.form, v.lemma, v.tense, v.voice, v.conj, v.morph, v.tag || "",
+      v.shape, v.stem, v.unc ? "1" : "0", v.note || ""]],
+  },
+  nin: { title: "Not infinitives", head: ["form"], rows: (v) => [[v.form]] },
   txt: { title: "Pasted texts", head: ["title", "work", "book", "lines"], rows: (v) => [[v.title, v.work, v.book, v.lines.length]] },
 };
 const DELETED = "Deleted";
