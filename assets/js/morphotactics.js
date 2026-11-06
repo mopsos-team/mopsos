@@ -299,7 +299,7 @@
       [...it.incForm].some((k) => tokenFormKeys.has(k));
   }
   const CATLABEL = { v: "verb", n: "noun", a: "adjective", p: "pronoun", d: "adverb",
-    r: "preposition", m: "numeral", "?": "uncertain", "a/n?": "adjective or noun (?)" };
+    r: "preposition", m: "numeral", u: "uncertain", "a/n": "adjective or noun" };
   const UNCERTAIN_NOTE = "This analysis is uncertain. Exercise caution.";
   // A clickable Greek word: opens the site-wide attestation popup.
   function wlink(w) { return w ? '<span class="wlink" data-word="' + UI.esc(w) + '">' + UI.esc(w) + "</span>" : "\u2013"; }
@@ -631,7 +631,7 @@
     const colAxisName = m2BySub ? "second-member subcategory" : "second-member category";
     el.cmpDesc.textContent = "How often each (" + rowAxisName + ", " + colAxisName + ") pairing occurs among the " +
       (label ? "matching" : "analyzed") + " compounds" + (label ? " (" + label + ")" : "") +
-      ". \u201c?\u201d marks an uncertain member analysis in the source data" +
+      ". \u201cUncertain\u201d marks a member whose category is undetermined in the source data" +
       ((m1BySub || m2BySub) ? ", and a pinned category with its subcategory left open is broken down by stem subcategory" : "") + ".";
 
     /* section visibility: the member charts vanish for a slot whose member
@@ -1066,7 +1066,7 @@
 
     compoundItems.forEach((it) => {
       const r = it.rows[0], n = distinctAnalyses(it).length, tag = caseLabel(it);
-      it.meta = (r.member1 || "?") + " + " + (r.member2 || "?") + (n > 1 ? " \u00b7 " + n + " analyses" : "") +
+      it.meta = (r.member1 || "\u2013") + " + " + (r.member2 || "\u2013") + (n > 1 ? " \u00b7 " + n + " analyses" : "") +
         (tag ? " \u00b7 " + tag : "");
     });
     compoundAttestations = SQL.objects("SELECT compound, work, book, line_num FROM " + q("ncompounds_attestations") + ";");
@@ -1197,7 +1197,7 @@
     }
     if (item.include.length) {
       html += "<tr><th>Derivatives counted here</th><td>" + item.include.map((i) => i.attested
-        ? '<span class="wlink" data-word="' + UI.esc(i.form.replace(/\?$/, "")) + '">' + UI.esc(i.form) + "</span>"
+        ? '<span class="wlink" data-word="' + UI.esc(i.form) + '">' + UI.esc(i.form) + "</span>"
         : '<span class="small-muted" title="Not found in the corpus">' + UI.esc(i.form) + "</span>").join(", ") + "</td></tr>";
     }
     html += "</tbody></table>";
