@@ -5,7 +5,8 @@
 (function () {
   "use strict";
   const E = window.CompoundEngine;
-  const { $, esc, plural, hash, toGreek, toast, saveFile, copy, csv, createStore } = window.EncoderKit;
+  const { $, esc, plural, hash, toGreek, toast, saveFile, copy, csv, createStore, createTranslations, loadTranslations } = window.EncoderKit;
+  const translations = createTranslations($("lines"));
   let D = null, ix = null;
   const CATS = [["n", "noun"], ["a", "adjective"], ["a/n", "adjective or noun"], ["v", "verb"], ["d", "adverb"], ["r", "preposition"], ["m", "numeral"], ["p", "pronoun"], ["u", "uncertain"]];
   const CATLABEL = Object.fromEntries(CATS);
@@ -143,8 +144,9 @@
         p = t.end;
       });
       out += esc(l.s.slice(p));
-      if (S.onlyTodo && !any) return;
-      html += '<div class="enc-ln"><span class="enc-no">' + esc(l.n) + '</span><span class="enc-tx">' + out + "</span></div>";
+      const onScreen = !(S.onlyTodo && !any);
+      if (onScreen) html += '<div class="enc-ln"><span class="enc-no">' + esc(l.n) + '</span><span class="enc-tx">' + out + "</span></div>";
+      html += translations.after(S.text.id, S.lines, li, onScreen);
     });
     box.innerHTML = html || '<p class="help">Every flagged word in this text is dealt with. Clear the filter to read the whole text and click anything that was missed.</p>';
     S.lines.forEach((l) => l.toks.forEach((t) => { t.el = null; }));
@@ -853,7 +855,7 @@
       '<div class="card"><h2>1. Backup</h2><p class="help" style="margin-top:-.35rem;">A backup file holds every compound, attestation, note and pasted text. Restoring one adds it to what is here.</p>' +
       '<div class="btn-row"><button class="btn" id="backupBtn">Save backup</button><button class="btn btn-warn" id="restoreBtn">Restore a backup</button></div></div>' +
       cards.replace(/<h2>(\d)\. /g, (m, n) => "<h2>" + (+n + 1) + ". ") +
-      '<p class="fig-caption">Catalogue built from ' + ix.items.size.toLocaleString("en-US") + " headwords on " + esc(D.built) + ". Hymns, Theogony, Works and Days and Shield: Evelyn-White's 1914 Loeb text via the Perseus Digital Library (CC BY-SA).</p>";
+      '<p class="fig-caption">Catalogue built from ' + ix.items.size.toLocaleString("en-US") + " headwords on " + esc(D.built) + ". Hymns, Theogony, Works and Days and Shield: Evelyn-White's 1914 Loeb text and translation via the Perseus Digital Library (CC BY-SA).</p>";
   }
   function backupData() {
     const o = { format: "mopsos-encoder-backup", version: 1 };
@@ -902,7 +904,8 @@
     if (!r.ok) throw new Error(name);
     return r.json();
   });
-  Promise.all([load("lexicon"), load("texts")]).then(([lex, txt]) => {
+  Promise.all([load("lexicon"), load("texts"), loadTranslations()]).then(([lex, txt, eng]) => {
+    translations.set(eng);
     D = { ...lex, texts: txt.texts };
     ix = E.buildIndex(D);
     boot();

@@ -6,7 +6,8 @@
 (function () {
   "use strict";
   const I = window.InfinitiveEngine, C = window.CompoundEngine;
-  const { $, esc, plural, hash, toGreek, toast, saveFile, copy, csv, createStore } = window.EncoderKit;
+  const { $, esc, plural, hash, toGreek, toast, saveFile, copy, csv, createStore, createTranslations, loadTranslations } = window.EncoderKit;
+  const translations = createTranslations($("lines"));
   const strip = I.strip;
   const TENSES = [["p", "present"], ["a", "aorist"], ["f", "future"], ["r", "perfect"], ["t", "future perfect"]];
   const VOICES = [["a", "active"], ["p", "passive"], ["m", "middle"], ["e", "mediopassive"]];
@@ -131,8 +132,9 @@
         p = t.end;
       });
       out += esc(l.s.slice(p));
-      if (S.onlyTodo && !any) return;
-      html += '<div class="enc-ln"><span class="enc-no">' + esc(l.n) + '</span><span class="enc-tx">' + out + "</span></div>";
+      const onScreen = !(S.onlyTodo && !any);
+      if (onScreen) html += '<div class="enc-ln"><span class="enc-no">' + esc(l.n) + '</span><span class="enc-tx">' + out + "</span></div>";
+      html += translations.after(S.text.id, S.lines, li, onScreen);
     });
     box.innerHTML = html || '<p class="help">Every flagged word in this text is dealt with. Clear the filter to read the whole text and click anything that was missed.</p>';
     S.lines.forEach((l) => l.toks.forEach((t) => { t.el = null; }));
@@ -539,7 +541,7 @@
       '<div class="card"><h2>2. infinitives_encoded.csv</h2><p class="help" style="margin-top:-.35rem;">One row per occurrence. ' + plural(rows.length, "row") + ".</p>" +
       (rows.length ? '<pre class="status enc-pre" id="preRows" tabindex="0">' + esc(csv(rows)) + "</pre>" : "") +
       '<div class="btn-row"><button class="btn" id="copyRows"' + (rows.length ? "" : " disabled") + '>Copy rows</button><button class="btn" id="saveRows"' + (rows.length ? "" : " disabled") + ">Save file with header</button></div></div>" +
-      '<p class="fig-caption">Corpus infinitives from ' + esc(D.built) + ". Hymns and Hesiod: Evelyn-White's 1914 Loeb text via the Perseus Digital Library (CC BY-SA).</p>";
+      '<p class="fig-caption">Corpus infinitives from ' + esc(D.built) + ". Hymns and Hesiod: Evelyn-White's 1914 Loeb text and translation via the Perseus Digital Library (CC BY-SA).</p>";
   }
   function backupData() {
     const o = { format: "mopsos-infinitives-backup", version: 1 };
@@ -582,7 +584,8 @@
     if (!r.ok) throw new Error(name);
     return r.json();
   });
-  Promise.all([load("lexicon"), load("infinitives"), load("texts")]).then(([lex, inf, txt]) => {
+  Promise.all([load("lexicon"), load("infinitives"), load("texts"), loadTranslations()]).then(([lex, inf, txt, eng]) => {
+    translations.set(eng);
     D = inf;
     TEXTS = txt.texts;
     ix = I.buildIndex(lex, inf);

@@ -52,6 +52,63 @@ window.EncoderKit = (function () {
       toast("Press Ctrl+C to copy the selected rows.");
     }
   }
+  /* Translation rows for the reader. A passage covers the Greek lines from its own
+   * start up to the next passage's start. Some editions print lines out of numerical
+   * order, so each row goes by where the passage's last line sits on the page rather
+   * than by its number. Open rows stay open when the reader is rebuilt. */
+  function createTranslations(box) {
+    const open = new Set();
+    let texts = {}, plan = null;
+    const at = (list, n) => {
+      let hit = -1;
+      for (let i = 0; i < list.length && list[i][0] <= n; i++) hit = i;
+      return hit;
+    };
+    function planFor(textId, lines) {
+      if (plan && plan.lines === lines) return plan;
+      const list = texts[textId] || [], of = [], span = new Map();
+      lines.forEach((l, i) => {
+        const n = parseInt(l.n, 10), p = at(list, n);
+        of[i] = p;
+        if (p < 0) return;
+        const e = span.get(p) || { last: i, lo: n, hi: n };
+        e.last = i; e.lo = Math.min(e.lo, n); e.hi = Math.max(e.hi, n);
+        span.set(p, e);
+      });
+      plan = { lines, list, of, span, seen: new Set() };
+      return plan;
+    }
+    box.addEventListener("click", (ev) => {
+      const b = ev.target.closest(".enc-tr-btn");
+      if (!b) return;
+      const row = b.parentNode, p = row.querySelector(".enc-tr-text"), opening = p.hidden;
+      p.hidden = !opening;
+      b.setAttribute("aria-expanded", String(opening));
+      b.firstChild.textContent = opening ? "Hide translation" : "Show translation";
+      if (opening) open.add(row.dataset.tr); else open.delete(row.dataset.tr);
+    });
+    return {
+      set(o) { texts = (o && o.texts) || {}; plan = null; },
+      // The row to place after line li, if that line ends a passage. onScreen says
+      // whether the line is showing, so a filtered-out passage gets no row.
+      after(textId, lines, li, onScreen) {
+        const p = planFor(textId, lines);
+        if (li === 0) p.seen.clear();
+        const here = p.of[li];
+        if (here === undefined || here < 0) return "";
+        if (onScreen) p.seen.add(here);
+        const s = p.span.get(here);
+        if (s.last !== li || !p.seen.has(here)) return "";
+        const key = textId + "|" + here, isOpen = open.has(key);
+        const range = s.hi > s.lo ? "lines " + s.lo + "–" + s.hi : "line " + s.lo;
+        return '<div class="enc-tr" data-tr="' + esc(key) + '"><button type="button" class="enc-tr-btn" aria-expanded="' + isOpen + '">' +
+          (isOpen ? "Hide translation" : "Show translation") + '<span class="enc-tr-range"> · ' + range + "</span></button>" +
+          '<p class="enc-tr-text"' + (isOpen ? "" : " hidden") + ">" + esc(p.list[here][1]) + "</p></div>";
+      },
+    };
+  }
+  const loadTranslations = () => fetch("assets/data/encoder/translations.json").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
   const csvCell = (v) => { const s = String(v == null ? "" : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const csv = (rows) => rows.map((r) => r.map(csvCell).join(",")).join("\n");
 
@@ -195,5 +252,5 @@ window.EncoderKit = (function () {
     return { rows, url, put, save, saveNow, load, start, refresh, markBackedUp };
   }
 
-  return { $, esc, plural, hash, toGreek, toast, saveFile, copy, csv, createStore };
+  return { $, esc, plural, hash, toGreek, toast, saveFile, copy, csv, createStore, createTranslations, loadTranslations };
 })();
