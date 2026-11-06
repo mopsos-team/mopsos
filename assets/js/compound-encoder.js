@@ -1,7 +1,8 @@
 /* ============================================================================
  *  COMPOUND ENCODER: the unlisted page for encoding nominal compounds from texts
- *  outside the corpus. Work stays in this browser (localStorage) until it is
- *  exported as CSV rows or a backup file. See compound-engine.js for the logic.
+ *  outside the corpus. Every decision is written to this browser, then sent to the
+ *  team's Google Sheet (scripts/encoder_sheet.gs), whose web app address is in the
+ *  page's data-sheet-url. See compound-engine.js for the logic.
  * ========================================================================== */
 (function () {
   "use strict";
@@ -26,7 +27,6 @@
     h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
     return (h2 >>> 0).toString(16).padStart(8, "0") + (h1 >>> 0).toString(16).padStart(8, "0");
   }
-  const shard = (id, n) => "s" + (parseInt(id.slice(0, 6), 16) % n);
   function toGreek(v) {
     const s = String(v == null ? "" : v);
     if (!s || E.hasGreek(s) || !/[a-z*]/i.test(s) || !window.BetaCode) return s;
@@ -34,8 +34,13 @@
   }
 
   /* ---- store ----------------------------------------------------------
-   * The site is static, so everything lives in this browser. A backup file
-   * from the Export panel is how work moves between browsers and reaches the team. */
+   * The site is static, so a decision is first kept in this browser and then
+   * sent to the Google Sheet. The outbox holds what the sheet has not confirmed;
+   * it survives a reload, so a dropped connection loses nothing. Sending is safe
+   * to repeat, because the sheet replaces a record by its id. */
+  const SHEET_URL = document.body.dataset.sheetUrl || "";
+  let outbox = {}, sheetState = SHEET_URL ? "connecting" : "off";
+  let sendTimer = null, sending = false, retryDelay = 5000, lastPull = 0, sheetJoined = false;
   const store = { ent: new Map(), att: new Map(), not: new Map(), txt: new Map() };
   const COLLECTIONS = ["ent", "att", "not", "txt"];
   let unbacked = 0, storageOk = true, saveTimer = null;
@@ -43,7 +48,7 @@
   function writeLocal() {
     clearTimeout(saveTimer);
     try {
-      const o = { unbacked, textId: S.text && S.text.id, onlyTodo: S.onlyTodo, pos: S.pos };
+      const o = { unbacked, outbox, sheetJoined, textId: S.text && S.text.id, onlyTodo: S.onlyTodo, pos: S.pos };
       COLLECTIONS.forEach((k) => { o[k] = [...store[k].entries()]; });
       localStorage.setItem(LOCAL_KEY, JSON.stringify(o));
       storageOk = true;
@@ -61,22 +66,118 @@
       const o = JSON.parse(raw);
       COLLECTIONS.forEach((k) => { (o[k] || []).forEach(([id, v]) => store[k].set(id, v)); });
       unbacked = o.unbacked || 0;
+      outbox = o.outbox || {};
+      sheetJoined = !!o.sheetJoined;
       return o;
     } catch (e) { return {}; }
   }
   function put(kind, id, value) {
     if (value == null) store[kind].delete(id); else store[kind].set(id, value);
     unbacked++;
+    if (SHEET_URL) { outbox[kind + "|" + id] = { kind, id, value: value == null ? null : value }; queueSend(400); }
     saveLocal();
   }
   const putEntry = (id, v) => put("ent", id, v);
   const putNot = (id, v) => put("not", id, v);
   function refreshSync() {
-    const el = $("sync");
-    el.className = storageOk ? "small-muted" : "small-muted cmp-warn";
-    el.textContent = !storageOk ? "This browser is not keeping your work. Save a backup under Export before you close this page."
-      : unbacked ? "Saved in this browser · " + plural(unbacked, "change") + " since your last backup" : "Saved in this browser";
+    const el = $("sync"), waiting = Object.keys(outbox).length;
+    const late = !storageOk || sheetState === "waiting";
+    el.className = late ? "small-muted cmp-warn" : "small-muted";
+    if (!storageOk && sheetState !== "saved") el.textContent = "This browser is not keeping your work. Save a backup under Export before you close this page.";
+    else if (sheetState === "off") el.textContent = unbacked ? "Saved in this browser · " + plural(unbacked, "change") + " since your last backup" : "Saved in this browser";
+    else if (sheetState === "waiting") el.textContent = "Saved in this browser · " + plural(waiting, "change") + " waiting to reach the team sheet. Keep working; they will send on their own.";
+    else if (sheetState === "sending") el.textContent = "Saving to the team sheet…";
+    else if (sheetState === "connecting") el.textContent = "Connecting to the team sheet…";
+    else el.textContent = "Saved to the team sheet";
   }
+  function setSheet(state) { sheetState = state; refreshSync(); }
+  function queueSend(ms) {
+    if (!SHEET_URL) return;
+    clearTimeout(sendTimer);
+    sendTimer = setTimeout(send, ms);
+  }
+  async function send() {
+    if (!SHEET_URL || sending) return;
+    const keys = Object.keys(outbox).slice(0, 250);
+    if (!keys.length) { setSheet("saved"); return; }
+    const batch = keys.map((k) => outbox[k]);
+    sending = true;
+    setSheet("sending");
+    try {
+      // text/plain keeps this a simple request, which Apps Script can answer.
+      const r = await fetch(SHEET_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ changes: batch }) });
+      const o = await r.json();
+      if (!o.ok) throw new Error(o.error || "refused");
+      // A record changed again while this was in flight goes out in the next batch.
+      keys.forEach((k, i) => { if (outbox[k] === batch[i]) delete outbox[k]; });
+      retryDelay = 5000;
+      sending = false;
+      saveLocal();
+      if (Object.keys(outbox).length) queueSend(50); else setSheet("saved");
+    } catch (e) {
+      sending = false;
+      setSheet("waiting");
+      queueSend(retryDelay);
+      retryDelay = Math.min(retryDelay * 2, 120000);
+    }
+  }
+  // Bring in what others have saved. Records with unsent changes here are left alone.
+  async function pull() {
+    if (!SHEET_URL) return;
+    lastPull = Date.now();
+    try {
+      const r = await fetch(SHEET_URL);
+      const o = await r.json();
+      if (!o.ok) throw new Error(o.error || "refused");
+      let changed = false, entries = false;
+      COLLECTIONS.forEach((kind) => (o[kind] || []).forEach(([id, v]) => {
+        if (outbox[kind + "|" + id] || JSON.stringify(store[kind].get(id)) === JSON.stringify(v)) return;
+        store[kind].set(id, v);
+        changed = true;
+        if (kind === "ent") entries = true;
+      }));
+      (o.deleted || []).forEach(([kind, id]) => {
+        if (!store[kind] || outbox[kind + "|" + id] || !store[kind].delete(id)) return;
+        changed = true;
+        if (kind === "ent") entries = true;
+      });
+      if (changed) {
+        saveLocal();
+        rebuildDerived();
+        if (entries) classifyAll();
+        populateTexts();
+        renderReader();
+        renderCounts();
+        if (panelOpen("panelEntries")) renderEntries();
+        if (panelOpen("panelExport")) renderExport();
+      }
+      // The first time a browser connects, send anything saved here before the
+      // sheet existed. Only once, so a row removed from the sheet stays removed.
+      if (!sheetJoined) {
+        sheetJoined = true;
+        const there = new Set();
+        COLLECTIONS.forEach((kind) => (o[kind] || []).forEach(([id]) => there.add(kind + "|" + id)));
+        COLLECTIONS.forEach((kind) => store[kind].forEach((value, id) => {
+          const k = kind + "|" + id;
+          if (!there.has(k) && !outbox[k]) outbox[k] = { kind, id, value };
+        }));
+        saveLocal();
+        queueSend(100);
+      }
+      if (sheetState === "connecting") setSheet(Object.keys(outbox).length ? "sending" : "saved");
+    } catch (e) {
+      if (sheetState === "connecting") setSheet("waiting");
+    }
+  }
+  function sendOnLeaving() {
+    const list = Object.values(outbox).slice(0, 250);
+    if (SHEET_URL && list.length && navigator.sendBeacon) {
+      navigator.sendBeacon(SHEET_URL, new Blob([JSON.stringify({ changes: list })], { type: "text/plain;charset=utf-8" }));
+    }
+  }
+  addEventListener("online", () => queueSend(0));
+  addEventListener("pagehide", sendOnLeaving);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && D && Date.now() - lastPull > 60000) pull(); });
   addEventListener("pagehide", writeLocal);
 
   /* ---- state ---------------------------------------------------------- */
@@ -906,9 +1007,9 @@
         '<button class="btn" data-save="' + k + '"' + (rows.length ? "" : " disabled") + ">Save file with header</button></div></div>";
     }).join("");
     $("exportIn").innerHTML =
-      '<div class="panel-info"><p class="help" style="margin:0">Your work is kept in this browser only. Save a backup at the end of each session and send it to the MoPSoS team; it also moves your work to another computer. To add the rows to the site, append them to the matching files in <code>assets/data/ncompounds/</code>, then run <code>python3 scripts/build_corpus.py</code>.</p>' +
+      '<div class="panel-info"><p class="help" style="margin:0">' + (SHEET_URL ? "Every decision goes to the team sheet as you make it, so nothing here needs sending." : "Your work is kept in this browser only. Save a backup at the end of each session and send it to the MoPSoS team; it also moves your work to another computer.") + ' To add the rows to the site, append them to the matching files in <code>assets/data/ncompounds/</code>, then run <code>python3 scripts/build_corpus.py</code>.</p>' +
       (inc ? '<p class="cmp-warn" style="margin:.5rem 0 0">' + plural(inc, "compound is", "compounds are") + " missing a member or a + in the segmentation. They export as they stand; check them under Encoded Compounds.</p>" : "") + "</div>" +
-      '<div class="card"><h2>1. Backup</h2><p class="help" style="margin-top:-.35rem;">A backup holds every compound, attestation, note and pasted text. Restoring one adds it to what is here.</p>' +
+      '<div class="card"><h2>1. Backup</h2><p class="help" style="margin-top:-.35rem;">A backup file holds every compound, attestation, note and pasted text. Restoring one adds it to what is here.</p>' +
       '<div class="btn-row"><button class="btn" id="backupBtn">Save backup</button><button class="btn btn-warn" id="restoreBtn">Restore a backup</button></div></div>' +
       cards.replace(/<h2>(\d)\. /g, (m, n) => "<h2>" + (+n + 1) + ". ") +
       '<p class="fig-caption">Catalogue built from ' + ix.items.size.toLocaleString("en-US") + " headwords on " + esc(D.built) + ". Hymns, Theogony, Works and Days and Shield: Evelyn-White's 1914 Loeb text via the Perseus Digital Library (CC BY-SA).</p>";
@@ -970,6 +1071,7 @@
     loadText(saved.textId || "hh2", saved.pos);
     refreshSync();
     $("encLoad").hidden = true;
+    if (SHEET_URL) { pull(); queueSend(300); setInterval(() => { if (!document.hidden) pull(); }, 120000); }
   }
   const load = (name) => fetch("assets/data/encoder/" + name + ".json").then((r) => {
     if (!r.ok) throw new Error(name);
