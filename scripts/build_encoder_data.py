@@ -23,6 +23,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "assets", "data")
 OUT = os.path.join(DATA, "encoder", "lexicon.json")
 OUT_INF = os.path.join(DATA, "encoder", "infinitives.json")
+MIDDLE_MORPHEME = "7"
 COLUMNS = ["lemma", "inferred", "segmentation", "member1", "member1_category", "member1_subcategory",
            "member2", "member2_category", "member2_subcategory", "analysis_count", "member_count",
            "link_to", "uncertain"]
@@ -71,29 +72,36 @@ def shape_text(value):
 
 
 def infinitives():
-    """known: form -> encodings with counts. partial: corpus infinitives with no
-    encoding yet (only active and passive are encoded). others: encoded forms that
-    are also other words, with how often."""
+    """known: form -> encodings with counts. middle: medial and mediopassive forms.
+    Their conjugation and morpheme (7) were filled in by rule and are unreviewed, so
+    the encoder trusts only their lemma, tense and voice. Once reviewed, drop the
+    MIDDLE_MORPHEME test below and they count as known.
+    partial: other corpus infinitives with no encoding yet. others: these forms
+    where they are also other words, with how often."""
     known = collections.defaultdict(collections.Counter)
+    middle = collections.defaultdict(collections.Counter)
     partial, other = {}, collections.Counter()
     rows = read("morphology", "morphology.csv")
     for r in rows:
         k = key(r["form"])
         if not k or r["pos"] != "v" or r["mood"] != "n":
             continue
-        if r["morpheme"] and r["conjugation"]:
+        if r["morpheme"] and r["conjugation"] and r["morpheme"] != MIDDLE_MORPHEME:
             known[k][(r["lemma"].strip(), r["tense"], r["voice"], r["conjugation"], r["morpheme"],
                       shape_text(r["metrical_stem_shape"]), shape_text(r["metrical_shape"]))] += 1
+        elif r["voice"] in ("m", "e") or k.endswith(("σθαι", "σθ", "χθαι", "φθαι", "ρθαι")):
+            middle[k][(r["form"], r["lemma"].strip(), r["tense"], r["voice"], shape_text(r["metrical_shape"]))] += 1
         elif r["voice"] in ("a", "p"):
             partial.setdefault(k, [r["lemma"].strip(), r["tense"], r["voice"]])
     for r in rows:
         k = key(r["form"])
-        if k in known and not (r["pos"] == "v" and r["mood"] == "n"):
+        if (k in known or k in middle) and not (r["pos"] == "v" and r["mood"] == "n"):
             other[k] += 1
     return dict(
         built=datetime.date.today().isoformat(),
         known={k: [list(a) + [n] for a, n in c.most_common()] for k, c in sorted(known.items())},
-        partial={k: v for k, v in sorted(partial.items()) if k not in known},
+        middle={k: [list(a) + [n] for a, n in c.most_common()] for k, c in sorted(middle.items())},
+        partial={k: v for k, v in sorted(partial.items()) if k not in known and k not in middle},
         others=dict(sorted(other.items())),
     )
 
@@ -115,7 +123,7 @@ def main():
     with open(OUT_INF, "w", encoding="utf-8", newline="\n") as f:
         json.dump(inf, f, ensure_ascii=False, separators=(",", ":"))
     print(f"Wrote {os.path.relpath(OUT_INF, ROOT)}: {os.path.getsize(OUT_INF) / 1e3:.0f} KB, "
-          f"{len(inf['known'])} encoded forms")
+          f"{len(inf['known'])} encoded forms, {len(inf['middle'])} medial and mediopassive forms")
 
 
 if __name__ == "__main__":

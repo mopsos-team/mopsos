@@ -49,12 +49,15 @@
     const works = [...new Set(allTexts().map((t) => t.work).concat(["Cypria", "Aethiopis", "Little Iliad", "Iliou Persis", "Nostoi", "Telegony", "Thebaid", "Epigoni", "Catalogue of Women"]))];
     $("workList").innerHTML = works.map((w) => '<option value="' + esc(w) + '">').join("");
   }
+  // The corpus already encodes the active and passive forms of these two.
+  const MEDIAL_ONLY = new Set(["theog", "wd"]);
   function classifyAll() {
     S.lines.forEach((l) => l.toks.forEach((t, ti) => {
       const nx = l.toks[ti + 1];
       t.next = nx ? nx.form : undefined;
       t.elided = /^[ʼ’'᾽]/.test(l.s.slice(t.end));
       t.c = I.classify(ix, t.form, { elided: t.elided, next: t.next, local: LOCAL });
+      if (MEDIAL_ONLY.has(S.text.id) && !t.c.fromCorpus && !/(?:σθ|σθαι|[χφρ]θαι)$/.test(t.c.k)) t.c = { kind: "plain", k: t.c.k };
     }));
   }
   function loadText(id, pos) {
@@ -200,16 +203,20 @@
   }
   function stemFromShape() {
     if (!F.autoStem) return;
-    const cut = F.conj && F.morph ? I.endingSyllables(F.conj, F.tense, F.morph) : 1;
+    // An elided -σθ’ has lost the syllable the ending would take.
+    const cut = /σθ$/.test(strip(F.form)) ? 0 : F.conj && F.morph ? I.endingSyllables(F.conj, F.tense, F.morph, F.voice) : 1;
     F.stem = F.shape.slice(0, Math.max(0, F.shape.length - cut));
     const el = $("fStem"); if (el) el.value = F.stem;
   }
   const options = (list, v) => '<option value=""></option>' + list.map(([k, t]) => '<option value="' + esc(k) + '"' + (k === v ? " selected" : "") + ">" + esc(t) + "</option>").join("");
-  const endingList = (f) => I.endingOptions(f.conj, f.tense).map((o) => [o.m, o.tag]);
+  const endingList = (f) => I.endingOptions(f.conj, f.tense, f.voice).map((o) => [o.m, o.tag]);
+  // -σθαι is the one ending of the medial and mediopassive forms.
+  const endingHtml = (f) => (I.isMiddle(f.voice) ? '<option value="' + I.MIDDLE_NUM + '">' + esc(I.MIDDLE_TAG) + "</option>" : options(endingList(f), f.morph));
   function fillEnding() {
     const el = $("fEnd"), list = endingList(F);
     if (!list.some(([k]) => k === F.morph)) F.morph = list.length === 1 ? list[0][0] : "";
-    el.innerHTML = options(list, F.morph);
+    el.innerHTML = endingHtml(F);
+    el.disabled = I.isMiddle(F.voice);
   }
   function statusHtml() {
     const c = F.ctx || {};
@@ -217,12 +224,13 @@
     if (F.typed) note = "Typed by hand. Add the line number below to record where it occurs.";
     else if (F.editing) note = "Already logged. Change anything and save.";
     else if (c.local) note = "Encoded earlier on this page.";
+    else if (c.fromCorpus) note = (c.kind === "check" ? '<span class="cmp-warn">Check the reading.</span> ' : "") + "Lemma, tense and voice are from the corpus. The conjugation is worked out by rule, so check it." + (t0(F) ? " The ending is elided, so this could be an imperative." : "");
     else if (c.kind === "known") note = "Known from the corpus, so this is filled in from there.";
     else if (c.kind === "check") {
       const why = c.also ? "This spelling is also another word in the corpus." : F.props.length > 1 ? "The corpus has more than one reading of this form." : "";
       note = '<span class="cmp-warn">Check the reading.</span> ' + (t0(F) ? "The ending is elided, so -μεν could be -μεναι. " : "") + why;
     } else if (c.kind === "new") note = c.sure ? "In the corpus but not yet encoded. Check the suggestion." : "Not in the corpus. Suggested from the ending and related forms.";
-    else note = /σθ(αι)?$/.test(strip(F.form)) ? "Middle and mediopassive infinitives are not being encoded yet." : "Not flagged. Encode it if it is an infinitive.";
+    else note = "Not flagged. Encode it if it is an infinitive.";
     return '<p class="help enc-note">' + note + "</p>";
   }
   const t0 = (f) => { const x = tokenAt(S.pos); return !f.typed && x && x.t.elided; };
@@ -234,7 +242,7 @@
   function propsHtml() {
     if (!F.props.length) return "";
     const rows = F.props.map((p, i) => {
-      const end = p.tag || I.endingTag(p.conj, p.tense, p.morph);
+      const end = p.tag || I.endingTag(p.conj, p.tense, p.morph, p.voice);
       return '<tr class="' + (F.used === p ? "on" : "") + '" data-act="use" data-p="' + i + '"><td><kbd>' + (i + 1) + "</kbd></td>" +
         "<td>" + esc(label(TENSES, p.tense)) + " " + esc(label(VOICES, p.voice)) + '<br><span class="pdg-c" style="margin-left:0">' + esc(label(CONJ, p.conj)) + "</span></td>" +
         '<td><span class="pdg-form">' + esc(end) + "</span></td>" +
@@ -264,7 +272,7 @@
       '<div class="field"><label for="fVoice"><strong>Voice</strong></label><select id="fVoice" class="' + cls(F.voice) + '">' + options(VOICES, F.voice) + "</select></div>" +
       '<div class="field"><label for="fConj"><strong>Conjugation</strong></label><select id="fConj" class="' + cls(F.conj) + '">' + options(CONJ, F.conj) + "</select></div></div>" +
       '<div class="enc-mem">' +
-      '<div class="field"><label for="fEnd"><strong>Ending</strong></label><select id="fEnd" class="' + cls(F.morph) + '">' + options(endingList(F), F.morph) + "</select></div>" +
+      '<div class="field"><label for="fEnd"><strong>Ending</strong></label><select id="fEnd" class="' + cls(F.morph) + '"' + (I.isMiddle(F.voice) ? " disabled" : "") + ">" + endingHtml(F) + "</select></div>" +
       '<div class="field"><label for="fShape"><strong>Metrical shape</strong></label><input type="text" id="fShape" class="' + (F.shape && (F.auto || F.typed) ? "auto" : "") + '" value="' + esc(F.shape) + '" autocomplete="off" spellcheck="false"></div>' +
       '<div class="field"><label for="fStem"><strong>Stem shape</strong></label><input type="text" id="fStem" class="' + (F.stem && F.auto ? "auto" : "") + '" value="' + esc(F.stem) + '" autocomplete="off" spellcheck="false"></div></div>' +
       '<div class="enc-end"><label class="regex-toggle"><input type="checkbox" id="fUnc"' + (F.unc ? " checked" : "") + '> Uncertain</label></div></div>' +
@@ -288,7 +296,7 @@
   /* ---- saving --------------------------------------------------------- */
   function record(f, at) {
     return { work: f.work.trim(), book: String(f.book).trim(), line: String(f.line).trim(), form: f.form, lemma: f.lemma.trim(), tense: f.tense, voice: f.voice, conj: f.conj, morph: f.morph,
-      tag: I.endingTag(f.conj, f.tense, f.morph), shape: f.shape, stem: f.stem, unc: f.unc ? 1 : 0, note: f.note.trim(), doc: f.doc, ti: f.ti, at };
+      tag: I.endingTag(f.conj, f.tense, f.morph, f.voice), shape: f.shape, stem: f.stem, unc: f.unc ? 1 : 0, note: f.note.trim(), doc: f.doc, ti: f.ti, at };
   }
   function after(undo, msg) {
     learn(); classifyAll(); renderCounts();
@@ -301,8 +309,8 @@
     if (!F.form || !/[Ͱ-Ͽἀ-῿]/.test(F.form)) return showErr("Enter the form in Greek or Beta Code.");
     if (!F.lemma.trim()) return showErr("Give the lemma.");
     if (!F.tense || !F.voice) return showErr("Give the tense and voice.");
-    const encoded = F.voice === "a" || F.voice === "p";
-    if (encoded && (!F.conj || !F.morph)) return showErr("Give the conjugation and ending.");
+    if (!F.conj) return showErr("Give the conjugation.");
+    if (!F.morph) return showErr("Give the ending.");
     if (F.shape && !/^[HL]+$/.test(F.shape)) return showErr("Metrical shapes use H and L only.");
     if (F.stem && !/^[HL]+$/.test(F.stem)) return showErr("Metrical shapes use H and L only.");
     if (!F.work.trim() || !String(F.line).trim()) return showErr("Give the work and line.");
@@ -397,7 +405,7 @@
       F[el.id === "fTense" ? "tense" : "conj"] = el.value;
       el.classList.remove("auto");
       fillEnding(); stemFromShape();
-    } else if (el.id === "fVoice") { F.voice = el.value; el.classList.remove("auto"); }
+    } else if (el.id === "fVoice") { F.voice = el.value; el.classList.remove("auto"); fillEnding(); stemFromShape(); }
     else if (el.id === "fEnd") { F.morph = el.value; el.classList.remove("auto"); stemFromShape(); }
   });
   body.addEventListener("click", (ev) => {
@@ -531,7 +539,7 @@
       '<div class="card"><h2>2. infinitives_encoded.csv</h2><p class="help" style="margin-top:-.35rem;">One row per occurrence. ' + plural(rows.length, "row") + ".</p>" +
       (rows.length ? '<pre class="status enc-pre" id="preRows" tabindex="0">' + esc(csv(rows)) + "</pre>" : "") +
       '<div class="btn-row"><button class="btn" id="copyRows"' + (rows.length ? "" : " disabled") + '>Copy rows</button><button class="btn" id="saveRows"' + (rows.length ? "" : " disabled") + ">Save file with header</button></div></div>" +
-      '<p class="fig-caption">Corpus infinitives from ' + esc(D.built) + ". Hymns and Shield: Evelyn-White's 1914 Loeb text via the Perseus Digital Library (CC BY-SA).</p>";
+      '<p class="fig-caption">Corpus infinitives from ' + esc(D.built) + ". Hymns and Hesiod: Evelyn-White's 1914 Loeb text via the Perseus Digital Library (CC BY-SA).</p>";
   }
   function backupData() {
     const o = { format: "mopsos-infinitives-backup", version: 1 };
@@ -576,8 +584,7 @@
   });
   Promise.all([load("lexicon"), load("infinitives"), load("texts")]).then(([lex, inf, txt]) => {
     D = inf;
-    // Theogony and Works and Days are already encoded in the corpus.
-    TEXTS = txt.texts.filter((t) => t.id !== "theog" && t.id !== "wd");
+    TEXTS = txt.texts;
     ix = I.buildIndex(lex, inf);
     boot();
   }).catch(() => {
