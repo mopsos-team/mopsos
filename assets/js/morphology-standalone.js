@@ -377,13 +377,13 @@
   const INF_ENDING_TAGS = {
     t:  { name: "thematic",        tags: { "1": "\u2011ειν", "2": "\u2011έμεν", "3": "\u2011έμεναι", "4": "\u2011έειν", "5": "analogical / epic creation", "6": "contracted", "7": "\u2011σθαι" } },
     a:  { name: "athematic",       tags: { "1": "\u2011ναι", "2": "\u2011μεν", "3": "\u2011μεναι", "7": "\u2011σθαι" } },
-    s:  { name: "sigmatic",        tags: { "1": "\u2011σαι", "7": "\u2011σθαι" } },
+    s:  { name: "sigmatic",        tags: { "1": "\u2011σαι", "3": "\u2011σέμεναι", "7": "\u2011σθαι" } },
     sf: { name: "future thematic", tags: { "1": "\u2011σειν", "2": "\u2011σέμεν", "3": "\u2011σέμεναι", "7": "\u2011σθαι" } },
     c:  { name: "contract",        tags: { "1": "\u2011ειν", "2": "\u2011έμεν", "3": "\u2011έμεναι", "4": "\u2011έειν", "5": "analogical / epic creation", "6": "contracted", "7": "\u2011σθαι" } },
     cf: { name: "future contract", tags: { "1": "\u2011ειν", "7": "\u2011σθαι" } }
   };
   function infEndingClass(conj, tense) {
-    return ((conj === "s" || conj === "c") && tense === "f") ? conj + "f" : conj;
+    return ((conj === "s" || conj === "c") && (tense === "f" || tense === "t")) ? conj + "f" : conj;
   }
   function infEndingTag(conj, tense, m) {
     const cls = INF_ENDING_TAGS[infEndingClass(conj, tense)];
@@ -528,9 +528,9 @@
    *  descriptive numbers ("5"/"6") shown as Analogical / Contracted.
    * ---------------------------------------------------------------------- */
   // Medial and mediopassive rows (morpheme 7) were filled in by rule and are under
-  // review; drop the voice test once they should join the figures.
+  // review; drop the morpheme test once they should join the figures.
   const VIZ_BASE = INF_WHERE + " AND match_status <> \"CONFLICT_NO_MATCH\"" +
-    " AND (conjugation IS NOT NULL OR morpheme IS NOT NULL) AND voice IN ('a', 'p')";
+    " AND (conjugation IS NOT NULL OR morpheme IS NOT NULL) AND COALESCE(morpheme, '') <> '7'";
   const WORK_ORDER = ["Iliad", "Odyssey", "Theogony", "Works and Days"];
   const CONJ_NAME = { t: "Thematic", a: "Athematic", s: "Sigmatic", c: "Contract" };
   const TENSE_NAME = { p: "Present", a: "Aorist", r: "Perfect", f: "Future" };

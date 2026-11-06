@@ -3315,7 +3315,7 @@ Hesiod,Theogony,theogony-book-01,2273859,1,479,true,26,11,6,πελώρη,πέλ�
 Hesiod,Theogony,theogony-book-01,2273859,1,480,true,26,11,7,Κρήτῃ,Κρήτη,-1,n,-,s,-,-,-,f,d,-,2,HL,1,1,1,2,OK,,
 Hesiod,Theogony,theogony-book-01,2273859,1,480,true,26,11,8,ἐν,ἐν,4,r,-,-,-,-,-,-,-,-,1,L,1,3,1,3,OK,,
 Hesiod,Theogony,theogony-book-01,2273859,1,480,true,26,11,9,εὐρείῃ,εὐρύς,2,a,-,s,-,-,-,f,d,-,3,HHH,2,1,3,1,OK,,
-Hesiod,Theogony,theogony-book-01,2273859,1,480,true,26,11,10,τρεφέμεν,τρέφω,-2,v,-,-,p,n,a,-,-,-,3,LLH,3,2,4,1,OK,t,1,L
+Hesiod,Theogony,theogony-book-01,2273859,1,480,true,26,11,10,τρεφέμεν,τρέφω,-2,v,-,-,p,n,a,-,-,-,3,LLH,3,2,4,1,OK,t,2,L
 Hesiod,Theogony,theogony-book-01,2273859,1,480,true,26,11,11,ἀτιταλλέμεναί,ἀτιτάλλω,-1,v,-,-,p,n,a,-,-,-,6,LLHLLH,4,2,6,1,OK,t,3,LLH
 Hesiod,Theogony,theogony-book-01,2273859,1,480,true,26,11,12,τε,τε,8,g,-,-,-,-,-,-,-,-,1,H,6,2,6,2,OK,,
 Hesiod,Theogony,theogony-book-01,2273860,1,481,true,20,10,1,ἔνθα,ἔνθα,-2,d,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
@@ -7792,7 +7792,7 @@ Hesiod,Works and Days,works-and-days-book-01,1715951,1,105,true,11,6,3,πη,πη
 Hesiod,Works and Days,works-and-days-book-01,1715951,1,105,true,11,6,4,ἔστι,εἰμί,0,v,3,s,p,i,a,-,-,-,2,HL,3,1,3,2,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1715951,1,105,true,11,6,5,Διὸς,Ζεύς,-1,n,-,s,-,-,-,m,g,-,2,LH,3,3,4,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1715951,1,105,true,11,6,6,νόον,νόος,-1,n,-,s,-,-,-,m,a,-,2,LL,4,2,4,3,OK,,
-Hesiod,Works and Days,works-and-days-book-01,1715951,1,105,true,11,6,7,ἐξαλέασθαι,,3,v,-,-,a,n,p,-,-,-,5,HLLHH,5,1,6,2,OK,,
+Hesiod,Works and Days,works-and-days-book-01,1715951,1,105,true,11,6,7,ἐξαλέασθαι,ἐξαλέομαι,3,v,-,-,a,n,m,-,-,-,5,HLLHH,5,1,6,2,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1715952,1,106,true,30,10,1,εἰ,εἰ,-8,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1715952,1,106,true,30,10,2,δ’,δέ,0,g,-,-,-,-,-,-,-,-,0,,1,2,1,2,OK_ELIDED,,
 Hesiod,Works and Days,works-and-days-book-01,1715952,1,106,true,30,10,3,ἐθέλεις,ἐθέλω,2,v,2,s,p,i,a,-,-,-,3,LLH,1,2,2,1,OK,,
@@ -9615,7 +9615,7 @@ Hesiod,Works and Days,works-and-days-book-01,1716093,1,349,false,116,24,28,ἄρ
 Hesiod,Works and Days,works-and-days-book-01,1716093,1,349,false,116,24,29,εὕρῃς,εὑρίσκω,7,v,2,s,a,s,a,-,-,-,2,HH,6,1,6,2,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716094,1,350,true,3,2,1,μὴ,μή,-2,g,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716094,1,350,true,3,2,2,κακὰ,κακός,-1,a,-,p,-,-,-,n,a,-,2,LL,1,2,1,3,OK,,
-Hesiod,Works and Days,works-and-days-book-01,1716094,1,350,true,3,2,3,κερδαίνειν,κερδαίνω,0,v,-,-,p,n,a,-,-,-,3,HHH,2,1,3,1,OK,,
+Hesiod,Works and Days,works-and-days-book-01,1716094,1,350,true,3,2,3,κερδαίνειν,κερδαίνω,0,v,-,-,p,n,a,-,-,-,3,HHH,2,1,3,1,OK,t,1,HH
 Hesiod,Works and Days,works-and-days-book-01,1716095,1,350,false,9,4,1,κακὰ,κακός,-1,a,-,p,-,-,-,n,n,-,2,LL,3,2,3,3,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716095,1,350,false,9,4,2,κέρδεα,κέρδος,-4,n,-,p,-,-,-,n,n,-,3,HLL,4,1,4,3,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716095,1,350,false,9,4,3,ἶσ’,ἴσος,-3,a,-,p,-,-,-,n,n,-,1,H,5,1,5,1,OK,,
@@ -10123,14 +10123,14 @@ Hesiod,Works and Days,works-and-days-book-01,1716138,1,,true,46,12,14,τε,τε,
 Hesiod,Works and Days,works-and-days-book-01,1716138,1,,true,46,12,15,λήγει,λήγω,1,v,3,s,p,i,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716139,1,,true,7,5,1,τῆμος,τῆμος,-2,d,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716139,1,,true,7,5,2,ἄρ’,ἄρα,-1,g,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
-Hesiod,Works and Days,works-and-days-book-01,1716139,1,,true,7,5,3,ὑλοτομεῖν,ὑλοτομέω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
+Hesiod,Works and Days,works-and-days-book-01,1716139,1,,true,7,5,3,ὑλοτομεῖν,ὑλοτομέω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,c,6,LLL
 Hesiod,Works and Days,works-and-days-book-01,1716139,1,,true,7,5,4,μεμνημένος,μιμνήσκω,1,v,-,s,r,p,e,m,n,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716139,1,,true,7,5,5,ὥρια,ὥριος,-1,a,-,p,-,-,-,n,a,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716139,1,,true,7,5,6,ἔργα,ἔργον,2,n,-,p,-,-,-,n,a,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716140,1,,true,35,9,1,ὄλμον,ὄλμος,-10,n,-,s,-,-,-,m,a,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716140,1,437,true,35,9,2,μὲν,μέν,-2,g,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716140,1,,true,35,9,3,τριπόδην,τρίπους,2,a,-,s,-,-,-,m,a,-,,,,,,,CONFLICT_NO_MATCH,,
-Hesiod,Works and Days,works-and-days-book-01,1716140,1,,true,35,9,4,τάμνειν,τέμνω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
+Hesiod,Works and Days,works-and-days-book-01,1716140,1,,true,35,9,4,τάμνειν,τέμνω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,t,1,H
 Hesiod,Works and Days,works-and-days-book-01,1716140,1,,true,35,9,6,ὕπερον,ὕπερος,-5,n,-,s,-,-,-,m,a,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716140,1,,true,35,9,7,δὲ,δέ,-4,g,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716140,1,,true,35,9,8,τρίπηχυν,τρίπηχυς,2,a,-,s,-,-,-,m,a,-,,,,,,,CONFLICT_NO_MATCH,,
@@ -10331,7 +10331,7 @@ Hesiod,Works and Days,works-and-days-book-01,1716158,1,449,true,7,4,4,ἀνδρ�
 Hesiod,Works and Days,works-and-days-book-01,1716158,1,449,true,7,4,5,ἀβούτεω,ἀβούτης,1,a,-,s,-,-,-,m,g,-,3,LHH,5,3,6,2,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716159,1,456,true,9,6,1,δὴ,δή,-2,g,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716159,1,450,true,9,6,2,τότε,τότε,-1,d,-,-,-,-,-,-,-,-,2,LL,1,2,1,3,OK,,
-Hesiod,Works and Days,works-and-days-book-01,1716159,1,450,true,9,6,3,χορτάζειν,χορτάζω,0,v,-,-,p,n,a,-,-,-,3,HHH,2,1,3,1,OK,,
+Hesiod,Works and Days,works-and-days-book-01,1716159,1,450,true,9,6,3,χορτάζειν,χορτάζω,0,v,-,-,p,n,a,-,-,-,3,HHH,2,1,3,1,OK,t,1,HH
 Hesiod,Works and Days,works-and-days-book-01,1716159,1,450,true,9,6,4,ἕλικας,ἕλιξ,-1,a,-,p,-,-,-,m,a,-,3,LLH,3,2,4,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716159,1,450,true,9,6,5,βόας,βοῦς,2,n,-,p,-,-,-,m,a,-,2,LL,4,2,4,3,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716159,1,450,true,9,6,6,ἔνδον,ἔνδον,-1,d,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
@@ -10403,7 +10403,7 @@ Hesiod,Works and Days,works-and-days-book-01,1716166,1,,true,103,28,30,τοι,σ
 Hesiod,Works and Days,works-and-days-book-01,1716166,1,,true,103,28,31,πλήθωσιν,πλήθω,2,v,3,p,p,s,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716166,1,,true,103,28,32,ἄρουραι,ἄρουρα,1,n,-,p,-,-,-,f,n,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716167,1,,true,1,1,1,ἦρι,ἔαρ,-1,n,-,s,-,-,-,n,d,-,,,,,,,CONFLICT_NO_MATCH,,
-Hesiod,Works and Days,works-and-days-book-01,1716167,1,,true,1,1,2,πολεῖν,πολέω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
+Hesiod,Works and Days,works-and-days-book-01,1716167,1,,true,1,1,2,πολεῖν,πολέω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,c,6,L
 Hesiod,Works and Days,works-and-days-book-01,1716168,1,,true,15,5,1,θέρεος,θέρος,-5,n,-,s,-,-,-,n,g,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716168,1,477,true,15,5,2,δὲ,δέ,0,g,-,-,-,-,-,-,-,-,1,L,1,2,1,2,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716168,1,,true,15,5,3,νεωμένη,νεάω,-3,v,-,s,p,p,e,f,n,-,,,,,,,CONFLICT_NO_MATCH,,
@@ -11133,7 +11133,7 @@ Hesiod,Works and Days,works-and-days-book-01,1716222,1,567,true,31,12,14,ἱστ
 Hesiod,Works and Days,works-and-days-book-01,1716223,1,568,true,4,3,1,τὴν,ὁ,-1,p,-,s,-,-,-,f,a,-,1,H,1,1,1,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716223,1,568,true,4,3,2,φθάμενος,φθάνω,-2,v,-,s,a,p,m,m,n,-,3,LLH,1,2,2,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716223,1,568,true,4,3,3,οἴνας,οἴνη,-1,n,-,p,-,-,-,f,a,-,2,HH,2,2,3,1,OK,,
-Hesiod,Works and Days,works-and-days-book-01,1716223,1,568,true,4,3,4,περταμνέμεν,περιτέμνω,0,v,-,-,p,n,a,-,-,-,5,LLHLL,3,2,4,3,OK_FUZZY,,
+Hesiod,Works and Days,works-and-days-book-01,1716223,1,568,true,4,3,4,περταμνέμεν,περιτέμνω,0,v,-,-,p,n,a,-,-,-,5,LLHLL,3,2,4,3,OK_FUZZY,t,2,LLH
 Hesiod,Works and Days,works-and-days-book-01,1716224,1,568,false,9,3,1,ὣς,ὡς,-4,d,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716224,1,568,false,9,3,2,γὰρ,γάρ,-3,g,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716224,1,568,false,9,3,3,ἄμεινον,ἀμείνων,-2,a,-,s,-,-,-,n,n,c,3,LHH,5,3,6,2,OK,,
@@ -11463,7 +11463,7 @@ Hesiod,Works and Days,works-and-days-book-01,1716242,1,614,true,85,17,14,τότ�
 Hesiod,Works and Days,works-and-days-book-01,1716242,1,614,true,85,17,15,ἔπειτ’,ἔπειτα,-3,d,-,-,-,-,-,-,-,-,2,LH,2,3,3,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716242,1,614,true,85,17,16,ἀρότου,ἄροτος,-1,n,-,s,-,-,-,m,g,-,3,LLH,3,2,4,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716242,1,614,true,85,17,17,μεμνημένος,μιμνήσκω,-1,v,-,s,r,p,e,m,n,-,4,HHLL,4,2,5,3,OK,,
-Hesiod,Works and Days,works-and-days-book-01,1716242,1,614,true,85,17,18,εἶναι,εἰμί,0,v,-,-,p,n,a,-,-,-,2,HH,6,1,6,2,OK,,
+Hesiod,Works and Days,works-and-days-book-01,1716242,1,614,true,85,17,18,εἶναι,εἰμί,0,v,-,-,p,n,a,-,-,-,2,HH,6,1,6,2,OK,a,1,H
 Hesiod,Works and Days,works-and-days-book-01,1716242,1,615,true,85,17,19,ὡραίου,ὡραῖος,3,a,-,s,-,-,-,m,g,-,3,HHH,1,1,2,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716243,1,615,true,14,5,1,πλειὼν,πλειών,-5,n,-,s,-,-,-,m,n,-,2,HH,2,2,3,1,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716243,1,615,true,14,5,2,δὲ,δέ,0,g,-,-,-,-,-,-,-,-,1,L,3,2,3,2,OK,,
@@ -11499,7 +11499,7 @@ Hesiod,Works and Days,works-and-days-book-01,1716245,1,620,true,31,13,1,καὶ,
 Hesiod,Works and Days,works-and-days-book-01,1716245,1,620,true,31,13,2,τότε,τότε,-3,d,-,-,-,-,-,-,-,-,2,LL,1,2,1,3,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716245,1,620,true,31,13,3,μηκέτι,μηκέτι,-2,d,-,-,-,-,-,-,-,-,3,HLL,2,1,2,3,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716245,1,,true,31,13,4,νῆας,ναῦς,-1,n,-,p,-,-,-,f,a,-,,,,,,,CONFLICT_NO_MATCH,,
-Hesiod,Works and Days,works-and-days-book-01,1716245,1,620,true,31,13,5,ἔχειν,ἔχω,0,v,-,-,p,n,a,-,-,-,2,LH,3,3,4,1,OK,,
+Hesiod,Works and Days,works-and-days-book-01,1716245,1,620,true,31,13,5,ἔχειν,ἔχω,0,v,-,-,p,n,a,-,-,-,2,LH,3,3,4,1,OK,t,1,L
 Hesiod,Works and Days,works-and-days-book-01,1716245,1,620,true,31,13,6,ἐνὶ,ἐν,1,r,-,-,-,-,-,-,-,-,2,LL,4,2,4,3,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716245,1,620,true,31,13,7,οἴνοπι,οἶνοψ,-1,a,-,s,-,-,-,m,d,-,3,HLL,5,1,5,3,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716245,1,620,true,31,13,8,πόντῳ,πόντος,2,n,-,s,-,-,-,m,d,-,2,HH,6,1,6,2,OK,,
@@ -12244,7 +12244,7 @@ Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,3,ποτ’,�
 Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,4,ἐξ,ἐκ,-3,r,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,5,ἠοῦς,ἠώς,1,n,-,s,-,-,-,f,g,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,6,Διὶ,Ζεύς,-7,n,-,s,-,-,-,m,d,-,,,,,,,CONFLICT_NO_MATCH,,
-Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,7,λειβέμεν,λείβω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
+Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,7,λειβέμεν,λείβω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,t,2,H
 Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,8,αἴθοπα,αἶθοψ,-1,a,-,s,-,-,-,m,a,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,9,οἶνον,οἶνος,2,n,-,s,-,-,-,m,a,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716310,1,,true,50,14,10,χερσὶν,χείρ,3,n,-,p,-,-,-,f,d,-,,,,,,,CONFLICT_NO_MATCH,,
@@ -12500,7 +12500,7 @@ Hesiod,Works and Days,works-and-days-book-01,1716335,1,,true,15,5,4,τοι,το�
 Hesiod,Works and Days,works-and-days-book-01,1716335,1,,true,15,5,5,λώιόν,λωίων,-1,a,-,s,-,-,-,n,n,c,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716335,1,782,true,15,5,6,ἐστιν,εἰμί,0,v,3,s,p,i,a,-,-,-,2,HH,6,1,6,2,OK,,
 Hesiod,Works and Days,works-and-days-book-01,1716336,1,,true,1,1,1,ὧδ’,ὧδε,-1,d,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
-Hesiod,Works and Days,works-and-days-book-01,1716336,1,,true,1,1,2,ἔρδειν,ἔρδω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
+Hesiod,Works and Days,works-and-days-book-01,1716336,1,,true,1,1,2,ἔρδειν,ἔρδω,0,v,-,-,p,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,t,1,H
 Hesiod,Works and Days,works-and-days-book-01,1716337,1,,true,9,4,1,δεινὴν,δεινός,-4,a,-,s,-,-,-,f,a,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716337,1,,true,9,4,2,δὲ,δέ,0,g,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Hesiod,Works and Days,works-and-days-book-01,1716337,1,,true,9,4,3,βροτῶν,βροτός,-2,n,-,p,-,-,-,m,g,-,,,,,,,CONFLICT_NO_MATCH,,
@@ -15405,7 +15405,7 @@ Homer,Iliad,iliad-book-01,2274287,1,322,true,4,3,3,Πηληϊάδεω,Πηληι
 Homer,Iliad,iliad-book-01,2274287,1,322,true,4,3,4,Ἀχιλῆος,Ἀχιλλεύς,2,n,-,s,-,-,-,m,g,-,4,LLHH,5,2,6,2,OK,,
 Homer,Iliad,iliad-book-01,2274288,1,323,true,4,4,1,χειρὸς,χείρ,-1,n,-,s,-,-,-,f,g,-,2,HL,1,1,1,2,OK,,
 Homer,Iliad,iliad-book-01,2274288,1,323,true,4,4,2,ἑλόντ’,αἱρέω,-1,v,-,d,a,p,a,m,n,-,2,LH,1,3,2,1,OK,,
-Homer,Iliad,iliad-book-01,2274288,1,323,true,4,4,3,ἀγέμεν,ἄγω,0,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,,
+Homer,Iliad,iliad-book-01,2274288,1,323,true,4,4,3,ἀγέμεν,ἄγω,0,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,t,2,L
 Homer,Iliad,iliad-book-01,2274288,1,323,true,4,4,4,Βρισηΐδα,Βρισηίς,1,n,-,s,-,-,-,f,a,-,4,HHLL,3,2,4,3,OK,,
 Homer,Iliad,iliad-book-01,2274288,1,323,true,4,4,5,καλλιπάρῃον,καλλιπάρηος,1,a,-,s,-,-,-,f,a,-,5,HLLHH,5,1,6,2,OK,,
 Homer,Iliad,iliad-book-01,2274289,1,324,true,39,12,1,εἰ,εἰ,-9,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
@@ -17616,7 +17616,7 @@ Homer,Iliad,iliad-book-02,2274459,2,9,true,20,10,5,Ἀτρεΐδαο,Ἀτρεί
 Homer,Iliad,iliad-book-02,2274459,2,10,true,20,10,6,πάντα,πᾶς,-3,a,-,p,-,-,-,n,a,-,2,HL,1,1,1,2,OK,,
 Homer,Iliad,iliad-book-02,2274459,2,10,true,20,10,7,μάλ’,μάλα,1,d,-,-,-,-,-,-,-,-,1,L,1,3,1,3,OK,,
 Homer,Iliad,iliad-book-02,2274459,2,10,true,20,10,8,ἀτρεκέως,ἀτρεκής,-1,d,-,-,-,-,-,-,-,-,4,HLLH,2,1,3,1,OK,,
-Homer,Iliad,iliad-book-02,2274459,2,10,true,20,10,9,ἀγορευέμεν,ἀγορεύω,0,v,-,-,p,n,a,-,-,-,5,LLHLL,3,2,4,3,OK,,
+Homer,Iliad,iliad-book-02,2274459,2,10,true,20,10,9,ἀγορευέμεν,ἀγορεύω,0,v,-,-,p,n,a,-,-,-,5,LLHLL,3,2,4,3,OK,t,2,LLH
 Homer,Iliad,iliad-book-02,2274459,2,10,true,20,10,10,ὡς,ὡς,-1,d,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-02,2274459,2,10,true,20,10,11,ἐπιτέλλω,ἐπιτέλλω,2,v,1,s,p,s,a,-,-,-,4,LLHH,5,2,6,2,OK,,
 Homer,Iliad,iliad-book-02,2274460,2,11,true,16,6,1,θωρῆξαί,θωρήσσω,-2,v,-,-,a,n,a,-,-,-,3,HHH,1,1,2,1,OK,s,1,HH
@@ -27245,7 +27245,7 @@ Homer,Iliad,iliad-book-04,2275153,4,52,false,66,15,13,καὶ,καί,6,c,-,-,-,-
 Homer,Iliad,iliad-book-04,2275153,4,52,false,66,15,14,εὐρυάγυια,εὐρυάγυια,-1,n,-,s,-,-,-,f,n,-,5,HLLHL,4,1,5,2,OK,,
 Homer,Iliad,iliad-book-04,2275153,4,52,false,66,15,15,Μυκήνη,Μυκήνη,-2,n,-,s,-,-,-,f,n,-,3,LHH,5,3,6,2,OK,,
 Homer,Iliad,iliad-book-04,2275154,4,53,true,10,7,1,τὰς,ὁ,-1,p,-,p,-,-,-,f,a,-,1,H,1,1,1,1,OK,,
-Homer,Iliad,iliad-book-04,2275154,4,53,true,10,7,2,διαπέρσαι,διαπέρθω,0,v,-,-,a,n,a,-,-,-,4,LLHL,1,2,2,2,OK,,
+Homer,Iliad,iliad-book-04,2275154,4,53,true,10,7,2,διαπέρσαι,διαπέρθω,0,v,-,-,a,n,a,-,-,-,4,LLHL,1,2,2,2,OK,s,1,LLH
 Homer,Iliad,iliad-book-04,2275154,4,53,true,10,7,3,ὅτ’,ὅτι,1,c,-,-,-,-,-,-,-,-,1,L,2,3,2,3,OK,,
 Homer,Iliad,iliad-book-04,2275154,4,53,true,10,7,4,ἄν,ἄν,-2,g,-,-,-,-,-,-,-,-,1,H,3,1,3,1,OK,,
 Homer,Iliad,iliad-book-04,2275154,4,53,true,10,7,5,τοι,σύ,-1,p,-,s,-,-,-,-,d,-,1,L,3,2,3,2,OK,,
@@ -29309,7 +29309,7 @@ Homer,Iliad,iliad-book-04,2275314,4,345,false,52,12,1,ἔνθα,ἔνθα,-13,d,
 Homer,Iliad,iliad-book-04,2275314,4,345,false,52,12,2,φίλ’,φίλος,-12,a,-,p,-,-,-,n,n,-,1,L,1,3,1,3,OK,,
 Homer,Iliad,iliad-book-04,2275314,4,345,false,52,12,3,ὀπταλέα,ὀπταλέος,-1,a,-,p,-,-,-,n,a,-,4,HLLH,2,1,3,1,OK,,
 Homer,Iliad,iliad-book-04,2275314,4,345,false,52,12,4,κρέα,κρέας,-1,-,-,p,-,-,-,n,a,-,2,LL,3,2,3,3,OK,,
-Homer,Iliad,iliad-book-04,2275314,4,345,false,52,12,5,ἔδμεναι,ἔδω,-9,v,-,-,-,n,a,-,-,-,3,HLL,4,1,4,3,OK,,
+Homer,Iliad,iliad-book-04,2275314,4,345,false,52,12,5,ἔδμεναι,ἔδω,-9,v,-,-,p,n,a,-,-,-,3,HLL,4,1,4,3,OK,a,3,H
 Homer,Iliad,iliad-book-04,2275314,4,345,false,52,12,6,ἠδὲ,ἠδέ,0,c,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
 Homer,Iliad,iliad-book-04,2275314,4,345,false,52,12,7,κύπελλα,κύπελλον,-2,n,-,p,-,-,-,n,a,-,3,LHH,5,3,6,2,OK,,
 Homer,Iliad,iliad-book-04,2275314,4,346,false,52,12,8,οἴνου,οἶνος,1,n,-,s,-,-,-,m,g,-,2,HH,1,1,1,2,OK,,
@@ -31658,7 +31658,7 @@ Homer,Iliad,iliad-book-05,2275498,5,132,true,43,13,8,ἐς,εἰς,1,r,-,-,-,-,-
 Homer,Iliad,iliad-book-05,2275498,5,132,true,43,13,9,πόλεμον,πόλεμος,1,n,-,s,-,-,-,m,a,-,3,LLH,2,2,3,1,OK,,
 Homer,Iliad,iliad-book-05,2275498,5,132,true,43,13,11,τήν,ὁ,-2,p,-,s,-,-,-,f,a,-,1,H,3,2,3,2,OK,,
 Homer,Iliad,iliad-book-05,2275498,5,132,true,43,13,12,γ’,γε,1,g,-,-,-,-,-,-,-,-,0,,4,1,4,1,OK_ELIDED,,
-Homer,Iliad,iliad-book-05,2275498,5,132,true,43,13,13,οὐτάμεν,οὐτάω,0,v,-,-,a,n,a,-,-,-,3,HLL,4,1,4,3,OK,,
+Homer,Iliad,iliad-book-05,2275498,5,132,true,43,13,13,οὐτάμεν,οὐτάω,0,v,-,-,a,n,a,-,-,-,3,HLL,4,1,4,3,OK,a,2,HL
 Homer,Iliad,iliad-book-05,2275498,5,132,true,43,13,14,ὀξέϊ,ὀξύς,-1,a,-,s,-,-,-,m,d,-,3,HLL,5,1,5,3,OK,,
 Homer,Iliad,iliad-book-05,2275498,5,132,true,43,13,15,χαλκῷ,χαλκός,2,n,-,s,-,-,-,m,d,-,2,HH,6,1,6,2,OK,,
 Homer,Iliad,iliad-book-05,2275499,5,133,false,107,21,1,ἣ,ὁ,-23,p,-,s,-,-,-,f,n,-,1,H,1,1,1,1,OK,,
@@ -32181,7 +32181,7 @@ Homer,Iliad,iliad-book-05,2275536,5,202,false,29,11,7,φορβῆς,φορβή,1
 Homer,Iliad,iliad-book-05,2275536,5,203,false,29,11,8,ἀνδρῶν,ἀνήρ,-1,n,-,p,-,-,-,m,g,-,2,HH,1,1,1,2,OK,,
 Homer,Iliad,iliad-book-05,2275536,5,203,false,29,11,9,εἰλομένων,εἴλω,3,v,-,p,p,p,e,m,g,-,4,HLLH,2,1,3,1,OK,,
 Homer,Iliad,iliad-book-05,2275536,5,203,false,29,11,10,εἰωθότες,ἔθω,4,v,-,p,r,p,a,m,n,-,4,HHLL,3,2,4,3,OK,,
-Homer,Iliad,iliad-book-05,2275536,5,203,false,29,11,11,ἔδμεναι,ἔδω,1,v,-,-,-,n,a,-,-,-,3,HLL,5,1,5,3,OK,,
+Homer,Iliad,iliad-book-05,2275536,5,203,false,29,11,11,ἔδμεναι,ἔδω,1,v,-,-,p,n,a,-,-,-,3,HLL,5,1,5,3,OK,a,3,H
 Homer,Iliad,iliad-book-05,2275536,5,203,false,29,11,12,ἄδην,ἅδην,1,d,-,-,-,-,-,-,-,-,2,HH,6,1,6,2,OK,,
 Homer,Iliad,iliad-book-05,2275537,5,204,true,16,8,1,ὣς,ὡς,-1,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-05,2275537,5,204,true,16,8,2,λίπον,λείπω,-2,v,1,s,a,i,a,-,-,-,2,LL,1,2,1,3,OK,,
@@ -34143,7 +34143,7 @@ Homer,Iliad,iliad-book-05,2275681,5,473,true,32,13,2,που,πού,1,d,-,-,-,-,-
 Homer,Iliad,iliad-book-05,2275681,5,473,true,32,13,3,ἄτερ,ἄτερ,-3,r,-,-,-,-,-,-,-,-,2,LH,1,3,2,1,OK,,
 Homer,Iliad,iliad-book-05,2275681,5,473,true,32,13,4,λαῶν,λαός,-3,n,-,p,-,-,-,m,g,-,2,HH,2,2,3,1,OK,,
 Homer,Iliad,iliad-book-05,2275681,5,473,true,32,13,5,πόλιν,πόλις,-1,n,-,s,-,-,-,f,a,-,2,LL,3,2,3,3,OK,,
-Homer,Iliad,iliad-book-05,2275681,5,473,true,32,13,6,ἑξέμεν,ἔχω,5,v,-,-,f,n,a,-,-,-,3,HLL,4,1,4,3,OK,s,1,H
+Homer,Iliad,iliad-book-05,2275681,5,473,true,32,13,6,ἑξέμεν,ἔχω,5,v,-,-,f,n,a,-,-,-,3,HLL,4,1,4,3,OK,s,2,H
 Homer,Iliad,iliad-book-05,2275681,5,473,true,32,13,7,ἠδ’,ἠδέ,4,c,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-05,2275681,5,473,true,32,13,8,ἐπικούρων,ἐπίκουρος,1,n,-,p,-,-,-,m,g,-,4,LLHH,5,2,6,2,OK,,
 Homer,Iliad,iliad-book-05,2275681,5,474,true,32,13,9,οἶος,οἶος,3,a,-,s,-,-,-,m,n,-,2,HH,1,1,1,2,OK,,
@@ -37849,7 +37849,7 @@ Homer,Iliad,iliad-book-06,2275965,6,92,false,663,77,36,γούνασιν,γόνυ
 Homer,Iliad,iliad-book-06,2275965,6,92,false,663,77,37,ἠϋκόμοιο,εὔκομος,3,a,-,s,-,-,-,f,g,-,5,HLLHH,5,1,6,2,OK,,
 Homer,Iliad,iliad-book-06,2275965,6,93,false,663,77,39,καί,καί,0,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-06,2275965,6,93,false,663,77,40,οἱ,ἕ,-1,p,-,s,-,-,-,f,d,-,1,L,1,2,1,2,OK,,
-Homer,Iliad,iliad-book-06,2275965,6,93,false,663,77,41,ὑποσχέσθαι,ὑπισχνέομαι,2,v,-,-,a,n,a,-,-,-,4,LHHH,1,3,3,1,OK,t,7,LHH
+Homer,Iliad,iliad-book-06,2275965,6,93,false,663,77,41,ὑποσχέσθαι,ὑπισχνέομαι,2,v,-,-,a,n,m,-,-,-,4,LHHH,1,3,3,1,OK,t,7,LHH
 Homer,Iliad,iliad-book-06,2275965,6,93,false,663,77,42,δυοκαίδεκα,δυοκαίδεκα,-1,m,-,-,-,-,-,-,-,-,5,LLHLL,3,2,4,3,OK,,
 Homer,Iliad,iliad-book-06,2275965,6,93,false,663,77,43,βοῦς,βοῦς,-5,n,-,p,-,-,-,f,a,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-06,2275965,6,93,false,663,77,44,ἐνὶ,ἐν,-4,r,-,-,-,-,-,-,-,-,2,LL,5,2,5,3,OK,,
@@ -38000,7 +38000,7 @@ Homer,Iliad,iliad-book-06,2275973,6,114,false,171,30,27,ἡμετέρῃς,ἡμ
 Homer,Iliad,iliad-book-06,2275973,6,114,false,171,30,28,ἀλόχοισι,ἄλοχος,2,n,-,p,-,-,-,f,d,-,4,LLHH,5,2,6,2,OK,,
 Homer,Iliad,iliad-book-06,2275973,6,115,false,171,30,29,δαίμοσιν,δαίμων,-1,n,-,p,-,-,-,m,d,-,3,HLL,1,1,1,3,OK,,
 Homer,Iliad,iliad-book-06,2275973,6,115,false,171,30,30,ἀρήσασθαι,ἀράομαι,-3,v,-,-,a,n,m,-,-,-,4,HHHL,2,1,3,2,OK,s,7,HHH
-Homer,Iliad,iliad-book-06,2275973,6,115,false,171,30,32,ὑποσχέσθαι,ὑπισχνέομαι,-1,v,-,-,a,n,a,-,-,-,4,LHHH,3,3,5,1,OK,t,7,LHH
+Homer,Iliad,iliad-book-06,2275973,6,115,false,171,30,32,ὑποσχέσθαι,ὑπισχνέομαι,-1,v,-,-,a,n,m,-,-,-,4,LHHH,3,3,5,1,OK,t,7,LHH
 Homer,Iliad,iliad-book-06,2275973,6,115,false,171,30,33,δ’,δέ,9,g,-,-,-,-,-,-,-,-,0,,5,2,5,2,OK_ELIDED,,
 Homer,Iliad,iliad-book-06,2275973,6,115,false,171,30,34,ἑκατόμβας,ἑκατόμβη,2,n,-,p,-,-,-,f,a,-,4,LLHH,5,2,6,2,OK,,
 Homer,Iliad,iliad-book-06,2275974,6,116,true,7,5,1,ὣς,ὡς,-2,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
@@ -38453,7 +38453,7 @@ Homer,Iliad,iliad-book-06,2276012,6,176,true,70,21,11,ἐρέεινε,ἐρεε�
 Homer,Iliad,iliad-book-06,2276012,6,176,true,70,21,12,καὶ,καί,0,c,-,-,-,-,-,-,-,-,1,L,3,3,3,3,OK,,
 Homer,Iliad,iliad-book-06,2276012,6,176,true,70,21,13,ᾔτεε,αἰτέω,1,v,3,s,i,i,a,-,-,-,3,HLL,4,1,4,3,OK,,
 Homer,Iliad,iliad-book-06,2276012,6,178,true,70,21,14,σῆμα,σῆμα,-1,n,-,s,-,-,-,n,a,-,2,HL,3,1,3,2,OK,,
-Homer,Iliad,iliad-book-06,2276012,6,176,true,70,21,15,ἰδέσθαι,εἶδον,2,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Iliad,iliad-book-06,2276012,6,176,true,70,21,15,ἰδέσθαι,εἶδον,2,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Iliad,iliad-book-06,2276012,6,177,true,70,21,16,ὅττί,ὁ,-6,p,-,s,-,-,-,n,a,-,2,HL,1,1,1,2,OK,,
 Homer,Iliad,iliad-book-06,2276012,6,179,true,70,21,17,ῥά,ἄρα,-5,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
 Homer,Iliad,iliad-book-06,2276012,6,177,true,70,21,18,οἱ,ἕ,-4,p,-,s,-,-,-,m,d,-,1,H,2,1,2,1,OK,,
@@ -39130,7 +39130,7 @@ Homer,Iliad,iliad-book-06,2276062,6,273,false,419,57,23,γούνασιν,γόν�
 Homer,Iliad,iliad-book-06,2276062,6,273,false,419,57,24,ἠϋκόμοιο,εὔκομος,3,a,-,s,-,-,-,f,g,-,5,HLLHH,5,1,6,2,OK,,
 Homer,Iliad,iliad-book-06,2276062,6,274,false,419,57,26,καί,καί,0,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-06,2276062,6,274,false,419,57,27,οἱ,ἕ,-1,p,-,s,-,-,-,f,d,-,1,L,1,2,1,2,OK,,
-Homer,Iliad,iliad-book-06,2276062,6,274,false,419,57,28,ὑποσχέσθαι,ὑπισχνέομαι,2,v,-,-,a,n,a,-,-,-,4,LHHH,1,3,3,1,OK,t,7,LHH
+Homer,Iliad,iliad-book-06,2276062,6,274,false,419,57,28,ὑποσχέσθαι,ὑπισχνέομαι,2,v,-,-,a,n,m,-,-,-,4,LHHH,1,3,3,1,OK,t,7,LHH
 Homer,Iliad,iliad-book-06,2276062,6,274,false,419,57,29,δυοκαίδεκα,δυοκαίδεκα,-1,m,-,-,-,-,-,-,-,-,5,LLHLL,3,2,4,3,OK,,
 Homer,Iliad,iliad-book-06,2276062,6,274,false,419,57,30,βοῦς,βοῦς,-5,n,-,p,-,-,-,f,a,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-06,2276062,6,274,false,419,57,31,ἐνὶ,ἐν,-4,r,-,-,-,-,-,-,-,-,2,LL,5,2,5,3,OK,,
@@ -40608,7 +40608,7 @@ Homer,Iliad,iliad-book-06,2276163,6,476,false,145,25,5,δότε,δίδωμι,0,v
 Homer,Iliad,iliad-book-06,2276163,6,476,false,145,25,6,δὴ,δή,1,g,-,-,-,-,-,-,-,-,1,H,4,1,4,1,OK,,
 Homer,Iliad,iliad-book-06,2276163,6,476,false,145,25,7,καὶ,καί,-1,c,-,-,-,-,-,-,-,-,1,H,4,2,4,2,OK,,
 Homer,Iliad,iliad-book-06,2276163,6,476,false,145,25,8,τόνδε,ὅδε,-2,p,-,s,-,-,-,m,a,-,2,HL,5,1,5,2,OK,,
-Homer,Iliad,iliad-book-06,2276163,6,476,false,145,25,9,γενέσθαι,γίγνομαι,-15,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Iliad,iliad-book-06,2276163,6,476,false,145,25,9,γενέσθαι,γίγνομαι,-15,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Iliad,iliad-book-06,2276163,6,477,false,145,25,10,παῖδ’,παῖς,-14,n,-,s,-,-,-,m,a,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-06,2276163,6,477,false,145,25,11,ἐμὸν,ἐμός,1,a,-,s,-,-,-,m,a,-,2,LL,1,2,1,3,OK,,
 Homer,Iliad,iliad-book-06,2276163,6,477,false,145,25,12,ὡς,ὡς,3,c,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
@@ -42255,7 +42255,7 @@ Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,1,Ζεῦ,Ζεύς,-4,n,-,s,-
 Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,2,πάτερ,πάτηρ,1,n,-,s,-,-,-,m,v,-,2,LL,1,2,1,3,OK,,
 Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,3,ἢ,ἤ,-8,c,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,4,Αἴαντα,Αἴας,-7,n,-,s,-,-,-,m,a,-,3,HHL,2,2,3,2,OK,,
-Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,5,λαχεῖν,λαγχάνω,0,v,-,-,a,n,a,-,-,-,2,LH,3,3,4,1,OK,,
+Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,5,λαχεῖν,λαγχάνω,0,v,-,-,a,n,a,-,-,-,2,LH,3,3,4,1,OK,t,1,L
 Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,7,ἢ,ἤ,-4,c,-,-,-,-,-,-,-,-,1,H,4,2,4,2,OK,,
 Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,8,Τυδέος,Τυδεύς,-1,n,-,s,-,-,-,m,g,-,3,HLL,5,1,5,3,OK,,
 Homer,Iliad,iliad-book-07,2276288,7,179,true,39,12,9,υἱόν,υἱός,-2,n,-,s,-,-,-,m,a,-,2,HH,6,1,6,2,OK,,
@@ -42411,7 +42411,7 @@ Homer,Iliad,iliad-book-07,2276296,7,199,false,178,27,23,ἐν,ἐν,-5,r,-,-,-,-
 Homer,Iliad,iliad-book-07,2276296,7,199,false,178,27,24,Σαλαμῖνι,Σαλαμίς,1,n,-,s,-,-,-,f,d,-,4,LLHL,2,2,3,2,OK,,
 Homer,Iliad,iliad-book-07,2276296,7,199,false,178,27,25,γενέσθαι,γίγνομαι,-3,v,-,-,a,n,m,-,-,-,3,LHH,3,3,4,2,OK,t,7,LH
 Homer,Iliad,iliad-book-07,2276296,7,199,false,178,27,26,τε,τε,-2,g,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
-Homer,Iliad,iliad-book-07,2276296,7,199,false,178,27,27,τραφέμεν,τρέφω,-1,v,-,-,a,n,p,-,-,-,3,LLH,5,2,6,1,OK,,
+Homer,Iliad,iliad-book-07,2276296,7,199,false,178,27,27,τραφέμεν,τρέφω,-1,v,-,-,a,n,a,-,-,-,3,LLH,5,2,6,1,OK,t,2,L
 Homer,Iliad,iliad-book-07,2276296,7,199,false,178,27,28,τε,τε,6,g,-,-,-,-,-,-,-,-,1,H,6,2,6,2,OK,,
 Homer,Iliad,iliad-book-07,2276297,7,200,true,11,7,1,ὣς,ὡς,-1,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-07,2276297,7,200,true,11,7,2,ἔφαθ’,φημί,-3,v,3,s,i,i,e,-,-,-,2,LL,1,2,1,3,OK,,
@@ -45901,7 +45901,7 @@ Homer,Iliad,iliad-book-08,2276570,8,205,false,150,22,7,ὅσοι,ὅσος,-20,a
 Homer,Iliad,iliad-book-08,2276570,8,205,false,150,22,8,Δαναοῖσιν,Δαναοί,-19,n,-,p,-,-,-,m,d,-,4,LLHL,4,2,5,2,OK,,
 Homer,Iliad,iliad-book-08,2276570,8,205,false,150,22,9,ἀρωγοί,ἀρωγός,-18,a,-,p,-,-,-,m,n,-,3,LHH,5,3,6,2,OK,,
 Homer,Iliad,iliad-book-08,2276570,8,206,false,150,22,11,Τρῶας,Τρώς,-1,n,-,p,-,-,-,m,a,-,2,HL,1,1,1,2,OK,,
-Homer,Iliad,iliad-book-08,2276570,8,206,false,150,22,12,ἀπώσασθαι,ἀπωθέω,-1,v,-,-,a,n,-,-,-,-,4,LHHH,1,3,3,1,OK,s,7,LHH
+Homer,Iliad,iliad-book-08,2276570,8,206,false,150,22,12,ἀπώσασθαι,ἀπωθέω,-1,v,-,-,a,n,m,-,-,-,4,LHHH,1,3,3,1,OK,s,7,LHH
 Homer,Iliad,iliad-book-08,2276570,8,206,false,150,22,13,καὶ,καί,8,c,-,-,-,-,-,-,-,-,1,L,3,2,3,2,OK,,
 Homer,Iliad,iliad-book-08,2276570,8,206,false,150,22,14,ἐρυκέμεν,ἐρύκω,1,v,-,-,p,n,a,-,-,-,4,LHLL,3,3,4,3,OK,t,2,LH
 Homer,Iliad,iliad-book-08,2276570,8,206,false,150,22,15,εὐρύοπα,εὐρύοπα,-1,a,-,s,-,-,-,m,n,-,4,HLLH,5,1,6,1,OK,,
@@ -51088,7 +51088,7 @@ Homer,Iliad,iliad-book-09,2276949,9,368,true,43,11,13,Ἀγαμέμνων,Ἀγ�
 Homer,Iliad,iliad-book-09,2276949,9,369,true,43,11,14,Ἀτρεΐδης,Ἀτρείδης,1,n,-,s,-,-,-,m,n,-,4,HLLH,1,1,2,1,OK,,
 Homer,Iliad,iliad-book-09,2276950,9,369,true,47,20,1,τῷ,ὁ,-2,p,-,s,-,-,-,m,d,-,1,H,2,2,2,2,OK,,
 Homer,Iliad,iliad-book-09,2276950,9,369,true,47,20,2,πάντ’,πα~ς,-1,a,-,p,-,-,-,n,a,-,1,H,3,1,3,1,OK,,
-Homer,Iliad,iliad-book-09,2276950,9,369,true,47,20,3,ἀγορευέμεν,ἀγορεύω,0,v,-,-,p,n,a,-,-,-,5,LLHLL,3,2,4,3,OK,,
+Homer,Iliad,iliad-book-09,2276950,9,369,true,47,20,3,ἀγορευέμεν,ἀγορεύω,0,v,-,-,p,n,a,-,-,-,5,LLHLL,3,2,4,3,OK,t,2,LLH
 Homer,Iliad,iliad-book-09,2276950,9,369,true,47,20,4,ὡς,,-1,-,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-09,2276950,9,369,true,47,20,5,ἐπιτέλλω,ἐπιτέλλω,2,v,1,s,p,i,a,-,-,-,4,LLHH,5,2,6,2,OK,,
 Homer,Iliad,iliad-book-09,2276950,9,370,true,47,20,6,ἀμφαδόν,ἀμφαδόν,3,d,-,-,-,-,-,-,-,-,3,HLL,1,1,1,3,OK,,
@@ -54025,7 +54025,7 @@ Homer,Iliad,iliad-book-10,2277153,10,64,true,21,13,5,ἄναξ,ἄναξ,-2,n,-,
 Homer,Iliad,iliad-book-10,2277153,10,64,true,21,13,6,ἀνδρῶν,ἀνήρ,1,n,-,p,-,-,-,m,g,-,2,HH,4,2,5,1,OK,,
 Homer,Iliad,iliad-book-10,2277153,10,64,true,21,13,7,Ἀγαμέμνων,Ἀγαμέμνων,3,n,-,s,-,-,-,m,n,-,4,LLHH,5,2,6,2,OK,,
 Homer,Iliad,iliad-book-10,2277153,10,65,true,21,13,9,αὖθι,αὖθι,-1,d,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
-Homer,Iliad,iliad-book-10,2277153,10,65,true,21,13,10,μένειν,μένω,0,v,-,-,p,n,a,-,-,-,2,LH,1,3,2,1,OK,,
+Homer,Iliad,iliad-book-10,2277153,10,65,true,21,13,10,μένειν,μένω,0,v,-,-,p,n,a,-,-,-,2,LH,1,3,2,1,OK,t,1,L
 Homer,Iliad,iliad-book-10,2277153,10,65,true,21,13,12,μή,μή,2,c,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
 Homer,Iliad,iliad-book-10,2277153,10,65,true,21,13,13,πως,πως,-1,g,-,-,-,-,-,-,-,-,1,H,3,1,3,1,OK,,
 Homer,Iliad,iliad-book-10,2277153,10,65,true,21,13,14,ἀβροτάξομεν,ἀβροτάζω,2,v,1,p,a,s,a,-,-,-,5,LLHLL,3,2,4,3,OK,,
@@ -54043,7 +54043,7 @@ Homer,Iliad,iliad-book-10,2277155,10,67,true,40,15,3,ᾗ,ᾗ,-2,d,-,-,-,-,-,-,-,
 Homer,Iliad,iliad-book-10,2277155,10,67,true,40,15,4,κεν,ἄν,-1,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
 Homer,Iliad,iliad-book-10,2277155,10,67,true,40,15,5,ἴῃσθα,εἶμι,4,v,2,s,p,s,a,-,-,-,3,LHL,2,3,3,2,OK,,
 Homer,Iliad,iliad-book-10,2277155,10,67,true,40,15,6,καὶ,καί,0,c,-,-,-,-,-,-,-,-,1,L,3,3,3,3,OK,,
-Homer,Iliad,iliad-book-10,2277155,10,67,true,40,15,7,ἐγρήγορθαι,ἐγείρω,-1,v,-,-,r,n,p,-,-,-,4,HHHL,4,1,5,2,OK,a,7,HHH
+Homer,Iliad,iliad-book-10,2277155,10,67,true,40,15,7,ἐγρήγορθαι,ἐγείρω,-1,v,-,-,r,n,e,-,-,-,4,HHHL,4,1,5,2,OK,a,7,HHH
 Homer,Iliad,iliad-book-10,2277155,10,67,true,40,15,8,ἄνωχθι,ἄνωγα,2,v,2,s,r,m,a,-,-,-,3,LHH,5,3,6,2,OK,,
 Homer,Iliad,iliad-book-10,2277155,10,68,true,40,15,9,πατρόθεν,πατρόθεν,-3,d,-,-,-,-,-,-,-,-,3,HLL,1,1,1,3,OK,,
 Homer,Iliad,iliad-book-10,2277155,10,68,true,40,15,10,ἐκ,ἐκ,-2,r,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
@@ -57563,7 +57563,7 @@ Homer,Iliad,iliad-book-10,2277438,10,550,true,31,14,6,οὐ,οὐ,-3,d,-,-,-,-,-
 Homer,Iliad,iliad-book-10,2277438,10,,true,31,14,7,δέ,δέ,0,g,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Homer,Iliad,iliad-book-10,2277438,10,548,true,31,14,8,τί,τις,-1,p,-,s,-,-,-,n,a,-,1,L,5,3,5,3,OK,,
 Homer,Iliad,iliad-book-10,2277438,10,548,true,31,14,9,φημι,φημί,2,v,1,s,p,i,a,-,-,-,2,HH,6,1,6,2,OK,,
-Homer,Iliad,iliad-book-10,2277438,10,549,true,31,14,10,μιμνάζειν,μιμνάζω,1,v,-,-,p,n,a,-,-,-,3,HHH,1,1,2,1,OK,t,1,HΗ
+Homer,Iliad,iliad-book-10,2277438,10,549,true,31,14,10,μιμνάζειν,μιμνάζω,1,v,-,-,p,n,a,-,-,-,3,HHH,1,1,2,1,OK,t,1,HH
 Homer,Iliad,iliad-book-10,2277438,10,549,true,31,14,11,παρὰ,παρά,1,r,-,-,-,-,-,-,-,-,2,LL,2,2,2,3,OK,,
 Homer,Iliad,iliad-book-10,2277438,10,549,true,31,14,12,νηυσὶ,ναῦς,1,n,-,p,-,-,-,f,d,-,2,HL,3,1,3,2,OK,,
 Homer,Iliad,iliad-book-10,2277438,10,549,true,31,14,13,γέρων,γέρων,-3,n,-,s,-,-,-,m,n,-,2,LH,3,3,4,1,OK,,
@@ -65450,7 +65450,7 @@ Homer,Iliad,iliad-book-12,2278009,12,235,true,128,30,21,κέλεαι,κέλομ�
 Homer,Iliad,iliad-book-12,2278009,12,235,true,128,30,22,Ζηνὸς,Ζεύς,-4,n,-,s,-,-,-,m,g,-,2,HH,2,2,3,1,OK,,
 Homer,Iliad,iliad-book-12,2278009,12,235,true,128,30,23,μὲν,μέν,2,g,-,-,-,-,-,-,-,-,1,L,3,2,3,2,OK,,
 Homer,Iliad,iliad-book-12,2278009,12,235,true,128,30,24,ἐριγδούποιο,ἐρίγδουπος,2,a,-,s,-,-,-,m,g,-,5,LHHHL,3,3,5,2,OK,,
-Homer,Iliad,iliad-book-12,2278009,12,235,true,128,30,25,λαθέσθαι,λανθάνω,4,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Iliad,iliad-book-12,2278009,12,235,true,128,30,25,λαθέσθαι,λανθάνω,4,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Iliad,iliad-book-12,2278009,12,236,true,128,30,26,βουλέων,βουλή,1,n,-,p,-,-,-,f,g,-,2,HH,1,1,1,2,OK,,
 Homer,Iliad,iliad-book-12,2278009,12,236,true,128,30,28,ἅς,ὅς,-5,p,-,p,-,-,-,f,a,-,1,H,2,1,2,1,OK,,
 Homer,Iliad,iliad-book-12,2278009,12,236,true,128,30,29,τέ,τε,-4,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
@@ -67404,7 +67404,7 @@ Homer,Iliad,iliad-book-13,2278138,13,35,true,34,13,11,δ’,δέ,0,g,-,-,-,-,-,-
 Homer,Iliad,iliad-book-13,2278138,13,35,true,34,13,12,ἀμβρόσιον,ἀμβρόσιος,-2,a,-,s,-,-,-,n,a,-,4,HLLH,4,1,5,1,OK,,
 Homer,Iliad,iliad-book-13,2278138,13,35,true,34,13,13,βάλεν,βάλλω,2,v,3,s,a,i,a,-,-,-,2,LL,5,2,5,3,OK,,
 Homer,Iliad,iliad-book-13,2278138,13,35,true,34,13,14,εἶδαρ,εἶδαρ,1,n,-,s,-,-,-,n,a,-,2,HH,6,1,6,2,OK,,
-Homer,Iliad,iliad-book-13,2278138,13,36,true,34,13,15,ἔδμεναι,ἔδω,2,v,-,-,-,n,a,-,-,-,3,HLL,1,1,1,3,OK,,
+Homer,Iliad,iliad-book-13,2278138,13,36,true,34,13,15,ἔδμεναι,ἔδω,2,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,H
 Homer,Iliad,iliad-book-13,2278139,13,36,false,67,14,1,ἀμφὶ,ἀμφί,-4,r,-,-,-,-,-,-,-,-,2,HL,2,1,2,2,OK,,
 Homer,Iliad,iliad-book-13,2278139,13,36,false,67,14,2,δὲ,δέ,0,g,-,-,-,-,-,-,-,-,1,L,2,3,2,3,OK,,
 Homer,Iliad,iliad-book-13,2278139,13,36,false,67,14,3,ποσσὶ,πούς,2,n,-,p,-,-,-,m,d,-,2,HL,3,1,3,2,OK,,
@@ -68726,7 +68726,7 @@ Homer,Iliad,iliad-book-13,2278241,13,226,true,32,14,7,εἶναι,εἰμί,3,v,
 Homer,Iliad,iliad-book-13,2278241,13,226,true,32,14,8,ὑπερμενέϊ,ὑπερμενής,-1,a,-,s,-,-,-,-,d,-,5,LHLLH,3,3,5,1,OK,,
 Homer,Iliad,iliad-book-13,2278241,13,226,true,32,14,9,Κρονίωνι,Κρονίων,2,n,-,s,-,-,-,m,d,-,4,LLHH,5,2,6,2,OK,,
 Homer,Iliad,iliad-book-13,2278241,13,227,true,32,14,10,νωνύμνους,νώνυμνος,-5,a,-,p,-,-,-,m,a,-,3,HHH,1,1,2,1,OK,,
-Homer,Iliad,iliad-book-13,2278241,13,227,true,32,14,11,ἀπολέσθαι,ἀπόλλυμι,4,v,-,-,a,n,-,-,-,-,4,LLHL,2,2,3,2,OK,t,7,LLH
+Homer,Iliad,iliad-book-13,2278241,13,227,true,32,14,11,ἀπολέσθαι,ἀπόλλυμι,4,v,-,-,a,n,m,-,-,-,4,LLHL,2,2,3,2,OK,t,7,LLH
 Homer,Iliad,iliad-book-13,2278241,13,227,true,32,14,12,ἀπ’,ἀπό,1,r,-,-,-,-,-,-,-,-,1,L,3,3,3,3,OK,,
 Homer,Iliad,iliad-book-13,2278241,13,227,true,32,14,13,Ἄργεος,Ἄργος,1,n,-,s,-,-,-,n,g,-,3,HLL,4,1,4,3,OK,,
 Homer,Iliad,iliad-book-13,2278241,13,227,true,32,14,14,ἐνθάδ’,ἐνθάδε,3,d,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
@@ -68921,7 +68921,7 @@ Homer,Iliad,iliad-book-13,2278258,13,252,true,29,9,1,οὐ,οὐ,-4,d,-,-,-,-,-,
 Homer,Iliad,iliad-book-13,2278258,13,252,true,29,9,2,δέ,δέ,0,g,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
 Homer,Iliad,iliad-book-13,2278258,13,252,true,29,9,3,τοι,τοι,-5,g,-,-,-,-,-,-,-,-,1,L,5,3,5,3,OK,,
 Homer,Iliad,iliad-book-13,2278258,13,252,true,29,9,4,αὐτὸς,αὐτός,-4,a,-,s,-,-,-,m,n,-,2,HH,6,1,6,2,OK,,
-Homer,Iliad,iliad-book-13,2278258,13,253,true,29,9,5,ἧσθαι,ἧμαι,-5,v,-,-,r,n,-,-,-,-,2,HL,1,1,1,2,OK,a,7,H
+Homer,Iliad,iliad-book-13,2278258,13,253,true,29,9,5,ἧσθαι,ἧμαι,-5,v,-,-,r,n,e,-,-,-,2,HL,1,1,1,2,OK,a,7,H
 Homer,Iliad,iliad-book-13,2278258,13,253,true,29,9,6,ἐνὶ,ἐν,1,r,-,-,-,-,-,-,-,-,2,LH,1,3,2,1,OK,,
 Homer,Iliad,iliad-book-13,2278258,13,253,true,29,9,7,κλισίῃσι,κλισία,1,n,-,p,-,-,-,f,d,-,4,LLHL,2,2,3,2,OK,,
 Homer,Iliad,iliad-book-13,2278258,13,253,true,29,9,8,λιλαίομαι,λιλαίομαι,6,v,1,s,p,i,e,-,-,-,4,LHLL,3,3,4,3,OK,,
@@ -69120,7 +69120,7 @@ Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,11,οὐ,οὐ,-5,d,-,-,-,-
 Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,12,δέ,δέ,-29,g,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
 Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,13,οἱ,ἕ,-6,p,-,s,-,-,-,m,d,-,1,L,1,3,1,3,OK,,
 Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,14,ἀτρέμας,ἀτρέμας,-1,d,-,-,-,-,-,-,-,-,3,HLL,2,1,2,3,OK,,
-Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,15,ἧσθαι,ἧμαι,-1,v,-,-,r,n,-,-,-,-,2,HL,3,1,3,2,OK,a,7,H
+Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,15,ἧσθαι,ἧμαι,-1,v,-,-,r,n,e,-,-,-,2,HL,3,1,3,2,OK,a,7,H
 Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,16,ἐρητύετ’,ἐρητύω,-25,v,3,s,p,i,e,-,-,-,4,LHLL,3,3,4,3,OK,,
 Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,17,ἐν,ἐν,-2,r,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-13,2278275,13,280,true,340,39,18,φρεσὶ,φρήν,1,n,-,p,-,-,-,-,d,-,2,LL,5,2,5,3,OK,,
@@ -76708,7 +76708,7 @@ Homer,Iliad,iliad-book-14,2278832,14,500,true,31,11,9,καὶ,καί,0,c,-,-,-,-
 Homer,Iliad,iliad-book-14,2278832,14,500,true,31,11,10,εὐχόμενος,εὔχομαι,-2,v,-,s,p,p,e,m,n,-,4,HLLH,4,1,5,1,OK,,
 Homer,Iliad,iliad-book-14,2278832,14,500,true,31,11,11,ἔπος,ἔπος,-1,n,-,s,-,-,-,n,a,-,2,LL,5,2,5,3,OK,,
 Homer,Iliad,iliad-book-14,2278832,14,500,true,31,11,12,ηὔδα,αὐδάω,3,v,3,s,i,i,a,-,-,-,2,HH,6,1,6,2,OK,,
-Homer,Iliad,iliad-book-14,2278833,14,501,true,27,11,1,εἰπέμεναί,εἶπον,0,v,-,-,a,n,a,-,-,-,4,HLLH,1,1,2,1,OK,,
+Homer,Iliad,iliad-book-14,2278833,14,501,true,27,11,1,εἰπέμεναί,εἶπον,0,v,-,-,a,n,a,-,-,-,4,HLLH,1,1,2,1,OK,t,3,H
 Homer,Iliad,iliad-book-14,2278833,14,501,true,27,11,2,μοι,ἐγώ,1,p,-,s,-,-,-,m,d,-,1,H,2,2,2,2,OK,,
 Homer,Iliad,iliad-book-14,2278833,14,501,true,27,11,3,Τρῶες,Τρώς,2,n,-,p,-,-,-,m,v,-,2,HL,3,1,3,2,OK,,
 Homer,Iliad,iliad-book-14,2278833,14,501,true,27,11,4,ἀγαυοῦ,ἀγαυός,-1,a,-,s,-,-,-,m,g,-,3,LHH,3,3,4,2,OK,,
@@ -77575,7 +77575,7 @@ Homer,Iliad,iliad-book-15,2278883,15,97,true,69,20,4,φημι,φημί,2,v,1,s,p
 Homer,Iliad,iliad-book-15,2278883,15,98,true,69,20,5,πᾶσιν,πᾶς,-4,a,-,p,-,-,-,m,d,-,2,HL,1,1,1,2,OK,,
 Homer,Iliad,iliad-book-15,2278883,15,98,true,69,20,6,ὁμῶς,ὁμῶς,-2,d,-,-,-,-,-,-,-,-,2,LH,1,3,2,1,OK,,
 Homer,Iliad,iliad-book-15,2278883,15,98,true,69,20,7,θυμὸν,θυμός,-1,n,-,s,-,-,-,m,a,-,2,HH,2,2,3,1,OK,,
-Homer,Iliad,iliad-book-15,2278883,15,98,true,69,20,8,κεχαρησέμεν,χαίρω,4,v,-,-,t,n,a,-,-,-,5,LLHLL,3,2,4,3,OK,,
+Homer,Iliad,iliad-book-15,2278883,15,98,true,69,20,8,κεχαρησέμεν,χαίρω,4,v,-,-,t,n,a,-,-,-,5,LLHLL,3,2,4,3,OK,s,2,LLH
 Homer,Iliad,iliad-book-15,2278883,15,98,true,69,20,10,οὔ,οὐ,-2,d,-,-,-,-,-,-,-,-,0,,5,1,5,1,OK_ELIDED,,
 Homer,Iliad,iliad-book-15,2278883,15,98,true,69,20,11,τε,τε,-3,g,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
 Homer,Iliad,iliad-book-15,2278883,15,98,true,69,20,12,βροτοῖσιν,βροτός,-2,n,-,p,-,-,-,m,d,-,3,LHH,5,3,6,2,OK,,
@@ -77949,7 +77949,7 @@ Homer,Iliad,iliad-book-15,2278910,15,147,true,47,14,6,τ’,τε,-5,g,-,-,-,-,-,
 Homer,Iliad,iliad-book-15,2278910,15,147,true,47,14,7,εἰς,εἰς,-2,r,-,-,-,-,-,-,-,-,1,H,4,2,4,2,OK,,
 Homer,Iliad,iliad-book-15,2278910,15,147,true,47,14,8,ὦπα,ὤψ,-1,n,-,s,-,-,-,f,a,-,2,HL,5,1,5,2,OK,,
 Homer,Iliad,iliad-book-15,2278910,15,147,true,47,14,9,ἴδησθε,εἶδον,3,v,2,p,a,s,a,-,-,-,3,LHH,5,3,6,2,OK,,
-Homer,Iliad,iliad-book-15,2278910,15,148,true,47,14,11,ἕρδειν,ἔρδω,0,v,-,-,p,n,a,-,-,-,2,HH,1,1,1,2,OK,,
+Homer,Iliad,iliad-book-15,2278910,15,148,true,47,14,11,ἕρδειν,ἔρδω,0,v,-,-,p,n,a,-,-,-,2,HH,1,1,1,2,OK,t,1,H
 Homer,Iliad,iliad-book-15,2278910,15,148,true,47,14,12,ὅττί,ὅστις,-4,p,-,s,-,-,-,n,a,-,2,HL,2,1,2,2,OK,,
 Homer,Iliad,iliad-book-15,2278910,15,148,true,47,14,13,κε,ἄν,-3,g,-,-,-,-,-,-,-,-,1,L,2,3,2,3,OK,,
 Homer,Iliad,iliad-book-15,2278910,15,148,true,47,14,14,κεῖνος,κεῖνος,-2,p,-,s,-,-,-,m,n,-,2,HL,3,1,3,2,OK,,
@@ -82831,7 +82831,7 @@ Homer,Iliad,iliad-book-16,2279268,16,86,true,124,31,35,πόρωσιν,πόρω,3
 Homer,Iliad,iliad-book-16,2279269,16,87,true,5,4,1,ἐκ,ἐκ,-2,r,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-16,2279269,16,87,true,5,4,2,νηῶν,ναῦς,1,n,-,p,-,-,-,f,g,-,2,HH,1,2,2,1,OK,,
 Homer,Iliad,iliad-book-16,2279269,16,87,true,5,4,3,ἐλάσας,ἐλαύνω,-1,v,-,s,a,p,a,m,n,-,3,LLH,2,2,3,1,OK,,
-Homer,Iliad,iliad-book-16,2279269,16,87,true,5,4,4,ἰέναι,εἶμι,0,v,-,-,p,n,a,-,-,-,3,LLH,3,2,4,1,OK,,
+Homer,Iliad,iliad-book-16,2279269,16,87,true,5,4,4,ἰέναι,εἶμι,0,v,-,-,p,n,a,-,-,-,3,LLH,3,2,4,1,OK,a,1,LL
 Homer,Iliad,iliad-book-16,2279269,16,87,true,5,4,5,πάλιν,πάλιν,1,d,-,-,-,-,-,-,-,-,2,LL,4,2,4,3,OK,,
 Homer,Iliad,iliad-book-16,2279270,16,87,true,70,19,1,εἰ,εἰ,-17,c,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-16,2279270,16,87,true,70,19,2,δέ,δέ,0,g,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
@@ -85385,7 +85385,7 @@ Homer,Iliad,iliad-book-16,2279462,16,453,true,118,36,7,ψυχή,ψυχή,-2,n,-,
 Homer,Iliad,iliad-book-16,2279462,16,453,true,118,36,8,τε,τε,-1,g,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
 Homer,Iliad,iliad-book-16,2279462,16,453,true,118,36,9,καὶ,καί,3,c,-,-,-,-,-,-,-,-,1,L,5,3,5,3,OK,,
 Homer,Iliad,iliad-book-16,2279462,16,453,true,118,36,10,αἰών,αἰών,1,n,-,s,-,-,-,m,n,-,2,HH,6,1,6,2,OK,,
-Homer,Iliad,iliad-book-16,2279462,16,454,true,118,36,12,πέμπειν,πέμπω,0,v,-,-,p,n,a,-,-,-,2,HH,1,1,1,2,OK,,
+Homer,Iliad,iliad-book-16,2279462,16,454,true,118,36,12,πέμπειν,πέμπω,0,v,-,-,p,n,a,-,-,-,2,HH,1,1,1,2,OK,t,1,H
 Homer,Iliad,iliad-book-16,2279462,16,454,true,118,36,13,μιν,μιν,1,p,-,s,-,-,-,m,a,-,1,H,2,1,2,1,OK,,
 Homer,Iliad,iliad-book-16,2279462,16,454,true,118,36,14,θάνατόν,θάνατος,-3,n,-,s,-,-,-,m,a,-,3,LLH,2,2,3,1,OK,,
 Homer,Iliad,iliad-book-16,2279462,16,454,true,118,36,15,τε,τε,-2,g,-,-,-,-,-,-,-,-,1,L,3,2,3,2,OK,,
@@ -88141,7 +88141,7 @@ Homer,Iliad,iliad-book-16,2279661,16,838,true,55,16,19,ἰόντι,εἶμι,5,v
 Homer,Iliad,iliad-book-16,2279662,16,839,true,38,16,1,μή,μή,-3,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-16,2279662,16,839,true,38,16,2,μοι,ἐγώ,-2,p,-,s,-,-,-,m,d,-,1,H,1,2,1,2,OK,,
 Homer,Iliad,iliad-book-16,2279662,16,839,true,38,16,3,πρὶν,πρίν,-1,d,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
-Homer,Iliad,iliad-book-16,2279662,16,839,true,38,16,4,ἰέναι,εἶμι,0,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,,
+Homer,Iliad,iliad-book-16,2279662,16,839,true,38,16,4,ἰέναι,εἶμι,0,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,a,1,LL
 Homer,Iliad,iliad-book-16,2279662,16,839,true,38,16,5,Πατρόκλεες,πάτροκλος,1,n,-,s,-,-,-,m,v,-,4,HHLL,3,2,4,3,OK,,
 Homer,Iliad,iliad-book-16,2279662,16,839,true,38,16,6,ἱπποκέλευθε,ἱπποκέλευθος,1,a,-,s,-,-,-,m,v,-,5,HLLHH,5,1,6,2,OK,,
 Homer,Iliad,iliad-book-16,2279662,16,840,true,38,16,7,νῆας,ναῦς,-1,n,-,p,-,-,-,f,a,-,2,HL,1,1,1,2,OK,,
@@ -93307,7 +93307,7 @@ Homer,Iliad,iliad-book-17,2280044,17,691,false,77,18,6,θέων,θέω,-4,v,-,s,
 Homer,Iliad,iliad-book-17,2280044,17,691,false,77,18,7,ἐπὶ,ἐπί,1,r,-,-,-,-,-,-,-,-,2,LL,4,2,4,3,OK,,
 Homer,Iliad,iliad-book-17,2280044,17,691,false,77,18,8,νῆας,ναῦς,1,n,-,p,-,-,-,f,a,-,2,HL,5,1,5,2,OK,,
 Homer,Iliad,iliad-book-17,2280044,17,691,false,77,18,9,Ἀχαιῶν,Ἀχαιός,1,a,-,p,-,-,-,m,g,-,3,LHH,5,3,6,2,OK,,
-Homer,Iliad,iliad-book-17,2280044,17,692,false,77,18,10,εἰπεῖν,εἶπον,0,v,-,-,a,n,a,-,-,-,2,HH,1,1,1,2,OK,,
+Homer,Iliad,iliad-book-17,2280044,17,692,false,77,18,10,εἰπεῖν,εἶπον,0,v,-,-,a,n,a,-,-,-,2,HH,1,1,1,2,OK,t,1,H
 Homer,Iliad,iliad-book-17,2280044,17,692,false,77,18,12,αἴ,εἰ,-9,c,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Iliad,iliad-book-17,2280044,17,692,false,77,18,13,κε,ἄν,-5,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
 Homer,Iliad,iliad-book-17,2280044,17,692,false,77,18,14,τάχιστα,ταχύς,-4,a,-,p,-,-,-,n,a,s,3,LHL,2,3,3,2,OK,,
@@ -100682,7 +100682,7 @@ Homer,Iliad,iliad-book-19,2280607,19,335,true,79,26,12,που,πού,-4,d,-,-,-,
 Homer,Iliad,iliad-book-19,2280607,19,335,true,79,26,13,τυτθὸν,τυτθός,-2,a,-,s,-,-,-,n,a,-,2,HL,3,1,3,2,OK,,
 Homer,Iliad,iliad-book-19,2280607,19,335,true,79,26,14,ἔτι,ἔτι,-1,d,-,-,-,-,-,-,-,-,2,LH,3,3,4,1,OK,,
 Homer,Iliad,iliad-book-19,2280607,19,335,true,79,26,15,ζώοντ’,ζάω,-1,v,-,s,p,p,a,m,a,-,2,HH,4,2,5,1,OK,,
-Homer,Iliad,iliad-book-19,2280607,19,335,true,79,26,16,ἀκάχησθαι,ἀχεύω,5,v,-,-,p,n,p,-,-,-,4,LLHH,5,2,6,2,OK,a,7,LLH
+Homer,Iliad,iliad-book-19,2280607,19,335,true,79,26,16,ἀκάχησθαι,ἀχεύω,5,v,-,-,p,n,e,-,-,-,4,LLHH,5,2,6,2,OK,a,7,LLH
 Homer,Iliad,iliad-book-19,2280607,19,336,true,79,26,17,γήραΐ,γῆρας,-3,n,-,s,-,-,-,n,d,-,3,HLL,1,1,1,3,OK,,
 Homer,Iliad,iliad-book-19,2280607,19,336,true,79,26,18,τε,τε,-2,g,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Iliad,iliad-book-19,2280607,19,336,true,79,26,19,στυγερῷ,στυγερός,2,a,-,s,-,-,-,n,d,-,3,LLH,2,2,3,1,OK,,
@@ -103679,7 +103679,7 @@ Homer,Iliad,iliad-book-20,2280831,20,334,false,73,18,18,καὶ,καί,-4,c,-,-,
 Homer,Iliad,iliad-book-20,2280831,20,334,false,73,18,19,φίλτερος,φίλτερος,1,a,-,s,-,-,-,m,n,-,3,HLL,4,1,4,3,OK,,
 Homer,Iliad,iliad-book-20,2280831,20,334,false,73,18,20,ἀθανάτοισιν,ἀθάνατος,1,a,-,p,-,-,-,m,d,-,5,HLLHH,5,1,6,2,OK,,
 Homer,Iliad,iliad-book-20,2280832,20,335,true,27,12,1,ἀλλ’,ἀλλά,-1,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
-Homer,Iliad,iliad-book-20,2280832,20,335,true,27,12,2,ἀναχωρῆσαι,ἀναχωρέω,0,v,-,-,a,n,a,-,-,-,5,LLHHH,1,2,3,1,OK,,
+Homer,Iliad,iliad-book-20,2280832,20,335,true,27,12,2,ἀναχωρῆσαι,ἀναχωρέω,0,v,-,-,a,n,a,-,-,-,5,LLHHH,1,2,3,1,OK,s,1,LLHH
 Homer,Iliad,iliad-book-20,2280832,20,335,true,27,12,3,ὅτε,ὅτε,1,d,-,-,-,-,-,-,-,-,2,LL,3,2,3,3,OK,,
 Homer,Iliad,iliad-book-20,2280832,20,335,true,27,12,4,κεν,ἄν,-1,g,-,-,-,-,-,-,-,-,1,H,4,1,4,1,OK,,
 Homer,Iliad,iliad-book-20,2280832,20,335,true,27,12,5,συμβλήσεαι,συμβάλλω,2,v,2,s,f,i,m,-,-,-,4,HHLL,4,2,5,3,OK,,
@@ -106353,7 +106353,7 @@ Homer,Iliad,iliad-book-21,2281038,21,192,true,21,10,7,μέγας,μέγας,3,a,
 Homer,Iliad,iliad-book-21,2281038,21,192,true,21,10,9,εἰ,εἰ,3,c,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-21,2281038,21,192,true,21,10,10,δύναταί,δύναμαι,1,v,3,s,p,i,e,-,-,-,3,LLH,5,2,6,1,OK,,
 Homer,Iliad,iliad-book-21,2281038,21,192,true,21,10,11,τι,τις,-1,p,-,s,-,-,-,n,a,-,1,H,6,2,6,2,OK,,
-Homer,Iliad,iliad-book-21,2281038,21,193,true,21,10,12,χραισμεῖν,χραισμέω,2,v,-,-,a,n,a,-,-,-,2,HH,1,1,1,2,OK,s,1,H
+Homer,Iliad,iliad-book-21,2281038,21,193,true,21,10,12,χραισμεῖν,χραισμέω,2,v,-,-,p,n,a,-,-,-,2,HH,1,1,1,2,OK,c,6,HL
 Homer,Iliad,iliad-book-21,2281039,21,193,false,174,33,1,ἀλλ’,ἀλλά,-2,d,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Iliad,iliad-book-21,2281039,21,193,false,174,33,2,οὐκ,οὐ,-1,d,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
 Homer,Iliad,iliad-book-21,2281039,21,193,false,174,33,3,ἔστι,εἰμί,0,v,3,s,p,i,a,-,-,-,2,HL,3,1,3,2,OK,,
@@ -107095,7 +107095,7 @@ Homer,Iliad,iliad-book-21,2281091,21,293,true,10,6,6,κε,ἄν,-1,g,-,-,-,-,-,-
 Homer,Iliad,iliad-book-21,2281091,21,293,true,10,6,7,πίθηαι,πείθω,2,v,2,s,a,s,e,-,-,-,3,LHH,5,3,6,2,OK,,
 Homer,Iliad,iliad-book-21,2281092,21,294,true,41,16,1,μὴ,μή,-2,g,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-21,2281092,21,294,true,41,16,2,πρὶν,πρίν,-1,d,-,-,-,-,-,-,-,-,1,H,1,2,1,2,OK,,
-Homer,Iliad,iliad-book-21,2281092,21,294,true,41,16,3,παύειν,παύω,0,v,-,-,p,n,a,-,-,-,2,HH,2,1,2,2,OK,,
+Homer,Iliad,iliad-book-21,2281092,21,294,true,41,16,3,παύειν,παύω,0,v,-,-,p,n,a,-,-,-,2,HH,2,1,2,2,OK,t,1,H
 Homer,Iliad,iliad-book-21,2281092,21,294,true,41,16,4,χεῖρας,χείρ,1,n,-,p,-,-,-,f,a,-,2,HL,3,1,3,2,OK,,
 Homer,Iliad,iliad-book-21,2281092,21,294,true,41,16,5,ὁμοιΐου,ὁμοίιος,-1,a,-,s,-,-,-,m,g,-,4,LHHH,3,3,5,1,OK,,
 Homer,Iliad,iliad-book-21,2281092,21,294,true,41,16,6,πολέμοιο,πόλεμος,3,n,-,s,-,-,-,m,g,-,4,LLHH,5,2,6,2,OK,,
@@ -108834,7 +108834,7 @@ Homer,Iliad,iliad-book-21,2281233,21,534,true,30,11,5,τεῖχος,τεῖχο�
 Homer,Iliad,iliad-book-21,2281233,21,534,true,30,11,6,ἀναπνεύσωσιν,ἀναπνέω,-4,v,3,p,a,s,a,-,-,-,5,LHHHL,3,3,5,2,OK,,
 Homer,Iliad,iliad-book-21,2281233,21,534,true,30,11,7,ἀλέντες,εἴλω,1,v,-,p,a,p,p,m,n,-,3,LHH,5,3,6,2,OK,,
 Homer,Iliad,iliad-book-21,2281233,21,535,true,30,11,9,αὖτις,αὖθις,-1,d,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
-Homer,Iliad,iliad-book-21,2281233,21,535,true,30,11,10,ἐπανθέμεναι,ἐπανατίθημι,0,v,-,-,a,n,a,-,-,-,5,LHLLH,1,3,3,1,OK,,
+Homer,Iliad,iliad-book-21,2281233,21,535,true,30,11,10,ἐπανθέμεναι,ἐπανατίθημι,0,v,-,-,a,n,a,-,-,-,5,LHLLH,1,3,3,1,OK,a,3,LHL
 Homer,Iliad,iliad-book-21,2281233,21,535,true,30,11,11,σανίδας,σανίς,1,n,-,p,-,-,-,f,a,-,3,LLH,3,2,4,1,OK,,
 Homer,Iliad,iliad-book-21,2281233,21,535,true,30,11,12,πυκινῶς,πυκνός,-1,d,-,-,-,-,-,-,-,-,3,LLH,4,2,5,1,OK,,
 Homer,Iliad,iliad-book-21,2281233,21,535,true,30,11,13,ἀραρυίας,ἀραρίσκω,2,v,-,p,r,p,a,f,a,-,4,LLHH,5,2,6,2,OK,,
@@ -109150,7 +109150,7 @@ Homer,Iliad,iliad-book-21,2281258,21,578,true,88,23,19,ἀλκῆς,ἀλκή,1,
 Homer,Iliad,iliad-book-21,2281258,21,578,true,88,23,21,πρίν,πρίν,3,c,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Iliad,iliad-book-21,2281258,21,578,true,88,23,22,γ’,γε,-3,g,-,-,-,-,-,-,-,-,0,,2,2,2,2,OK_ELIDED,,
 Homer,Iliad,iliad-book-21,2281258,21,578,true,88,23,23,ἠὲ,ἤ,-2,c,-,-,-,-,-,-,-,-,2,HH,2,2,3,1,OK,,
-Homer,Iliad,iliad-book-21,2281258,21,578,true,88,23,24,ξυμβλήμεναι,συμβάλλω,-1,v,-,-,a,n,m,-,-,-,4,HHLL,3,2,4,3,OK,,
+Homer,Iliad,iliad-book-21,2281258,21,578,true,88,23,24,ξυμβλήμεναι,συμβάλλω,-1,v,-,-,a,n,a,-,-,-,4,HHLL,3,2,4,3,OK,a,3,HH
 Homer,Iliad,iliad-book-21,2281258,21,578,true,88,23,25,ἠὲ,ἤ,4,c,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
 Homer,Iliad,iliad-book-21,2281258,21,578,true,88,23,26,δαμῆναι,δαμάζω,1,v,-,-,a,n,p,-,-,-,3,LHH,5,3,6,2,OK,a,1,LH
 Homer,Iliad,iliad-book-21,2281259,21,579,true,22,11,1,ὣς,ὡς,-7,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
@@ -115645,7 +115645,7 @@ Homer,Iliad,iliad-book-23,2281740,23,343,true,10,4,1,ἀλλὰ,ἀλλά,-4,d,-
 Homer,Iliad,iliad-book-23,2281740,23,343,true,10,4,2,φίλος,φίλος,-3,a,-,s,-,-,-,m,v,-,2,LH,2,3,3,1,OK,,
 Homer,Iliad,iliad-book-23,2281740,23,343,true,10,4,3,φρονέων,φρονέω,-2,v,-,s,p,p,a,m,n,-,3,LLH,3,2,4,1,OK,,
 Homer,Iliad,iliad-book-23,2281740,23,343,true,10,4,4,πεφυλαγμένος,φυλάσσω,-1,v,-,s,r,p,e,m,n,-,5,LLHLL,4,2,5,3,OK,,
-Homer,Iliad,iliad-book-23,2281740,23,343,true,10,4,5,εἶναι,εἰμί,0,v,-,-,p,n,a,-,-,-,2,HH,6,1,6,2,OK,,
+Homer,Iliad,iliad-book-23,2281740,23,343,true,10,4,5,εἶναι,εἰμί,0,v,-,-,p,n,a,-,-,-,2,HH,6,1,6,2,OK,a,1,H
 Homer,Iliad,iliad-book-23,2281741,23,344,true,160,41,1,εἰ,εἰ,-10,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-23,2281741,23,344,true,160,41,2,γάρ,γάρ,-9,g,-,-,-,-,-,-,-,-,1,H,1,2,1,2,OK,,
 Homer,Iliad,iliad-book-23,2281741,23,344,true,160,41,3,κ’,ἄν,-4,g,-,-,-,-,-,-,-,-,0,,2,1,2,1,OK_ELIDED,,
@@ -124073,7 +124073,7 @@ Homer,Iliad,iliad-book-24,2282408,24,591,true,21,7,9,ἑταῖρον,ἑταῖ
 Homer,Iliad,iliad-book-24,2282409,24,592,false,82,23,1,μή,μή,-3,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Iliad,iliad-book-24,2282409,24,592,false,82,23,2,μοι,ἐγώ,-2,p,-,s,-,-,-,m,d,-,1,H,1,2,1,2,OK,,
 Homer,Iliad,iliad-book-24,2282409,24,592,false,82,23,3,Πάτροκλε,Πάτροκλος,-1,n,-,s,-,-,-,m,v,-,3,HHH,2,1,3,1,OK,,
-Homer,Iliad,iliad-book-24,2282409,24,592,false,82,23,4,σκυδμαινέμεν,σκυδμαίνω,0,v,-,-,p,n,a,-,-,-,4,HHLL,3,2,4,3,OK,,
+Homer,Iliad,iliad-book-24,2282409,24,592,false,82,23,4,σκυδμαινέμεν,σκυδμαίνω,0,v,-,-,p,n,a,-,-,-,4,HHLL,3,2,4,3,OK,t,2,HH
 Homer,Iliad,iliad-book-24,2282409,24,592,false,82,23,6,αἴ,εἰ,2,c,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Iliad,iliad-book-24,2282409,24,592,false,82,23,7,κε,ἄν,-1,g,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
 Homer,Iliad,iliad-book-24,2282409,24,592,false,82,23,8,πύθηαι,πυνθάνομαι,2,v,2,s,a,s,e,-,-,-,3,LHH,5,3,6,2,OK,,
@@ -125804,7 +125804,7 @@ Homer,Odyssey,odyssey-book-01,2185551,1,21,true,17,9,6,Ὀδυσῆι,Ὀδυσ�
 Homer,Odyssey,odyssey-book-01,2185551,1,21,true,17,9,7,πάρος,πάρος,3,c,-,-,-,-,-,-,-,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185551,1,21,true,17,9,8,ἣν,ὅς,-1,p,-,s,-,-,-,f,a,-,1,H,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185551,1,21,true,17,9,9,γαῖαν,γαῖα,-1,n,-,s,-,-,-,f,a,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185551,1,21,true,17,9,10,ἱκέσθαι,ἱκνέομαι,3,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-01,2185551,1,21,true,17,9,10,ἱκέσθαι,ἱκνέομαι,3,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-01,2185552,1,22,false,141,27,1,ἀλλ’,ἀλλά,-4,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185552,1,22,false,141,27,2,ὁ,ὁ,-3,l,-,-,-,-,-,-,-,-,1,L,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185552,1,22,false,141,27,3,μὲν,μέν,-2,g,-,-,-,-,-,-,-,-,1,L,1,3,1,3,OK,,
@@ -126809,7 +126809,7 @@ Homer,Odyssey,odyssey-book-01,2185619,1,167,false,93,20,18,τις,τις,-3,p,-,
 Homer,Odyssey,odyssey-book-01,2185619,1,167,false,93,20,19,ἐπιχθονίων,ἐπιχθόνιος,-1,a,-,p,-,-,-,m,g,-,5,LHLLH,3,3,5,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185619,1,167,false,93,20,20,ἀνθρώπων,ἄνθρωπος,2,n,-,p,-,-,-,m,g,-,3,HHH,5,2,6,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185619,1,168,false,93,20,21,φῇσιν,φημί,5,v,3,s,-,s,a,-,-,-,2,HL,1,1,1,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185619,1,168,false,93,20,22,ἐλεύσεσθαι,ἔρχομαι,1,v,-,-,f,n,-,-,-,-,4,LHHH,1,3,3,1,OK,s,7,LHH
+Homer,Odyssey,odyssey-book-01,2185619,1,168,false,93,20,22,ἐλεύσεσθαι,ἔρχομαι,1,v,-,-,f,n,m,-,-,-,4,LHHH,1,3,3,1,OK,s,7,LHH
 Homer,Odyssey,odyssey-book-01,2185620,1,168,true,8,4,1,τοῦ,ὁ,-4,l,-,-,-,-,-,-,-,-,1,H,3,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185620,1,168,true,8,4,2,δ’,δέ,0,g,-,-,-,-,-,-,-,-,0,,4,1,4,1,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-01,2185620,1,168,true,8,4,3,ὤλετο,ὄλλυμι,1,v,3,s,a,i,-,-,-,-,3,HLL,4,1,4,3,OK,,
@@ -126855,7 +126855,7 @@ Homer,Odyssey,odyssey-book-01,2185627,1,173,true,26,8,5,σε,σύ,-4,p,-,s,-,-,-
 Homer,Odyssey,odyssey-book-01,2185627,1,173,true,26,8,6,πεζὸν,πεζός,1,a,-,s,-,-,-,m,a,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185627,1,173,true,26,8,7,ὀίομαι,οἴομαι,4,v,1,s,p,i,e,-,-,-,4,LHLL,3,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-01,2185627,1,173,true,26,8,8,ἐνθάδ’,ἐνθάδε,-1,d,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185627,1,173,true,26,8,9,ἱκέσθαι,ἱκνέομαι,2,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-01,2185627,1,173,true,26,8,9,ἱκέσθαι,ἱκνέομαι,2,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-01,2185628,1,174,true,74,28,1,καί,καί,0,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185628,1,174,true,74,28,2,μοι,ἐγώ,-2,p,-,s,-,-,-,m,d,-,1,H,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185628,1,174,true,74,28,3,τοῦτ’,οὗτος,-1,a,-,s,-,-,-,n,a,-,1,H,2,1,2,1,OK,,
@@ -127207,7 +127207,7 @@ Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,9,τοῦ,ὁ,-2,l,-,-,-,
 Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,10,μ’,ἐγώγε,-3,p,-,s,-,-,-,f,a,-,0,,1,2,1,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,11,ἔκ,ἐκ,-2,r,-,-,-,-,-,-,-,-,1,H,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,12,φασι,φημί,10,v,3,s,p,i,a,-,-,-,2,HL,2,1,2,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,13,γενέσθαι,γίγνομαι,1,v,-,-,a,n,-,-,-,-,3,LHL,2,3,3,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,13,γενέσθαι,γίγνομαι,1,v,-,-,a,n,m,-,-,-,3,LHL,2,3,3,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,15,ἐπεὶ,ἐπεί,3,c,-,-,-,-,-,-,-,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,16,σύ,σύ,-3,p,-,s,-,-,-,-,n,-,1,L,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185650,1,220,true,53,16,17,με,ἐγώ,-2,p,-,s,-,-,-,m,a,-,1,L,4,3,4,3,OK,,
@@ -128353,12 +128353,12 @@ Homer,Odyssey,odyssey-book-01,2185736,1,376,true,60,14,5,τόδε,ὅδε,-5,p,-
 Homer,Odyssey,odyssey-book-01,2185736,1,376,true,60,14,6,λωίτερον,λωίων,-1,a,-,s,-,-,-,n,n,-,4,HLLH,4,1,5,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185736,1,376,true,60,14,7,καὶ,καί,-2,c,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185736,1,376,true,60,14,8,ἄμεινον,ἀμείνων,1,a,-,s,-,-,-,n,n,c,3,LHH,5,3,6,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185736,1,377,true,60,14,9,ἔμμεναι,εἰμί,5,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,Η
+Homer,Odyssey,odyssey-book-01,2185736,1,377,true,60,14,9,ἔμμεναι,εἰμί,5,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,H
 Homer,Odyssey,odyssey-book-01,2185736,1,377,true,60,14,11,ἀνδρὸς,ἀνήρ,-2,n,-,s,-,-,-,m,g,-,2,HL,2,1,2,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185736,1,377,true,60,14,12,ἑνὸς,εἷς,1,a,-,s,-,-,-,m,g,-,2,LH,2,3,3,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185736,1,377,true,60,14,13,βίοτον,βίοτος,-2,n,-,s,-,-,-,m,a,-,3,LLH,3,2,4,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185736,1,377,true,60,14,14,νήποινον,νήποινος,-1,a,-,s,-,-,-,n,a,-,3,HHL,4,2,5,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185736,1,377,true,60,14,15,ὀλέσθαι,ὄλλυμι,5,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-01,2185736,1,377,true,60,14,15,ὀλέσθαι,ὄλλυμι,5,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-01,2185736,1,378,true,60,14,17,κείρετ’,κείρω,15,v,2,p,p,m,a,-,-,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185737,1,378,true,29,13,1,ἐγὼ,ἐγώ,-3,p,-,s,-,-,-,m,n,-,2,LH,1,3,2,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185737,1,378,true,29,13,2,δὲ,δέ,0,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
@@ -128373,7 +128373,7 @@ Homer,Odyssey,odyssey-book-01,2185737,1,379,true,29,13,11,Ζεὺς,Ζεύς,-1,
 Homer,Odyssey,odyssey-book-01,2185737,1,379,true,29,13,12,δῷσι,δίδωμι,4,v,3,s,a,s,a,-,-,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185737,1,379,true,29,13,13,παλίντιτα,παλίντιτος,-1,a,-,p,-,-,-,n,a,-,4,LHLL,3,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-01,2185737,1,379,true,29,13,14,ἔργα,ἔργον,-1,n,-,p,-,-,-,n,a,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185737,1,379,true,29,13,15,γενέσθαι,γίγνομαι,3,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-01,2185737,1,379,true,29,13,15,γενέσθαι,γίγνομαι,3,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-01,2185738,1,380,true,14,5,1,νήποινοί,νήποινος,-5,a,-,p,-,-,-,m,n,-,3,HHH,1,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185738,1,380,true,14,5,2,κεν,ἄν,-4,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185738,1,380,true,14,5,3,ἔπειτα,ἔπειτα,-3,d,-,-,-,-,-,-,-,-,3,LHL,2,3,3,2,OK,,
@@ -128452,7 +128452,7 @@ Homer,Odyssey,odyssey-book-01,2185745,1,390,true,18,7,4,ἐθέλοιμι,ἐθ�
 Homer,Odyssey,odyssey-book-01,2185745,1,390,true,18,7,5,Διός,Ζεύς,-2,n,-,s,-,-,-,m,g,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185745,1,390,true,18,7,6,γε,γε,1,g,-,-,-,-,-,-,-,-,1,L,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185745,1,390,true,18,7,7,διδόντος,δίδωμι,3,v,-,s,p,p,a,m,g,-,3,LHL,4,3,5,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185745,1,390,true,18,7,8,ἀρέσθαι,αἴρω,4,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-01,2185745,1,390,true,18,7,8,ἀρέσθαι,αἴρω,4,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-01,2185746,1,391,true,16,6,1,ἦ,ἦ,-1,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185746,1,391,true,16,6,2,φῂς,φημί,0,v,2,s,p,i,a,-,-,-,1,H,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185746,1,391,true,16,6,3,τοῦτο,οὗτος,-4,a,-,s,-,-,-,n,a,-,2,HL,2,1,2,2,OK,,
@@ -128565,7 +128565,7 @@ Homer,Odyssey,odyssey-book-01,2185755,1,405,false,138,25,3,σε,σύ,-6,p,-,s,-,
 Homer,Odyssey,odyssey-book-01,2185755,1,405,false,138,25,5,φέριστε,φέριστος,3,a,-,s,-,-,-,m,v,-,3,LHL,2,3,3,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185755,1,405,false,138,25,7,περὶ,περί,-2,r,-,-,-,-,-,-,-,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-01,2185755,1,405,false,138,25,8,ξείνοιο,ξένος,1,n,-,s,-,-,-,m,g,-,3,HHL,4,2,5,2,OK,,
-Homer,Odyssey,odyssey-book-01,2185755,1,405,false,138,25,9,ἐρέσθαι,ἔρομαι,7,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-01,2185755,1,405,false,138,25,9,ἐρέσθαι,ἔρομαι,7,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-01,2185755,1,406,false,138,25,11,ὁππόθεν,ὁπόθεν,-20,d,-,-,-,-,-,-,-,-,3,HLL,1,1,1,3,OK,,
 Homer,Odyssey,odyssey-book-01,2185755,1,406,false,138,25,12,οὗτος,οὗτος,-1,a,-,s,-,-,-,m,n,-,2,HL,2,1,2,2,OK,,
 Homer,Odyssey,odyssey-book-01,2185755,1,406,false,138,25,13,ἀνήρ,ἀνήρ,-18,n,-,s,-,-,-,m,n,-,2,LH,2,3,3,1,OK,,
@@ -129456,7 +129456,7 @@ Homer,Odyssey,odyssey-book-02,2185821,2,82,true,35,13,10,τις,τις,-1,p,-,s,
 Homer,Odyssey,odyssey-book-02,2185821,2,82,true,35,13,11,ἔτλη,τλάω,2,v,3,s,i,i,a,-,-,-,2,HH,6,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-02,2185821,2,83,true,35,13,12,Τηλέμαχον,Τηλέμαχος,-2,n,-,s,-,-,-,m,a,-,4,HLLH,1,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-02,2185821,2,83,true,35,13,13,μύθοισιν,μῦθος,-1,n,-,p,-,-,-,m,d,-,3,HHL,2,2,3,2,OK,,
-Homer,Odyssey,odyssey-book-02,2185821,2,83,true,35,13,14,ἀμείψασθαι,ἀμείβω,3,v,-,-,a,n,-,-,-,-,4,LHHH,3,3,5,1,OK,s,7,LHH
+Homer,Odyssey,odyssey-book-02,2185821,2,83,true,35,13,14,ἀμείψασθαι,ἀμείβω,3,v,-,-,a,n,m,-,-,-,4,LHHH,3,3,5,1,OK,s,7,LHH
 Homer,Odyssey,odyssey-book-02,2185821,2,83,true,35,13,15,χαλεποῖσιν,χαλεπός,2,a,-,p,-,-,-,m,d,-,4,LLHH,5,2,6,2,OK,,
 Homer,Odyssey,odyssey-book-02,2185822,2,84,true,16,5,1,Ἀντίνοος,Ἀντίνοος,-5,n,-,s,-,-,-,m,n,-,4,HLLH,1,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-02,2185822,2,84,true,16,5,2,δέ,δέ,0,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
@@ -129907,7 +129907,7 @@ Homer,Odyssey,odyssey-book-02,2185854,2,142,true,60,14,11,ἀνδρὸς,ἀνή
 Homer,Odyssey,odyssey-book-02,2185854,2,142,true,60,14,12,ἑνὸς,εἷς,1,a,-,s,-,-,-,m,g,-,2,LH,2,3,3,1,OK,,
 Homer,Odyssey,odyssey-book-02,2185854,2,142,true,60,14,13,βίοτον,βίοτος,-2,n,-,s,-,-,-,m,a,-,3,LLH,3,2,4,1,OK,,
 Homer,Odyssey,odyssey-book-02,2185854,2,142,true,60,14,14,νήποινον,νήποινος,-1,a,-,s,-,-,-,n,a,-,3,HHL,4,2,5,2,OK,,
-Homer,Odyssey,odyssey-book-02,2185854,2,142,true,60,14,15,ὀλέσθαι,ὄλλυμι,5,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-02,2185854,2,142,true,60,14,15,ὀλέσθαι,ὄλλυμι,5,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-02,2185854,2,143,true,60,14,17,κείρετ’,κείρω,15,v,2,p,p,m,a,-,-,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-02,2185855,2,143,true,29,13,1,ἐγὼ,ἐγώ,-3,p,-,s,-,-,-,m,n,-,2,LH,1,3,2,1,OK,,
 Homer,Odyssey,odyssey-book-02,2185855,2,143,true,29,13,2,δὲ,δέ,0,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
@@ -129922,7 +129922,7 @@ Homer,Odyssey,odyssey-book-02,2185855,2,144,true,29,13,11,Ζεὺς,Ζεύς,-1,
 Homer,Odyssey,odyssey-book-02,2185855,2,144,true,29,13,12,δῷσι,δίδωμι,4,v,3,s,a,s,a,-,-,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-02,2185855,2,144,true,29,13,13,παλίντιτα,παλίντιτος,-1,a,-,p,-,-,-,n,a,-,4,LHLL,3,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-02,2185855,2,144,true,29,13,14,ἔργα,ἔργον,-1,n,-,p,-,-,-,n,a,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-02,2185855,2,144,true,29,13,15,γενέσθαι,γίγνομαι,3,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-02,2185855,2,144,true,29,13,15,γενέσθαι,γίγνομαι,3,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-02,2185856,2,145,true,14,5,1,νήποινοί,νήποινος,-5,a,-,p,-,-,-,m,n,-,3,HHH,1,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-02,2185856,2,145,true,14,5,2,κεν,ἄν,-4,g,-,-,-,-,-,-,-,-,1,L,2,2,2,2,OK,,
 Homer,Odyssey,odyssey-book-02,2185856,2,145,true,14,5,3,ἔπειτα,ἔπειτα,-3,d,-,-,-,-,-,-,-,-,3,LHL,2,3,3,2,OK,,
@@ -132224,7 +132224,7 @@ Homer,Odyssey,odyssey-book-03,2186037,3,24,false,34,7,3,αὖ,αὖ,-7,d,-,-,-,-
 Homer,Odyssey,odyssey-book-03,2186037,3,24,false,34,7,4,νέον,νέος,-1,a,-,s,-,-,-,m,a,-,2,LL,2,2,2,3,OK,,
 Homer,Odyssey,odyssey-book-03,2186037,3,24,false,34,7,5,ἄνδρα,ἀνήρ,-2,n,-,s,-,-,-,m,a,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186037,3,24,false,34,7,6,γεραίτερον,γεραιός,-4,a,-,s,-,-,-,m,a,-,4,LHLL,3,3,4,3,OK,,
-Homer,Odyssey,odyssey-book-03,2186037,3,24,false,34,7,7,ἐξερέεσθαι,ἐξέρομαι,-3,v,-,-,p,n,-,-,-,-,5,HLLHH,5,1,6,2,OK,t,7,HLLH
+Homer,Odyssey,odyssey-book-03,2186037,3,24,false,34,7,7,ἐξερέεσθαι,ἐξέρομαι,-3,v,-,-,p,n,e,-,-,-,5,HLLHH,5,1,6,2,OK,t,7,HLLH
 Homer,Odyssey,odyssey-book-03,2186038,3,25,true,10,6,1,τὸν,ὁ,-3,p,-,s,-,-,-,m,a,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186038,3,25,true,10,6,2,δ’,δέ,0,g,-,-,-,-,-,-,-,-,0,,1,2,1,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-03,2186038,3,25,true,10,6,3,αὖτε,αὖτε,-1,d,-,-,-,-,-,-,-,-,2,HH,1,2,2,1,OK,,
@@ -132252,9 +132252,9 @@ Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,4,οὔ,οὐ,-7,d,-,-,-,-
 Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,5,σε,σύ,-6,p,-,s,-,-,-,-,a,-,1,L,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,6,θεῶν,θεός,-1,n,-,p,-,-,-,m,g,-,2,LH,1,3,2,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,7,ἀέκητι,ἀέκητι,-4,d,-,-,-,-,-,-,-,-,4,LLHL,2,2,3,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,8,γενέσθαι,γίγνομαι,-3,v,-,-,a,n,-,-,-,-,3,LHH,3,3,4,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,8,γενέσθαι,γίγνομαι,-3,v,-,-,a,n,m,-,-,-,3,LHH,3,3,4,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,9,τε,τε,-2,g,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
-Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,10,τραφέμεν,τρέφω,-1,v,-,-,a,n,p,-,-,-,3,LLH,5,2,6,1,OK,,
+Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,10,τραφέμεν,τρέφω,-1,v,-,-,a,n,a,-,-,-,3,LLH,5,2,6,1,OK,t,2,L
 Homer,Odyssey,odyssey-book-03,2186040,3,28,true,35,10,11,τε,τε,8,g,-,-,-,-,-,-,-,-,1,H,6,2,6,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186041,3,29,true,10,6,1,ὣς,ὡς,-2,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186041,3,29,true,10,6,2,ἄρα,ἄρα,-1,g,-,-,-,-,-,-,-,-,2,LL,1,2,1,3,OK,,
@@ -132533,7 +132533,7 @@ Homer,Odyssey,odyssey-book-03,2186065,3,69,true,33,13,4,κάλλίον,καλό�
 Homer,Odyssey,odyssey-book-03,2186065,3,69,true,33,13,5,ἐστι,εἰμί,0,v,3,s,p,i,a,-,-,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186065,3,69,true,33,13,6,μεταλλῆσαι,μεταλλάω,-1,v,-,-,a,n,a,-,-,-,4,LHHH,3,3,5,1,OK,s,1,LHH
 Homer,Odyssey,odyssey-book-03,2186065,3,69,true,33,13,7,καὶ,καί,2,c,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186065,3,69,true,33,13,8,ἐρέσθαι,ἔρομαι,1,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-03,2186065,3,69,true,33,13,8,ἐρέσθαι,ἔρομαι,1,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-03,2186065,3,70,true,33,13,9,ξείνους,ξένος,2,n,-,p,-,-,-,m,a,-,2,HH,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186065,3,70,true,33,13,11,οἱ,ὁ,-2,l,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186065,3,70,true,33,13,12,τινές,τις,1,p,-,p,-,-,-,m,n,-,2,LL,2,2,2,3,OK,,
@@ -133089,7 +133089,7 @@ Homer,Odyssey,odyssey-book-03,2186100,3,146,true,102,23,22,τὸ,ὁ,-2,p,-,s,-,
 Homer,Odyssey,odyssey-book-03,2186100,3,146,true,102,23,23,ᾔδη,οἶδα,2,v,3,s,l,i,a,-,-,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186100,3,146,true,102,23,25,ὃ,ὅς,1,p,-,s,-,-,-,n,a,-,1,L,3,3,3,3,OK,,
 Homer,Odyssey,odyssey-book-03,2186100,3,147,true,102,23,26,οὐ,οὐ,-1,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
-Homer,Odyssey,odyssey-book-03,2186100,3,146,true,102,23,27,πείσεσθαι,πείθω,-1,v,-,-,f,n,-,-,-,-,3,HHL,4,2,5,2,OK,s,7,HH
+Homer,Odyssey,odyssey-book-03,2186100,3,146,true,102,23,27,πείσεσθαι,πείθω,-1,v,-,-,f,n,m,-,-,-,3,HHL,4,2,5,2,OK,s,7,HH
 Homer,Odyssey,odyssey-book-03,2186100,3,146,true,102,23,28,ἔμελλεν,μέλλω,3,v,3,s,i,i,a,-,-,-,3,LHH,5,3,6,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186101,3,,true,22,8,1,οὐ,οὐ,-5,d,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Homer,Odyssey,odyssey-book-03,2186101,3,147,true,22,8,2,γάρ,γάρ,0,g,-,-,-,-,-,-,-,-,1,H,1,2,1,2,OK,,
@@ -133442,7 +133442,7 @@ Homer,Odyssey,odyssey-book-03,2186129,3,196,false,103,19,2,ἀγαθὸν,ἀγ�
 Homer,Odyssey,odyssey-book-03,2186129,3,196,false,103,19,3,καὶ,καί,-1,d,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186129,3,196,false,103,19,4,παῖδα,παῖς,-2,n,-,s,-,-,-,m,a,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186129,3,196,false,103,19,5,καταφθιμένοιο,καταφθίω,-2,v,-,s,a,p,-,m,g,-,6,LHLLHL,3,3,5,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186129,3,196,false,103,19,6,λιπέσθαι,λείπω,-18,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-03,2186129,3,196,false,103,19,6,λιπέσθαι,λείπω,-18,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-03,2186129,3,197,false,103,19,7,ἀνδρός,ἀνήρ,3,n,-,s,-,-,-,m,g,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186129,3,197,false,103,19,9,ἐπεὶ,ἐπεί,0,c,-,-,-,-,-,-,-,-,2,LH,1,3,2,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186129,3,197,false,103,19,10,καὶ,καί,-1,d,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
@@ -133502,7 +133502,7 @@ Homer,Odyssey,odyssey-book-03,2186132,3,204,true,37,19,20,κλέος,κλέος,
 Homer,Odyssey,odyssey-book-03,2186132,3,204,true,37,19,21,εὐρὺ,εὐρύς,1,a,-,s,-,-,-,n,a,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186132,3,204,true,37,19,22,καὶ,καί,-1,d,-,-,-,-,-,-,-,-,1,L,3,3,3,3,OK,,
 Homer,Odyssey,odyssey-book-03,2186132,3,204,true,37,19,23,ἐσσομένοισι,εἰμί,-1,v,-,p,f,p,-,m,d,-,5,HLLHL,4,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186132,3,204,true,37,19,24,πυθέσθαι,πυνθάνομαι,5,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-03,2186132,3,204,true,37,19,24,πυθέσθαι,πυνθάνομαι,5,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-03,2186133,3,205,true,43,16,1,αἲ,εἰ,-1,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186133,3,205,true,43,16,2,γὰρ,γάρ,0,g,-,-,-,-,-,-,-,-,1,L,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186133,3,205,true,43,16,3,ἐμοὶ,ἐγώ,-4,p,-,s,-,-,-,m,d,-,2,LH,1,3,2,1,OK,,
@@ -133510,7 +133510,7 @@ Homer,Odyssey,odyssey-book-03,2186133,3,205,true,43,16,4,τοσσήνδε,τοσ
 Homer,Odyssey,odyssey-book-03,2186133,3,205,true,43,16,5,θεοὶ,θεός,-2,n,-,p,-,-,-,m,n,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186133,3,205,true,43,16,6,δύναμιν,δύναμις,-1,n,-,s,-,-,-,f,a,-,3,LLH,4,2,5,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186133,3,205,true,43,16,7,περιθεῖεν,περιτίθημι,6,v,3,p,a,o,a,-,-,-,4,LLHH,5,2,6,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186133,3,206,true,43,16,9,τίσασθαι,τίνω,2,v,-,-,a,n,-,-,-,-,3,HHH,1,1,2,1,OK,s,7,HH
+Homer,Odyssey,odyssey-book-03,2186133,3,206,true,43,16,9,τίσασθαι,τίνω,2,v,-,-,a,n,m,-,-,-,3,HHH,1,1,2,1,OK,s,7,HH
 Homer,Odyssey,odyssey-book-03,2186133,3,206,true,43,16,10,μνηστῆρας,μνηστήρ,1,n,-,p,-,-,-,m,a,-,3,HHL,2,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186133,3,206,true,43,16,11,ὑπερβασίης,ὑπερβασία,2,n,-,s,-,-,-,f,g,-,5,LHLLH,3,3,5,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186133,3,206,true,43,16,12,ἀλεγεινῆς,ἀλεγεινός,1,a,-,s,-,-,-,f,g,-,4,LLHH,5,2,6,2,OK,,
@@ -133662,7 +133662,7 @@ Homer,Odyssey,odyssey-book-03,2186142,3,226,true,20,7,5,οὔ,οὐ,-5,d,-,-,-,-
 Homer,Odyssey,odyssey-book-03,2186142,3,226,true,20,7,6,πω,πω,-4,g,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186142,3,226,true,20,7,7,τοῦτο,οὗτος,-1,a,-,s,-,-,-,n,a,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186142,3,226,true,20,7,8,ἔπος,ἔπος,-1,n,-,s,-,-,-,n,a,-,2,LH,3,3,4,1,OK,,
-Homer,Odyssey,odyssey-book-03,2186142,3,226,true,20,7,9,τελέεσθαι,τελέω,-1,v,-,-,f,n,-,-,-,-,4,LLHL,4,2,5,2,OK,c,7,LLH
+Homer,Odyssey,odyssey-book-03,2186142,3,226,true,20,7,9,τελέεσθαι,τελέω,-1,v,-,-,f,n,m,-,-,-,4,LLHL,4,2,5,2,OK,c,7,LLH
 Homer,Odyssey,odyssey-book-03,2186142,3,226,true,20,7,10,ὀίω,οἴομαι,0,v,1,s,p,i,a,-,-,-,3,LHH,5,3,6,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186143,3,227,true,5,3,1,λίην,λίαν,-2,d,-,-,-,-,-,-,-,-,2,HH,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186143,3,227,true,5,3,2,γὰρ,γάρ,0,g,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
@@ -133721,10 +133721,10 @@ Homer,Odyssey,odyssey-book-03,2186149,3,233,true,70,28,12,ἐλθέμεναι,�
 Homer,Odyssey,odyssey-book-03,2186149,3,233,true,70,28,13,καὶ,καί,-5,c,-,-,-,-,-,-,-,-,1,H,3,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186149,3,233,true,70,28,14,νόστιμον,νόστιμος,-1,a,-,s,-,-,-,n,a,-,3,HLL,4,1,4,3,OK,,
 Homer,Odyssey,odyssey-book-03,2186149,3,233,true,70,28,15,ἦμαρ,ἦμαρ,-1,n,-,s,-,-,-,n,a,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186149,3,233,true,70,28,16,ἰδέσθαι,εἶδον,3,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-03,2186149,3,233,true,70,28,16,ἰδέσθαι,εἶδον,3,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-03,2186149,3,234,true,70,28,18,ἢ,ἤ,17,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186149,3,234,true,70,28,19,ἐλθὼν,ἔρχομαι,-1,v,-,s,a,p,a,m,n,-,2,HH,1,2,2,1,OK,,
-Homer,Odyssey,odyssey-book-03,2186149,3,234,true,70,28,20,ἀπολέσθαι,ἀπόλλυμι,2,v,-,-,a,n,-,-,-,-,4,LLHL,2,2,3,2,OK,t,7,LLH
+Homer,Odyssey,odyssey-book-03,2186149,3,234,true,70,28,20,ἀπολέσθαι,ἀπόλλυμι,2,v,-,-,a,n,m,-,-,-,4,LLHL,2,2,3,2,OK,t,7,LLH
 Homer,Odyssey,odyssey-book-03,2186149,3,234,true,70,28,21,ἐφέστιος,ἐφέστιος,1,a,-,s,-,-,-,m,n,-,4,LHLL,3,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-03,2186149,3,234,true,70,28,23,ὡς,ὡς,-2,d,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186149,3,234,true,70,28,24,Ἀγαμέμνων,Ἀγαμέμνων,-1,n,-,s,-,-,-,m,n,-,4,LLHH,5,2,6,2,OK,,
@@ -133792,7 +133792,7 @@ Homer,Odyssey,odyssey-book-03,2186154,3,243,true,31,15,4,ἔπος,ἔπος,-3,
 Homer,Odyssey,odyssey-book-03,2186154,3,243,true,31,15,5,ἄλλο,ἄλλος,1,a,-,s,-,-,-,n,a,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186154,3,243,true,31,15,6,μεταλλῆσαι,μεταλλάω,-1,v,-,-,a,n,a,-,-,-,4,LHHH,3,3,5,1,OK,s,1,LHH
 Homer,Odyssey,odyssey-book-03,2186154,3,243,true,31,15,7,καὶ,καί,4,c,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186154,3,243,true,31,15,8,ἐρέσθαι,ἔρομαι,1,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-03,2186154,3,243,true,31,15,8,ἐρέσθαι,ἔρομαι,1,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-03,2186154,3,244,true,31,15,9,Νέστορ’,Νέστωρ,2,n,-,s,-,-,-,m,a,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186154,3,244,true,31,15,11,ἐπεὶ,ἐπεί,8,c,-,-,-,-,-,-,-,-,2,LH,1,3,2,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186154,3,244,true,31,15,12,περὶ,περί,-1,r,-,-,-,-,-,-,-,-,2,LL,2,2,2,3,OK,,
@@ -133806,7 +133806,7 @@ Homer,Odyssey,odyssey-book-03,2186155,3,245,true,15,7,2,γὰρ,γάρ,0,g,-,-,-
 Homer,Odyssey,odyssey-book-03,2186155,3,245,true,15,7,3,δή,δή,-2,g,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186155,3,245,true,15,7,4,μίν,μιν,-2,p,-,s,-,-,-,m,a,-,1,H,2,2,2,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186155,3,245,true,15,7,5,φασιν,φημί,3,v,3,p,p,i,a,-,-,-,2,HL,3,1,3,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186155,3,245,true,15,7,6,ἀνάξασθαι,ἀνάσσω,1,v,-,-,a,n,-,-,-,-,4,LHHH,3,3,5,1,OK,s,7,LHH
+Homer,Odyssey,odyssey-book-03,2186155,3,245,true,15,7,6,ἀνάξασθαι,ἀνάσσω,1,v,-,-,a,n,m,-,-,-,4,LHHH,3,3,5,1,OK,s,7,LHH
 Homer,Odyssey,odyssey-book-03,2186155,3,245,true,15,7,7,γένε’,γένος,1,n,-,p,-,-,-,n,a,-,2,LL,5,2,5,3,OK,,
 Homer,Odyssey,odyssey-book-03,2186155,3,245,true,15,7,8,ἀνδρῶν,ἀνήρ,1,n,-,p,-,-,-,m,g,-,2,HH,6,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186156,3,246,false,22,7,1,ὥς,ὡς,-7,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
@@ -134000,7 +134000,7 @@ Homer,Odyssey,odyssey-book-03,2186172,3,271,true,147,29,20,οἰωνοῖσιν,
 Homer,Odyssey,odyssey-book-03,2186172,3,271,true,147,29,21,ἕλωρ,ἕλωρ,-1,n,-,s,-,-,-,n,a,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186172,3,271,true,147,29,22,καὶ,καί,-2,c,-,-,-,-,-,-,-,-,1,H,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186172,3,271,true,147,29,23,κύρμα,κύρμα,1,n,-,s,-,-,-,n,a,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186172,3,271,true,147,29,24,γενέσθαι,γίγνομαι,5,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-03,2186172,3,271,true,147,29,24,γενέσθαι,γίγνομαι,5,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-03,2186172,3,272,true,147,29,26,τὴν,ὁ,-4,p,-,s,-,-,-,f,a,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186172,3,272,true,147,29,27,δ’,δέ,0,g,-,-,-,-,-,-,-,-,0,,1,2,1,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-03,2186172,3,272,true,147,29,28,ἐθέλων,ἐθέλω,-2,v,-,s,p,p,a,m,n,-,3,LLH,1,2,2,1,OK,,
@@ -134769,7 +134769,7 @@ Homer,Odyssey,odyssey-book-03,2186227,3,375,true,47,16,7,ἔολπα,ἔλπω,0
 Homer,Odyssey,odyssey-book-03,2186227,3,375,true,47,16,8,κακὸν,κακός,-1,a,-,s,-,-,-,m,a,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186227,3,375,true,47,16,9,καὶ,καί,-2,c,-,-,-,-,-,-,-,-,1,L,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186227,3,375,true,47,16,10,ἄναλκιν,ἄναλκις,1,a,-,s,-,-,-,m,a,-,3,LHL,4,3,5,2,OK,,
-Homer,Odyssey,odyssey-book-03,2186227,3,375,true,47,16,11,ἔσεσθαι,εἰμί,4,v,-,-,f,n,-,-,-,-,3,LHH,5,3,6,2,OK,s,7,LH
+Homer,Odyssey,odyssey-book-03,2186227,3,375,true,47,16,11,ἔσεσθαι,εἰμί,4,v,-,-,f,n,m,-,-,-,3,LHH,5,3,6,2,OK,s,7,LH
 Homer,Odyssey,odyssey-book-03,2186227,3,376,true,47,16,13,εἰ,εἰ,2,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-03,2186227,3,376,true,47,16,14,δή,δή,-6,g,-,-,-,-,-,-,-,-,1,H,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-03,2186227,3,376,true,47,16,15,τοι,σύ,-5,p,-,s,-,-,-,-,d,-,1,H,2,1,2,1,OK,,
@@ -136410,7 +136410,7 @@ Homer,Odyssey,odyssey-book-04,2186340,4,107,false,183,26,3,ἄρ’,ἄρα,-1,g
 Homer,Odyssey,odyssey-book-04,2186340,4,107,false,183,26,4,ἔμελλεν,μέλλω,-6,v,3,s,i,i,a,-,-,-,3,LHH,5,3,6,2,OK,,
 Homer,Odyssey,odyssey-book-04,2186340,4,108,false,183,26,5,αὐτῷ,αὐτός,4,a,-,s,-,-,-,m,d,-,2,HH,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-04,2186340,4,108,false,183,26,6,κήδε’,κῆδος,-1,n,-,p,-,-,-,n,a,-,2,HL,2,1,2,2,OK,,
-Homer,Odyssey,odyssey-book-04,2186340,4,108,false,183,26,7,ἔσεσθαι,εἰμί,3,v,-,-,f,n,-,-,-,-,3,LHL,2,3,3,2,OK,s,7,LH
+Homer,Odyssey,odyssey-book-04,2186340,4,108,false,183,26,7,ἔσεσθαι,εἰμί,3,v,-,-,f,n,m,-,-,-,3,LHL,2,3,3,2,OK,s,7,LH
 Homer,Odyssey,odyssey-book-04,2186340,4,108,false,183,26,9,ἐμοὶ,ἐγώ,-23,p,-,s,-,-,-,m,d,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-04,2186340,4,108,false,183,26,10,δ’,δέ,0,g,-,-,-,-,-,-,-,-,0,,4,2,4,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-04,2186340,4,108,false,183,26,11,ἄχος,ἄχος,-21,n,-,s,-,-,-,n,n,-,2,LL,4,2,4,3,OK,,
@@ -139213,7 +139213,7 @@ Homer,Odyssey,odyssey-book-04,2186544,4,493,true,26,10,3,σέ,σύ,-4,p,-,s,-,-,
 Homer,Odyssey,odyssey-book-04,2186544,4,493,true,26,10,4,φημι,φημί,3,v,1,s,p,i,a,-,-,-,2,HH,6,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-04,2186544,4,494,true,26,10,5,δὴν,δήν,-2,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-04,2186544,4,494,true,26,10,6,ἄκλαυτον,ἄκλαυστος,-1,a,-,s,-,-,-,m,a,-,3,HHL,1,2,2,2,OK,,
-Homer,Odyssey,odyssey-book-04,2186544,4,494,true,26,10,7,ἔσεσθαι,εἰμί,3,v,-,-,f,n,-,-,-,-,3,LHL,2,3,3,2,OK,s,7,LH
+Homer,Odyssey,odyssey-book-04,2186544,4,494,true,26,10,7,ἔσεσθαι,εἰμί,3,v,-,-,f,n,m,-,-,-,3,LHL,2,3,3,2,OK,s,7,LH
 Homer,Odyssey,odyssey-book-04,2186544,4,,true,26,10,9,ἐπὴν,ἐπήν,2,c,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Homer,Odyssey,odyssey-book-04,2186544,4,,true,26,10,10,ἐὺ,εὖ,-2,d,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Homer,Odyssey,odyssey-book-04,2186544,4,494,true,26,10,11,πάντα,πᾶς,-1,a,-,p,-,-,-,n,a,-,2,HL,5,1,5,2,OK,,
@@ -140601,7 +140601,7 @@ Homer,Odyssey,odyssey-book-04,2186664,4,681,true,13,6,7,πρόεσαν,προί�
 Homer,Odyssey,odyssey-book-04,2186664,4,681,true,13,6,8,μνηστῆρες,μνηστήρ,1,n,-,p,-,-,-,m,n,-,3,HHL,4,2,5,2,OK,,
 Homer,Odyssey,odyssey-book-04,2186664,4,681,true,13,6,9,ἀγαυοί,ἀγαυός,1,a,-,p,-,-,-,m,n,-,3,LHH,5,3,6,2,OK,,
 Homer,Odyssey,odyssey-book-04,2186665,4,,true,26,11,1,ἦ,ἦ,-1,d,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
-Homer,Odyssey,odyssey-book-04,2186665,4,,true,26,11,2,εἰπέμεναι,εἶπον,0,v,-,-,a,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
+Homer,Odyssey,odyssey-book-04,2186665,4,,true,26,11,2,εἰπέμεναι,εἶπον,0,v,-,-,a,n,a,-,-,-,,,,,,,CONFLICT_NO_MATCH,t,3,H
 Homer,Odyssey,odyssey-book-04,2186665,4,682,true,26,11,3,δμῳῇσιν,δμωή,1,n,-,p,-,-,-,f,d,-,3,HHL,2,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-04,2186665,4,682,true,26,11,4,Ὀδυσσῆος,Ὀδυσσεύς,1,n,-,s,-,-,-,m,g,-,4,LHHH,3,3,5,1,OK,,
 Homer,Odyssey,odyssey-book-04,2186665,4,682,true,26,11,5,θείοιο,θεῖος,1,a,-,s,-,-,-,m,g,-,3,HHH,5,2,6,2,OK,,
@@ -141508,7 +141508,7 @@ Homer,Odyssey,odyssey-book-04,2186729,4,805,false,92,20,9,ζώοντες,ζώω,
 Homer,Odyssey,odyssey-book-04,2186729,4,806,false,92,20,10,κλαίειν,κλαίω,4,v,-,-,p,n,a,-,-,-,2,HH,1,1,1,2,OK,t,1,H
 Homer,Odyssey,odyssey-book-04,2186729,4,807,false,92,20,11,οὐ,οὐ,-12,d,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-04,2186729,4,,false,92,20,12,δ’,δέ,0,g,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
-Homer,Odyssey,odyssey-book-04,2186729,4,806,false,92,20,13,ἀκάχησθαι,ἀχεύω,-10,v,-,-,p,n,p,-,-,-,4,LLHL,2,2,3,2,OK,a,7,LLH
+Homer,Odyssey,odyssey-book-04,2186729,4,806,false,92,20,13,ἀκάχησθαι,ἀχεύω,-10,v,-,-,p,n,e,-,-,-,4,LLHL,2,2,3,2,OK,a,7,LLH
 Homer,Odyssey,odyssey-book-04,2186729,4,806,false,92,20,15,ἐπεί,ἐπεί,3,c,-,-,-,-,-,-,-,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-04,2186729,4,806,false,92,20,16,ῥ’,ἆρα,-3,g,-,-,-,-,-,-,-,-,0,,4,2,4,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-04,2186729,4,806,false,92,20,17,ἔτι,ἔτι,-2,d,-,-,-,-,-,-,-,-,2,LL,4,2,4,3,OK,,
@@ -142031,7 +142031,7 @@ Homer,Odyssey,odyssey-book-05,2186773,5,29,true,90,28,11,ἄγγελός,ἄγγ
 Homer,Odyssey,odyssey-book-05,2186773,5,29,true,90,28,12,ἐσσι,εἰμί,-4,v,2,s,p,i,a,-,-,-,2,HH,6,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-05,2186773,5,30,true,90,28,14,νύμφῃ,νύμφη,-2,n,-,s,-,-,-,f,d,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-05,2186773,5,30,true,90,28,15,ἐυπλοκάμῳ,εὐπλόκαμος,1,a,-,s,-,-,-,f,d,-,5,LHLLH,1,3,3,1,OK,,
-Homer,Odyssey,odyssey-book-05,2186773,5,30,true,90,28,16,εἰπεῖν,εἶπον,0,v,-,-,a,n,a,-,-,-,2,HH,3,2,4,1,OK,,
+Homer,Odyssey,odyssey-book-05,2186773,5,30,true,90,28,16,εἰπεῖν,εἶπον,0,v,-,-,a,n,a,-,-,-,2,HH,3,2,4,1,OK,t,1,H
 Homer,Odyssey,odyssey-book-05,2186773,5,30,true,90,28,17,νημερτέα,νημερτής,-1,a,-,s,-,-,-,f,a,-,4,HHLL,4,2,5,3,OK,,
 Homer,Odyssey,odyssey-book-05,2186773,5,30,true,90,28,18,βουλήν,βουλή,-1,n,-,s,-,-,-,f,a,-,2,HH,6,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-05,2186773,5,31,true,90,28,20,νόστον,νόστος,1,n,-,s,-,-,-,m,a,-,2,HL,1,1,1,2,OK,,
@@ -147696,7 +147696,7 @@ Homer,Odyssey,odyssey-book-06,2187200,6,303,true,48,16,8,αὐλή,αὐλή,1,n
 Homer,Odyssey,odyssey-book-06,2187200,6,304,true,48,16,10,ὦκα,ὦκα,-3,d,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-06,2187200,6,304,true,48,16,11,μάλα,μάλα,1,d,-,-,-,-,-,-,-,-,2,LH,1,3,2,1,OK,,
 Homer,Odyssey,odyssey-book-06,2187200,6,304,true,48,16,12,μεγάροιο,μέγαρον,-1,n,-,s,-,-,-,n,g,-,4,LLHL,2,2,3,2,OK,,
-Homer,Odyssey,odyssey-book-06,2187200,6,304,true,48,16,13,διελθέμεν,διέρχομαι,0,v,-,-,a,n,a,-,-,-,4,LHLL,3,3,4,3,OK,,
+Homer,Odyssey,odyssey-book-06,2187200,6,304,true,48,16,13,διελθέμεν,διέρχομαι,0,v,-,-,a,n,a,-,-,-,4,LHLL,3,3,4,3,OK,t,2,LH
 Homer,Odyssey,odyssey-book-06,2187200,6,304,true,48,16,15,ὄφρ’,ὄφρα,2,c,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Odyssey,odyssey-book-06,2187200,6,304,true,48,16,16,ἂν,ἄν,-1,g,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
 Homer,Odyssey,odyssey-book-06,2187200,6,304,true,48,16,17,ἵκηαι,ἱκνέομαι,2,v,2,s,a,s,e,-,-,-,3,LHH,5,3,6,2,OK,,
@@ -147742,7 +147742,7 @@ Homer,Odyssey,odyssey-book-06,2187204,6,310,true,40,18,3,μητρὸς,μήτη�
 Homer,Odyssey,odyssey-book-06,2187204,6,310,true,40,18,4,περὶ,περί,-3,r,-,-,-,-,-,-,-,-,2,LL,4,2,4,3,OK,,
 Homer,Odyssey,odyssey-book-06,2187204,6,310,true,40,18,5,γούνασι,γόνυ,1,n,-,p,-,-,-,n,d,-,3,HLL,5,1,5,3,OK,,
 Homer,Odyssey,odyssey-book-06,2187204,6,310,true,40,18,6,χεῖρας,χείρ,-1,n,-,p,-,-,-,f,a,-,2,HH,6,1,6,2,OK,,
-Homer,Odyssey,odyssey-book-06,2187204,6,311,true,40,18,7,βάλλειν,βάλλω,0,v,-,-,p,n,a,-,-,-,2,HH,1,1,1,2,OK,,
+Homer,Odyssey,odyssey-book-06,2187204,6,311,true,40,18,7,βάλλειν,βάλλω,0,v,-,-,p,n,a,-,-,-,2,HH,1,1,1,2,OK,t,1,H
 Homer,Odyssey,odyssey-book-06,2187204,6,311,true,40,18,8,ἡμετέρης,ἡμέτερος,5,a,-,s,-,-,-,f,g,-,4,HLLH,2,1,3,1,OK,,
 Homer,Odyssey,odyssey-book-06,2187204,6,311,true,40,18,10,ἵνα,ἵνα,3,c,-,-,-,-,-,-,-,-,2,LL,3,2,3,3,OK,,
 Homer,Odyssey,odyssey-book-06,2187204,6,311,true,40,18,11,νόστιμον,νόστιμος,-1,a,-,s,-,-,-,n,a,-,3,HLL,4,1,4,3,OK,,
@@ -150452,7 +150452,7 @@ Homer,Odyssey,odyssey-book-08,2187404,8,11,true,73,22,7,ἠδὲ,ἠδέ,-5,c,-,
 Homer,Odyssey,odyssey-book-08,2187404,8,11,true,73,22,8,μέδοντες,μέδων,1,n,-,p,-,-,-,m,v,-,3,LHH,5,3,6,2,OK,,
 Homer,Odyssey,odyssey-book-08,2187404,8,12,true,73,22,10,εἰς,εἰς,-2,r,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-08,2187404,8,12,true,73,22,11,ἀγορὴν,ἀγορά,1,n,-,s,-,-,-,f,a,-,3,LLH,1,2,2,1,OK,,
-Homer,Odyssey,odyssey-book-08,2187404,8,12,true,73,22,12,ἰέναι,εἶμι,0,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,,
+Homer,Odyssey,odyssey-book-08,2187404,8,12,true,73,22,12,ἰέναι,εἶμι,0,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,a,1,LL
 Homer,Odyssey,odyssey-book-08,2187404,8,12,true,73,22,14,ὄφρα,ὄφρα,2,c,-,-,-,-,-,-,-,-,2,HH,3,2,4,1,OK,,
 Homer,Odyssey,odyssey-book-08,2187404,8,12,true,73,22,15,ξείνοιο,ξένος,-1,n,-,s,-,-,-,m,g,-,3,HHL,4,2,5,2,OK,,
 Homer,Odyssey,odyssey-book-08,2187404,8,12,true,73,22,16,πύθησθε,πυνθάνομαι,2,v,2,p,a,s,e,-,-,-,3,LHH,5,3,6,2,OK,,
@@ -154071,7 +154071,7 @@ Homer,Odyssey,odyssey-book-08,2187681,8,510,true,113,31,36,ἔμελλεν,μέ�
 Homer,Odyssey,odyssey-book-08,2187682,8,511,true,39,19,1,αἶσα,αἶσα,-2,n,-,s,-,-,-,f,n,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-08,2187682,8,511,true,39,19,2,γὰρ,γάρ,-1,g,-,-,-,-,-,-,-,-,1,L,1,3,1,3,OK,,
 Homer,Odyssey,odyssey-book-08,2187682,8,511,true,39,19,3,ἦν,εἰμί,0,v,3,s,i,i,a,-,-,-,1,H,2,1,2,1,OK,,
-Homer,Odyssey,odyssey-book-08,2187682,8,511,true,39,19,4,ἀπολέσθαι,ἀπόλλυμι,1,v,-,-,a,n,-,-,-,-,4,LLHL,2,2,3,2,OK,t,7,LLH
+Homer,Odyssey,odyssey-book-08,2187682,8,511,true,39,19,4,ἀπολέσθαι,ἀπόλλυμι,1,v,-,-,a,n,m,-,-,-,4,LLHL,2,2,3,2,OK,t,7,LLH
 Homer,Odyssey,odyssey-book-08,2187682,8,511,true,39,19,6,ἐπὴν,ἐπήν,2,c,-,-,-,-,-,-,-,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-08,2187682,8,511,true,39,19,7,πόλις,πόλις,-1,n,-,s,-,-,-,f,n,-,2,LL,4,2,4,3,OK,,
 Homer,Odyssey,odyssey-book-08,2187682,8,511,true,39,19,8,ἀμφικαλύψῃ,ἀμφικαλύπτω,2,v,3,s,a,s,a,-,-,-,5,HLLHH,5,1,6,2,OK,,
@@ -156267,7 +156267,7 @@ Homer,Odyssey,odyssey-book-09,2187835,9,230,true,15,7,4,ἔμελλ’,μέλλ�
 Homer,Odyssey,odyssey-book-09,2187835,9,230,true,15,7,5,ἑτάροισι,ἑταῖρος,-2,n,-,p,-,-,-,m,d,-,4,LLHL,2,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-09,2187835,9,230,true,15,7,6,φανεὶς,φαίνω,-2,v,-,s,a,p,p,m,n,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-09,2187835,9,230,true,15,7,7,ἐρατεινὸς,ἐρατεινός,-1,a,-,s,-,-,-,m,n,-,4,LLHL,4,2,5,2,OK,,
-Homer,Odyssey,odyssey-book-09,2187835,9,230,true,15,7,8,ἔσεσθαι,εἰμί,4,v,-,-,f,n,-,-,-,-,3,LHH,5,3,6,2,OK,s,7,LH
+Homer,Odyssey,odyssey-book-09,2187835,9,230,true,15,7,8,ἔσεσθαι,εἰμί,4,v,-,-,f,n,m,-,-,-,3,LHH,5,3,6,2,OK,s,7,LH
 Homer,Odyssey,odyssey-book-09,2187836,9,231,true,60,18,2,ἔνθα,ἔνθα,-4,d,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-09,2187836,9,231,true,60,18,3,δὲ,δέ,-12,g,-,-,-,-,-,-,-,-,1,L,1,3,1,3,OK,,
 Homer,Odyssey,odyssey-book-09,2187836,9,231,true,60,18,4,πῦρ,πῦρ,-1,n,-,s,-,-,-,n,a,-,1,H,2,1,2,1,OK,,
@@ -158066,7 +158066,7 @@ Homer,Odyssey,odyssey-book-09,2187980,9,475,true,23,12,6,ἔμελλες,μέλ�
 Homer,Odyssey,odyssey-book-09,2187980,9,475,true,23,12,7,ἀνάλκιδος,ἄναλκις,-1,a,-,s,-,-,-,m,g,-,4,LHLL,3,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-09,2187980,9,475,true,23,12,8,ἀνδρὸς,ἀνήρ,-1,n,-,s,-,-,-,m,g,-,2,HL,5,1,5,2,OK,,
 Homer,Odyssey,odyssey-book-09,2187980,9,475,true,23,12,9,ἑταίρους,ἑταῖρος,-1,n,-,p,-,-,-,m,a,-,3,LHH,5,3,6,2,OK,,
-Homer,Odyssey,odyssey-book-09,2187980,9,476,true,23,12,10,ἔδμεναι,ἔδω,4,v,-,-,-,n,a,-,-,-,3,HLL,1,1,1,3,OK,,
+Homer,Odyssey,odyssey-book-09,2187980,9,476,true,23,12,10,ἔδμεναι,ἔδω,4,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,H
 Homer,Odyssey,odyssey-book-09,2187980,9,476,true,23,12,11,ἐν,ἐν,1,r,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-09,2187980,9,476,true,23,12,12,σπῆι,σπέος,1,n,-,s,-,-,-,n,d,-,2,HH,2,2,3,1,OK,,
 Homer,Odyssey,odyssey-book-09,2187980,9,476,true,23,12,13,γλαφυρῷ,γλαφυρός,1,a,-,s,-,-,-,n,d,-,3,LLH,3,2,4,1,OK,,
@@ -160359,7 +160359,7 @@ Homer,Odyssey,odyssey-book-10,2188168,10,,true,84,22,15,βάλεν,βάλλω,7,
 Homer,Odyssey,odyssey-book-10,2188168,10,242,true,84,22,16,καρπόν,καρπός,-1,n,-,s,-,-,-,m,a,-,2,HH,4,2,5,1,OK,,
 Homer,Odyssey,odyssey-book-10,2188168,10,242,true,84,22,17,τε,τε,2,g,-,-,-,-,-,-,-,-,0,,5,3,5,3,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-10,2188168,10,242,true,84,22,18,κρανείης,κράνεια,2,n,-,s,-,-,-,f,g,-,3,LHH,5,3,6,2,OK_FUZZY,,
-Homer,Odyssey,odyssey-book-10,2188168,10,243,true,84,22,19,ἔδμεναι,ἔδω,4,v,-,-,-,n,a,-,-,-,3,HLL,1,1,1,3,OK,,
+Homer,Odyssey,odyssey-book-10,2188168,10,243,true,84,22,19,ἔδμεναι,ἔδω,4,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,H
 Homer,Odyssey,odyssey-book-10,2188168,10,243,true,84,22,21,οἷα,οἷος,-4,a,-,p,-,-,-,n,a,-,2,HL,2,1,2,2,OK,,
 Homer,Odyssey,odyssey-book-10,2188168,10,243,true,84,22,22,σύες,ὗς,-3,n,-,p,-,-,-,f,n,-,2,LH,2,3,3,1,OK,,
 Homer,Odyssey,odyssey-book-10,2188168,10,243,true,84,22,23,χαμαιευνάδες,,1,-,-,-,-,-,-,-,-,-,5,LLHLL,3,2,4,3,OK,,
@@ -160382,7 +160382,7 @@ Homer,Odyssey,odyssey-book-10,2188169,10,245,true,28,13,15,πότμον,πότμ
 Homer,Odyssey,odyssey-book-10,2188170,10,246,true,26,11,1,οὐ,οὐ,-4,d,-,-,-,-,-,-,-,-,0,,1,1,1,1,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-10,2188170,10,246,true,26,11,2,δέ,δέ,0,g,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-10,2188170,10,246,true,26,11,3,τι,τις,-3,p,-,s,-,-,-,n,a,-,1,L,1,3,1,3,OK,,
-Homer,Odyssey,odyssey-book-10,2188170,10,246,true,26,11,4,ἐκφάσθαι,ἔκφημι,-1,v,-,-,p,n,-,-,-,-,3,HHH,2,1,3,1,OK,a,7,HH
+Homer,Odyssey,odyssey-book-10,2188170,10,246,true,26,11,4,ἐκφάσθαι,ἔκφημι,-1,v,-,-,p,n,e,-,-,-,3,HHH,2,1,3,1,OK,a,7,HH
 Homer,Odyssey,odyssey-book-10,2188170,10,246,true,26,11,5,δύνατο,δύναμαι,3,v,3,s,i,i,e,-,-,-,3,LLH,3,2,4,1,OK,,
 Homer,Odyssey,odyssey-book-10,2188170,10,246,true,26,11,6,ἔπος,ἔπος,2,n,-,s,-,-,-,n,a,-,2,LL,4,2,4,3,OK,,
 Homer,Odyssey,odyssey-book-10,2188170,10,246,true,26,11,7,ἱέμενός,ἵημι,-2,v,-,s,p,p,-,m,n,-,4,HLLH,5,1,6,1,OK,,
@@ -160752,7 +160752,7 @@ Homer,Odyssey,odyssey-book-10,2188206,10,294,false,83,21,14,ἐρυσσάμεν�
 Homer,Odyssey,odyssey-book-10,2188206,10,294,false,83,21,15,παρὰ,παρά,1,r,-,-,-,-,-,-,-,-,2,LL,5,2,5,3,OK,,
 Homer,Odyssey,odyssey-book-10,2188206,10,294,false,83,21,16,μηροῦ,μηρός,1,n,-,s,-,-,-,m,g,-,2,HH,6,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-10,2188206,10,295,false,83,21,17,Κίρκῃ,Κίρκη,-1,n,-,s,-,-,-,f,d,-,2,HL,1,1,1,2,OK,,
-Homer,Odyssey,odyssey-book-10,2188206,10,295,false,83,21,18,ἐπαῖξαι,ἐπαίσσω,0,v,-,-,a,n,a,-,-,-,4,LHHH,1,3,3,1,OK,,
+Homer,Odyssey,odyssey-book-10,2188206,10,295,false,83,21,18,ἐπαῖξαι,ἐπαίσσω,0,v,-,-,a,n,a,-,-,-,4,LHHH,1,3,3,1,OK,s,1,LHH
 Homer,Odyssey,odyssey-book-10,2188206,10,295,false,83,21,20,ὥς,ὡς,-5,d,-,-,-,-,-,-,-,-,1,H,3,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-10,2188206,10,295,false,83,21,21,τε,τε,-4,g,-,-,-,-,-,-,-,-,1,H,4,1,4,1,OK,,
 Homer,Odyssey,odyssey-book-10,2188206,10,295,false,83,21,22,κτάμεναι,κτείνω,-3,v,-,-,a,n,a,-,-,-,3,LLH,4,2,5,1,OK,t,3,L
@@ -161772,7 +161772,7 @@ Homer,Odyssey,odyssey-book-10,2188293,10,431,true,5,3,4,τούτων,οὗτος
 Homer,Odyssey,odyssey-book-10,2188294,10,432,true,130,37,1,Κίρκης,Κίρκη,-2,n,-,s,-,-,-,f,g,-,2,HH,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-10,2188294,10,432,true,130,37,2,ἐς,εἰς,-2,r,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-10,2188294,10,432,true,130,37,3,μέγαρον,μέγαρον,1,n,-,s,-,-,-,n,a,-,3,LLH,2,2,3,1,OK,,
-Homer,Odyssey,odyssey-book-10,2188294,10,432,true,130,37,4,καταβήμεναι,καταβαίνω,0,v,-,-,a,n,a,-,-,-,5,LLHLL,3,2,4,3,OK,,
+Homer,Odyssey,odyssey-book-10,2188294,10,432,true,130,37,4,καταβήμεναι,καταβαίνω,0,v,-,-,a,n,a,-,-,-,5,LLHLL,3,2,4,3,OK,a,3,LLH
 Homer,Odyssey,odyssey-book-10,2188294,10,432,true,130,37,6,ἥ,ὅς,-7,p,-,s,-,-,-,f,n,-,1,H,5,1,5,1,OK,,
 Homer,Odyssey,odyssey-book-10,2188294,10,432,true,130,37,7,κεν,ἄν,-6,g,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
 Homer,Odyssey,odyssey-book-10,2188294,10,432,true,130,37,8,ἅπαντας,ἅπας,-5,a,-,p,-,-,-,m,a,-,3,LHH,5,3,6,2,OK,,
@@ -162505,7 +162505,7 @@ Homer,Odyssey,odyssey-book-10,2188344,10,535,true,58,19,4,ὀξὺ,ὀξύς,1,a
 Homer,Odyssey,odyssey-book-10,2188344,10,535,true,58,19,5,ἐρυσσάμενος,ἐρύω,-3,v,-,s,a,p,m,m,n,-,5,LHLLH,3,3,5,1,OK,,
 Homer,Odyssey,odyssey-book-10,2188344,10,535,true,58,19,6,παρὰ,παρά,1,r,-,-,-,-,-,-,-,-,2,LL,5,2,5,3,OK,,
 Homer,Odyssey,odyssey-book-10,2188344,10,535,true,58,19,7,μηροῦ,μηρός,1,n,-,s,-,-,-,m,g,-,2,HH,6,1,6,2,OK,,
-Homer,Odyssey,odyssey-book-10,2188344,10,536,true,58,19,8,ἧσθαι,ἧμαι,-3,v,-,-,r,n,-,-,-,-,2,HH,1,1,1,2,OK,a,7,H
+Homer,Odyssey,odyssey-book-10,2188344,10,536,true,58,19,8,ἧσθαι,ἧμαι,-3,v,-,-,r,n,e,-,-,-,2,HH,1,1,1,2,OK,a,7,H
 Homer,Odyssey,odyssey-book-10,2188344,10,536,true,58,19,10,μη,μή,-2,g,-,-,-,-,-,-,-,-,0,,2,1,2,1,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-10,2188344,10,536,true,58,19,11,δὲ,δέ,0,g,-,-,-,-,-,-,-,-,2,HL,2,1,2,2,OK,,
 Homer,Odyssey,odyssey-book-10,2188344,10,536,true,58,19,12,ἐᾶν,ἐάω,1,v,-,-,p,n,a,-,-,-,2,LH,2,3,3,1,OK,c,6,LL
@@ -165932,7 +165932,7 @@ Homer,Odyssey,odyssey-book-11,2188590,11,441,true,40,9,7,σὺ,σύ,-4,p,-,s,-,-
 Homer,Odyssey,odyssey-book-11,2188590,11,441,true,40,9,8,γυναικί,γυνή,-3,n,-,s,-,-,-,f,d,-,3,LHL,3,3,4,2,OK,,
 Homer,Odyssey,odyssey-book-11,2188590,11,441,true,40,9,9,περ,πέρ,1,g,-,-,-,-,-,-,-,-,1,L,4,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-11,2188590,11,441,true,40,9,10,ἤπιος,ἤπιος,-1,a,-,s,-,-,-,m,n,-,3,HLL,5,1,5,3,OK,,
-Homer,Odyssey,odyssey-book-11,2188590,11,441,true,40,9,11,εἶναι,εἰμί,0,v,-,-,p,n,a,-,-,-,2,HH,6,1,6,2,OK,,
+Homer,Odyssey,odyssey-book-11,2188590,11,441,true,40,9,11,εἶναι,εἰμί,0,v,-,-,p,n,a,-,-,-,2,HH,6,1,6,2,OK,a,1,H
 Homer,Odyssey,odyssey-book-11,2188591,11,,true,55,17,1,μή,μή,-4,d,-,-,-,-,-,-,-,-,,,,,,,CONFLICT_NO_MATCH,,
 Homer,Odyssey,odyssey-book-11,2188591,11,442,true,55,17,2,οἱ,ἕ,-3,p,-,s,-,-,-,f,d,-,1,H,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-11,2188591,11,442,true,55,17,3,μῦθον,μῦθος,-2,n,-,s,-,-,-,m,a,-,2,HL,2,1,2,2,OK,,
@@ -165945,7 +165945,7 @@ Homer,Odyssey,odyssey-book-11,2188591,11,442,true,55,17,10,εἰδῇς,οἶδ�
 Homer,Odyssey,odyssey-book-11,2188591,11,443,true,55,17,12,ἀλλὰ,ἀλλά,0,c,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-11,2188591,11,443,true,55,17,13,τὸ,ὁ,-2,p,-,s,-,-,-,n,a,-,1,L,1,3,1,3,OK,,
 Homer,Odyssey,odyssey-book-11,2188591,11,443,true,55,17,14,μὲν,μέν,-4,g,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
-Homer,Odyssey,odyssey-book-11,2188591,11,443,true,55,17,15,φάσθαι,φημί,-3,v,-,-,p,n,-,-,-,-,2,HH,2,2,3,1,OK,a,7,H
+Homer,Odyssey,odyssey-book-11,2188591,11,443,true,55,17,15,φάσθαι,φημί,-3,v,-,-,p,n,e,-,-,-,2,HH,2,2,3,1,OK,a,7,H
 Homer,Odyssey,odyssey-book-11,2188591,11,443,true,55,17,17,τὸ,ὁ,-4,p,-,s,-,-,-,n,n,-,1,L,3,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-11,2188591,11,443,true,55,17,18,δὲ,δέ,6,g,-,-,-,-,-,-,-,-,1,L,3,3,3,3,OK,,
 Homer,Odyssey,odyssey-book-11,2188591,11,443,true,55,17,19,καὶ,καί,-2,d,-,-,-,-,-,-,-,-,1,H,4,1,4,1,OK,,
@@ -166051,7 +166051,7 @@ Homer,Odyssey,odyssey-book-11,2188600,11,455,true,25,9,8,ἐς,εἰς,-4,r,-,-,
 Homer,Odyssey,odyssey-book-11,2188600,11,455,true,25,9,9,πατρίδα,πατρίς,-1,a,-,s,-,-,-,f,a,-,3,HLL,5,1,5,3,OK,,
 Homer,Odyssey,odyssey-book-11,2188600,11,455,true,25,9,10,γαῖαν,γαῖα,2,n,-,s,-,-,-,f,a,-,2,HH,6,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-11,2188600,11,456,true,25,9,11,νῆα,ναῦς,-1,n,-,s,-,-,-,f,a,-,2,HL,1,1,1,2,OK,,
-Homer,Odyssey,odyssey-book-11,2188600,11,456,true,25,9,12,κατισχέμεναι,κατίσχω,0,v,-,-,p,n,a,-,-,-,5,LHLLH,1,3,3,1,OK,,
+Homer,Odyssey,odyssey-book-11,2188600,11,456,true,25,9,12,κατισχέμεναι,κατίσχω,0,v,-,-,p,n,a,-,-,-,5,LHLLH,1,3,3,1,OK,t,3,LH
 Homer,Odyssey,odyssey-book-11,2188601,11,456,false,14,4,1,ἐπεὶ,ἐπεί,0,c,-,-,-,-,-,-,-,-,2,LL,3,2,3,3,OK,,
 Homer,Odyssey,odyssey-book-11,2188601,11,456,false,14,4,2,οὐκέτι,οὐκέτι,-4,d,-,-,-,-,-,-,-,-,3,HLL,4,1,4,3,OK,,
 Homer,Odyssey,odyssey-book-11,2188601,11,456,false,14,4,3,πιστὰ,πιστός,-3,a,-,p,-,-,-,n,n,-,2,HL,5,1,5,2,OK,,
@@ -168154,7 +168154,7 @@ Homer,Odyssey,odyssey-book-12,2188750,12,108,false,57,22,5,πεπλημένος,
 Homer,Odyssey,odyssey-book-12,2188750,12,108,false,57,22,6,ὦκα,ὦκα,1,d,-,-,-,-,-,-,-,-,2,HH,6,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-12,2188750,12,109,false,57,22,7,νῆα,ναῦς,-2,n,-,s,-,-,-,f,a,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-12,2188750,12,109,false,57,22,8,παρὲξ,παρέξ,-1,d,-,-,-,-,-,-,-,-,2,LH,1,3,2,1,OK,,
-Homer,Odyssey,odyssey-book-12,2188750,12,109,false,57,22,9,ἐλάαν,ἐλαύνω,0,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,,
+Homer,Odyssey,odyssey-book-12,2188750,12,109,false,57,22,9,ἐλάαν,ἐλαύνω,0,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,t,1,LL
 Homer,Odyssey,odyssey-book-12,2188750,12,109,false,57,22,11,ἐπεὶ,ἐπεί,2,c,-,-,-,-,-,-,-,-,2,LL,3,2,3,3,OK,,
 Homer,Odyssey,odyssey-book-12,2188750,12,109,false,57,22,12,ἦ,ἦ,-3,d,-,-,-,-,-,-,-,-,1,H,4,1,4,1,OK,,
 Homer,Odyssey,odyssey-book-12,2188750,12,109,false,57,22,13,πολὺ,πολύς,-1,a,-,s,-,-,-,n,a,-,2,LL,4,2,4,3,OK,,
@@ -170083,7 +170083,7 @@ Homer,Odyssey,odyssey-book-12,2188897,12,377,true,92,34,6,μάκαρες,μάκ�
 Homer,Odyssey,odyssey-book-12,2188897,12,377,true,92,34,7,θεοὶ,θεός,3,n,-,p,-,-,-,m,v,-,2,LL,4,2,4,3,OK,,
 Homer,Odyssey,odyssey-book-12,2188897,12,377,true,92,34,8,αἰὲν,ἀεί,-1,d,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
 Homer,Odyssey,odyssey-book-12,2188897,12,377,true,92,34,9,ἐόντες,εἰμί,2,v,-,p,p,p,a,m,v,-,3,LHH,5,3,6,2,OK,,
-Homer,Odyssey,odyssey-book-12,2188897,12,378,true,92,34,11,τῖσαι,τίνω,0,v,-,-,a,n,a,-,-,-,2,HH,1,1,1,2,OK,,
+Homer,Odyssey,odyssey-book-12,2188897,12,378,true,92,34,11,τῖσαι,τίνω,0,v,-,-,a,n,a,-,-,-,2,HH,1,1,1,2,OK,s,1,H
 Homer,Odyssey,odyssey-book-12,2188897,12,378,true,92,34,12,δὴ,δή,1,g,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-12,2188897,12,378,true,92,34,13,ἑτάρους,ἑταῖρος,2,n,-,p,-,-,-,m,a,-,3,LLH,2,2,3,1,OK,,
 Homer,Odyssey,odyssey-book-12,2188897,12,378,true,92,34,14,Λαερτιάδεω,Λαερτιάδης,-1,n,-,s,-,-,-,m,g,-,5,HHLLH,3,2,5,1,OK,,
@@ -173270,7 +173270,7 @@ Homer,Odyssey,odyssey-book-13,2189130,13,363,true,38,14,3,μὲν,μέν,-4,g,-,
 Homer,Odyssey,odyssey-book-13,2189130,13,363,true,38,14,4,μυχῷ,μυχός,-3,n,-,s,-,-,-,m,d,-,2,LL,3,2,3,3,OK,,
 Homer,Odyssey,odyssey-book-13,2189130,13,363,true,38,14,5,ἄντρου,ἄντρον,1,n,-,s,-,-,-,n,g,-,2,HH,4,1,4,2,OK,,
 Homer,Odyssey,odyssey-book-13,2189130,13,363,true,38,14,6,θεσπεσίοιο,θεσπέσιος,1,a,-,s,-,-,-,n,g,-,5,HLLHH,5,1,6,2,OK,,
-Homer,Odyssey,odyssey-book-13,2189130,13,364,true,38,14,7,θείμεν,θέω,0,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK_FUZZY,,
+Homer,Odyssey,odyssey-book-13,2189130,13,364,true,38,14,7,θείμεν,τίθημι,0,v,1,p,a,s,a,-,-,-,3,HLL,1,1,1,3,OK_FUZZY,,,
 Homer,Odyssey,odyssey-book-13,2189130,13,364,true,38,14,8,αὐτίκα,αὐτίκα,1,d,-,-,-,-,-,-,-,-,3,HLL,2,1,2,3,OK,,
 Homer,Odyssey,odyssey-book-13,2189130,13,364,true,38,14,9,νῦν,νῦν,2,d,-,-,-,-,-,-,-,-,1,H,3,1,3,1,OK,,
 Homer,Odyssey,odyssey-book-13,2189130,13,364,true,38,14,11,ἵνα,ἵνα,4,c,-,-,-,-,-,-,-,-,2,LL,3,2,3,3,OK,,
@@ -174091,7 +174091,7 @@ Homer,Odyssey,odyssey-book-14,2189194,14,41,true,26,12,10,δὲ,δέ,0,g,-,-,-,-
 Homer,Odyssey,odyssey-book-14,2189194,14,41,true,26,12,11,σύας,ὗς,-2,n,-,p,-,-,-,m,a,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-14,2189194,14,41,true,26,12,12,σιάλους,σίαλος,1,n,-,p,-,-,-,m,a,-,3,LLH,4,2,5,1,OK,,
 Homer,Odyssey,odyssey-book-14,2189194,14,41,true,26,12,13,ἀτιτάλλω,ἀτιτάλλω,3,v,1,s,p,i,a,-,-,-,4,LLHH,5,2,6,2,OK,,
-Homer,Odyssey,odyssey-book-14,2189194,14,42,true,26,12,14,ἔδμεναι,ἔδω,1,v,-,-,-,n,a,-,-,-,3,HLL,1,1,1,3,OK,,
+Homer,Odyssey,odyssey-book-14,2189194,14,42,true,26,12,14,ἔδμεναι,ἔδω,1,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,H
 Homer,Odyssey,odyssey-book-14,2189195,14,42,true,55,20,1,αὐτὰρ,ἀτάρ,-5,g,-,-,-,-,-,-,-,-,2,HH,2,1,2,2,OK,,
 Homer,Odyssey,odyssey-book-14,2189195,14,42,true,55,20,2,κεῖνος,κεῖνος,-4,p,-,s,-,-,-,m,n,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-14,2189195,14,42,true,55,20,3,ἐελδόμενός,ἔλδομαι,-3,v,-,s,p,p,e,m,n,-,5,LHLLH,3,3,5,1,OK,,
@@ -176717,7 +176717,7 @@ Homer,Odyssey,odyssey-book-14,2189386,14,396,true,74,23,14,τε,τε,-2,g,-,-,-,
 Homer,Odyssey,odyssey-book-14,2189386,14,396,true,74,23,15,χιτῶνά,χιτών,-1,n,-,s,-,-,-,m,a,-,3,LHL,3,3,4,2,OK,,
 Homer,Odyssey,odyssey-book-14,2189386,14,396,true,74,23,16,τε,τε,5,g,-,-,-,-,-,-,-,-,1,L,4,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-14,2189386,14,396,true,74,23,17,εἵματα,εἷμα,1,n,-,p,-,-,-,n,a,-,3,HLL,5,1,5,3,OK,,
-Homer,Odyssey,odyssey-book-14,2189386,14,396,true,74,23,18,πέμψαι,πέμπω,0,v,-,-,a,n,a,-,-,-,2,HH,6,1,6,2,OK,,
+Homer,Odyssey,odyssey-book-14,2189386,14,396,true,74,23,18,πέμψαι,πέμπω,0,v,-,-,a,n,a,-,-,-,2,HH,6,1,6,2,OK,s,1,H
 Homer,Odyssey,odyssey-book-14,2189386,14,397,true,74,23,19,Δουλίχιόνδ’,Δουλίχιόδε,-1,d,-,-,-,-,-,-,-,-,4,HLLH,1,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-14,2189386,14,397,true,74,23,20,ἰέναι,εἶμι,2,v,-,-,p,n,a,-,-,-,3,LLH,2,2,3,1,OK,a,1,LL
 Homer,Odyssey,odyssey-book-14,2189386,14,397,true,74,23,22,ὅθι,ὅθι,-3,d,-,-,-,-,-,-,-,-,2,LL,3,2,3,3,OK,,
@@ -180544,7 +180544,7 @@ Homer,Odyssey,odyssey-book-15,2189696,15,393,false,34,8,4,σε,σύ,-6,p,-,s,-,-
 Homer,Odyssey,odyssey-book-15,2189696,15,393,false,34,8,5,χρή,χρή,3,v,3,s,p,i,a,-,-,-,1,H,6,2,6,2,OK,,
 Homer,Odyssey,odyssey-book-15,2189696,15,394,false,34,8,7,πρὶν,πρίν,-3,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-15,2189696,15,394,false,34,8,8,ὥρη,ὥρα,-4,n,-,s,-,-,-,f,n,-,2,HH,1,2,2,1,OK,,
-Homer,Odyssey,odyssey-book-15,2189696,15,394,false,34,8,10,καταλέχθαι,καταλέγω,5,v,-,-,a,n,p,-,-,-,4,LLHL,2,2,3,2,OK,a,7,LLH
+Homer,Odyssey,odyssey-book-15,2189696,15,394,false,34,8,10,καταλέχθαι,καταλέγω,5,v,-,-,a,n,m,-,-,-,4,LLHL,2,2,3,2,OK,a,7,LLH
 Homer,Odyssey,odyssey-book-15,2189697,15,394,false,12,4,1,ἀνίη,ἀνία,-5,n,-,s,-,-,-,f,n,-,3,LHH,3,3,4,2,OK,,
 Homer,Odyssey,odyssey-book-15,2189697,15,394,false,12,4,2,καὶ,καί,-4,d,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
 Homer,Odyssey,odyssey-book-15,2189697,15,394,false,12,4,3,πολὺς,πολύς,-1,a,-,s,-,-,-,m,n,-,2,LL,5,2,5,3,OK,,
@@ -181176,7 +181176,7 @@ Homer,Odyssey,odyssey-book-15,2189747,15,480,true,27,8,4,φώκῃσι,φώκη,
 Homer,Odyssey,odyssey-book-15,2189747,15,480,true,27,8,5,καὶ,καί,-2,c,-,-,-,-,-,-,-,-,1,L,3,3,3,3,OK,,
 Homer,Odyssey,odyssey-book-15,2189747,15,480,true,27,8,6,ἰχθύσι,ἰχθύς,1,n,-,p,-,-,-,m,d,-,3,HLL,4,1,4,3,OK,,
 Homer,Odyssey,odyssey-book-15,2189747,15,480,true,27,8,7,κύρμα,κύρμα,-1,n,-,s,-,-,-,n,a,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-15,2189747,15,480,true,27,8,8,γενέσθαι,γίγνομαι,-1,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-15,2189747,15,480,true,27,8,8,γενέσθαι,γίγνομαι,-1,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-15,2189747,15,481,true,27,8,9,ἔκβαλον,ἐκβάλλω,8,v,3,p,a,i,a,-,-,-,3,HLL,1,1,1,3,OK,,
 Homer,Odyssey,odyssey-book-15,2189748,15,481,true,5,4,1,αὐτὰρ,ἀτάρ,-2,g,-,-,-,-,-,-,-,-,2,HL,2,1,2,2,OK,,
 Homer,Odyssey,odyssey-book-15,2189748,15,481,true,5,4,2,ἐγὼ,ἐγώ,-1,p,-,s,-,-,-,m,n,-,2,LH,2,3,3,1,OK,,
@@ -182384,7 +182384,7 @@ Homer,Odyssey,odyssey-book-16,2189851,16,83,true,35,15,5,πέμψω,πέμπω,3
 Homer,Odyssey,odyssey-book-16,2189851,16,83,true,35,15,6,καὶ,καί,1,c,-,-,-,-,-,-,-,-,1,H,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-16,2189851,16,83,true,35,15,7,σῖτον,σῖτος,1,n,-,s,-,-,-,m,a,-,2,HL,5,1,5,2,OK,,
 Homer,Odyssey,odyssey-book-16,2189851,16,83,true,35,15,8,ἅπαντα,ἅπας,1,a,-,s,-,-,-,m,a,-,3,LHH,5,3,6,2,OK,,
-Homer,Odyssey,odyssey-book-16,2189851,16,84,true,35,15,9,ἔδμεναι,ἔδω,2,v,-,-,-,n,a,-,-,-,3,HLL,1,1,1,3,OK,,
+Homer,Odyssey,odyssey-book-16,2189851,16,84,true,35,15,9,ἔδμεναι,ἔδω,2,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,H
 Homer,Odyssey,odyssey-book-16,2189851,16,84,true,35,15,11,ὡς,ὡς,6,c,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-16,2189851,16,84,true,35,15,12,ἂν,ἄν,-3,g,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
 Homer,Odyssey,odyssey-book-16,2189851,16,84,true,35,15,13,μή,μή,-2,d,-,-,-,-,-,-,-,-,1,H,3,1,3,1,OK,,
@@ -182873,7 +182873,7 @@ Homer,Odyssey,odyssey-book-16,2189886,16,151,true,28,12,14,ἐκεῖνον,ἐ�
 Homer,Odyssey,odyssey-book-16,2189887,16,151,true,16,9,1,ἀτὰρ,ἀτάρ,-3,g,-,-,-,-,-,-,-,-,2,LH,3,3,4,1,OK,,
 Homer,Odyssey,odyssey-book-16,2189887,16,151,true,16,9,2,πρὸς,πρός,-2,r,-,-,-,-,-,-,-,-,1,H,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-16,2189887,16,151,true,16,9,3,μητέρα,μήτηρ,1,n,-,s,-,-,-,f,a,-,3,HLL,5,1,5,3,OK,,
-Homer,Odyssey,odyssey-book-16,2189887,16,151,true,16,9,4,εἰπεῖν,εἶπον,0,v,-,-,a,n,a,-,-,-,2,HH,6,1,6,2,OK,,
+Homer,Odyssey,odyssey-book-16,2189887,16,151,true,16,9,4,εἰπεῖν,εἶπον,0,v,-,-,a,n,a,-,-,-,2,HH,6,1,6,2,OK,t,1,H
 Homer,Odyssey,odyssey-book-16,2189887,16,152,true,16,9,5,ἀμφίπολον,ἀμφίπολος,-1,a,-,s,-,-,-,f,a,-,4,HLLH,1,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-16,2189887,16,152,true,16,9,6,ταμίην,ταμία,-1,n,-,s,-,-,-,f,a,-,3,LLH,2,2,3,1,OK,,
 Homer,Odyssey,odyssey-book-16,2189887,16,152,true,16,9,7,ὀτρυνέμεν,ὀτρύνω,3,v,-,-,p,n,a,-,-,-,4,HHLL,3,2,4,3,OK,t,2,HH
@@ -183422,7 +183422,7 @@ Homer,Odyssey,odyssey-book-16,2189933,16,224,true,26,8,5,σε,σύ,-4,p,-,s,-,-,
 Homer,Odyssey,odyssey-book-16,2189933,16,224,true,26,8,6,πεζὸν,πεζός,1,a,-,s,-,-,-,m,a,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-16,2189933,16,224,true,26,8,7,ὀΐομαι,οἴομαι,0,v,1,s,p,i,e,-,-,-,4,LHLL,3,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-16,2189933,16,224,true,26,8,8,ἐνθάδ’,ἐνθάδε,-1,d,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-16,2189933,16,224,true,26,8,9,ἱκέσθαι,ἱκνέομαι,2,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-16,2189933,16,224,true,26,8,9,ἱκέσθαι,ἱκνέομαι,2,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-16,2189934,16,225,true,12,6,1,τὸν,ὁ,-3,p,-,s,-,-,-,m,a,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-16,2189934,16,225,true,12,6,2,δ’,δέ,0,g,-,-,-,-,-,-,-,-,0,,1,2,1,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-16,2189934,16,225,true,12,6,3,αὖτε,αὖτε,-1,d,-,-,-,-,-,-,-,-,2,HH,1,2,2,1,OK,,
@@ -183815,7 +183815,7 @@ Homer,Odyssey,odyssey-book-16,2189965,16,278,true,19,8,1,ἀλλ’,ἀλλά,-4
 Homer,Odyssey,odyssey-book-16,2189965,16,278,true,19,8,2,ἦ,ἦ,-3,d,-,-,-,-,-,-,-,-,0,,1,2,1,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-16,2189965,16,278,true,19,8,3,τοι,τοι,-2,g,-,-,-,-,-,-,-,-,2,HH,1,2,2,1,OK,,
 Homer,Odyssey,odyssey-book-16,2189965,16,278,true,19,8,4,παύεσθαι,παύω,-1,v,-,-,p,n,e,-,-,-,3,HHL,2,2,3,2,OK,t,7,HH
-Homer,Odyssey,odyssey-book-16,2189965,16,278,true,19,8,5,ἀνωγέμεν,ἄνωγα,0,v,-,-,p,n,a,-,-,-,4,LHLL,3,3,4,3,OK,,
+Homer,Odyssey,odyssey-book-16,2189965,16,278,true,19,8,5,ἀνωγέμεν,ἄνωγα,0,v,-,-,r,n,a,-,-,-,4,LHLL,3,3,4,3,OK,a,2,LHL
 Homer,Odyssey,odyssey-book-16,2189965,16,278,true,19,8,6,ἀφροσυνάων,ἀφροσύνη,2,n,-,p,-,-,-,f,g,-,5,HLLHH,5,1,6,2,OK,,
 Homer,Odyssey,odyssey-book-16,2189965,16,279,true,19,8,8,μειλιχίοις,μειλίχιος,-1,a,-,p,-,-,-,n,d,-,4,HLLH,1,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-16,2189965,16,279,true,19,8,9,ἐπέεσσι,ἔπος,-1,n,-,p,-,-,-,n,d,-,4,LLHL,2,2,3,2,OK,,
@@ -185030,7 +185030,7 @@ Homer,Odyssey,odyssey-book-16,2190054,16,447,false,16,6,1,θεόθεν,θεόθ�
 Homer,Odyssey,odyssey-book-16,2190054,16,447,false,16,6,2,δ’,δέ,0,g,-,-,-,-,-,-,-,-,0,,4,2,4,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-16,2190054,16,447,false,16,6,3,οὐκ,οὐ,-1,d,-,-,-,-,-,-,-,-,1,H,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-16,2190054,16,447,false,16,6,4,ἔστ’,εἰμί,2,v,3,s,p,i,a,-,-,-,1,H,5,1,5,1,OK,,
-Homer,Odyssey,odyssey-book-16,2190054,16,447,false,16,6,5,ἀλέασθαι,ἀλεόμαι,1,v,-,-,a,n,-,-,-,-,4,LLHH,5,2,6,2,OK,s,7,LLH
+Homer,Odyssey,odyssey-book-16,2190054,16,447,false,16,6,5,ἀλέασθαι,ἀλεόμαι,1,v,-,-,a,n,m,-,-,-,4,LLHH,5,2,6,2,OK,s,7,LLH
 Homer,Odyssey,odyssey-book-16,2190055,16,448,true,12,7,1,ὣς,ὡς,-1,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-16,2190055,16,448,true,12,7,2,φάτο,φημί,-4,v,3,s,a,i,-,-,-,-,2,LL,1,2,1,3,OK,,
 Homer,Odyssey,odyssey-book-16,2190055,16,448,true,12,7,3,θαρσύνων,θαρσύνω,1,v,-,s,p,p,a,m,n,-,3,HHH,2,1,3,1,OK,,
@@ -187131,7 +187131,7 @@ Homer,Odyssey,odyssey-book-17,2190217,17,259,true,35,14,12,αἰδοίη,αἰδ
 Homer,Odyssey,odyssey-book-17,2190217,17,259,true,35,14,13,ταμίη,ταμία,-1,n,-,s,-,-,-,f,n,-,3,LLH,3,2,4,1,OK,,
 Homer,Odyssey,odyssey-book-17,2190217,17,259,true,35,14,14,παρέθηκε,παρατίθημι,3,v,3,s,a,i,a,-,-,-,4,LLHL,4,2,5,2,OK,,
 Homer,Odyssey,odyssey-book-17,2190217,17,259,true,35,14,15,φέρουσα,φέρω,1,v,-,s,p,p,a,f,n,-,3,LHH,5,3,6,2,OK,,
-Homer,Odyssey,odyssey-book-17,2190217,17,260,true,35,14,16,ἔδμεναι,ἔδω,2,v,-,-,-,n,a,-,-,-,3,HLL,1,1,1,3,OK,,
+Homer,Odyssey,odyssey-book-17,2190217,17,260,true,35,14,16,ἔδμεναι,ἔδω,2,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,H
 Homer,Odyssey,odyssey-book-17,2190218,17,260,true,37,14,1,ἀγχίμολον,ἀγχίμολος,-6,a,-,s,-,-,-,n,a,-,4,HLLH,2,1,3,1,OK,,
 Homer,Odyssey,odyssey-book-17,2190218,17,260,true,37,14,2,δ’,δέ,-9,g,-,-,-,-,-,-,-,-,0,,3,2,3,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-17,2190218,17,260,true,37,14,3,Ὀδυσεὺς,Ὀδυσσεύς,-1,n,-,s,-,-,-,m,n,-,3,LLH,3,2,4,1,OK,,
@@ -188955,7 +188955,7 @@ Homer,Odyssey,odyssey-book-17,2190375,17,508,true,57,22,7,κιὼν,κίω,-3,v,
 Homer,Odyssey,odyssey-book-17,2190375,17,508,true,57,22,8,τὸν,ὁ,-1,l,-,-,-,-,-,-,-,-,1,H,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-17,2190375,17,508,true,57,22,9,ξεῖνον,ξένος,-2,n,-,s,-,-,-,m,a,-,2,HL,5,1,5,2,OK,,
 Homer,Odyssey,odyssey-book-17,2190375,17,508,true,57,22,10,ἄνωχθι,ἄνωγα,4,v,2,s,r,m,a,-,-,-,3,LHH,5,3,6,2,OK,,
-Homer,Odyssey,odyssey-book-17,2190375,17,509,true,57,22,11,ἐλθέμεν,ἔρχομαι,1,v,-,-,a,n,a,-,-,-,3,HLL,1,1,1,3,OK,t,3,H
+Homer,Odyssey,odyssey-book-17,2190375,17,509,true,57,22,11,ἐλθέμεν,ἔρχομαι,1,v,-,-,a,n,a,-,-,-,3,HLL,1,1,1,3,OK,t,2,H
 Homer,Odyssey,odyssey-book-17,2190375,17,509,true,57,22,13,ὄφρα,ὄφρα,3,c,-,-,-,-,-,-,-,-,2,HL,2,1,2,2,OK,,
 Homer,Odyssey,odyssey-book-17,2190375,17,509,true,57,22,14,τί,τις,-2,p,-,s,-,-,-,n,a,-,1,L,2,3,2,3,OK,,
 Homer,Odyssey,odyssey-book-17,2190375,17,509,true,57,22,15,μιν,μιν,8,p,-,s,-,-,-,m,a,-,1,H,3,1,3,1,OK,,
@@ -192184,7 +192184,7 @@ Homer,Odyssey,odyssey-book-18,2190653,18,343,true,24,9,3,πὰρ,παρά,-2,r,-
 Homer,Odyssey,odyssey-book-18,2190653,18,343,true,24,9,4,λαμπτῆρσι,λαμπτήρ,1,n,-,p,-,-,-,m,d,-,3,HHL,2,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-18,2190653,18,343,true,24,9,5,φαείνων,φαίνω,-2,v,-,s,p,p,a,m,n,-,3,LHH,3,3,4,2,OK,,
 Homer,Odyssey,odyssey-book-18,2190653,18,343,true,24,9,6,αἰθομένοισιν,αἴθω,2,v,-,p,p,p,e,m,d,-,5,HLLHH,5,1,6,2,OK,,
-Homer,Odyssey,odyssey-book-18,2190653,18,344,true,24,9,7,ἑστήκειν,ἵστημι,0,v,-,-,r,n,a,-,-,-,3,HHH,1,1,2,1,OK_FUZZY,,
+Homer,Odyssey,odyssey-book-18,2190653,18,344,true,24,9,7,ἑστήκειν,ἵστημι,0,v,3,s,l,i,a,-,-,-,3,HHH,1,1,2,1,OK_FUZZY,,,
 Homer,Odyssey,odyssey-book-18,2190653,18,344,true,24,9,8,ἐς,εἰς,-2,r,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
 Homer,Odyssey,odyssey-book-18,2190653,18,344,true,24,9,9,πάντας,πᾶς,1,a,-,p,-,-,-,m,a,-,2,HL,3,1,3,2,OK,,
 Homer,Odyssey,odyssey-book-18,2190653,18,344,true,24,9,10,ὁρώμενος,ὁράω,3,v,-,s,p,p,e,m,n,-,4,LHLL,3,3,4,3,OK,,
@@ -198740,7 +198740,7 @@ Homer,Odyssey,odyssey-book-20,2191175,20,213,true,18,8,5,κέλονται,κέλ
 Homer,Odyssey,odyssey-book-20,2191175,20,213,true,18,8,6,ἀγινέμεναί,ἀγινέω,1,v,-,-,p,n,a,-,-,-,5,LHLLH,3,3,5,1,OK,t,3,LHL
 Homer,Odyssey,odyssey-book-20,2191175,20,213,true,18,8,7,σφισιν,σφεῖς,1,p,-,p,-,-,-,m,d,-,2,LL,5,2,5,3,OK,,
 Homer,Odyssey,odyssey-book-20,2191175,20,213,true,18,8,8,αὐτοῖς,αὐτός,1,a,-,p,-,-,-,m,d,-,2,HH,6,1,6,2,OK,,
-Homer,Odyssey,odyssey-book-20,2191175,20,214,true,18,8,9,ἔδμεναι,ἔδω,3,v,-,-,-,n,a,-,-,-,3,HLL,1,1,1,3,OK,,
+Homer,Odyssey,odyssey-book-20,2191175,20,214,true,18,8,9,ἔδμεναι,ἔδω,3,v,-,-,p,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,3,H
 Homer,Odyssey,odyssey-book-20,2191176,20,214,true,34,11,1,οὐ,οὐ,-6,d,-,-,-,-,-,-,-,-,0,,2,1,2,1,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-20,2191176,20,214,true,34,11,2,δέ,δέ,-8,g,-,-,-,-,-,-,-,-,2,HL,2,1,2,2,OK,,
 Homer,Odyssey,odyssey-book-20,2191176,20,214,true,34,11,3,τι,τις,-4,p,-,s,-,-,-,n,a,-,1,L,2,3,2,3,OK,,
@@ -201342,7 +201342,7 @@ Homer,Odyssey,odyssey-book-21,2191388,21,193,true,25,10,11,μυθησαίμην,
 Homer,Odyssey,odyssey-book-21,2191388,21,194,true,25,10,13,ἦ,ἤ,0,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-21,2191388,21,194,true,25,10,14,αὐτὸς,αὐτός,-1,a,-,s,-,-,-,m,n,-,2,HH,1,2,2,1,OK,,
 Homer,Odyssey,odyssey-book-21,2191388,21,194,true,25,10,15,κεύθω,κεύθω,2,v,1,s,p,s,a,-,-,-,2,HH,2,2,3,1,OK,,
-Homer,Odyssey,odyssey-book-21,2191389,21,194,true,10,4,1,φάσθαι,φημί,-4,v,-,-,p,n,-,-,-,-,2,HH,3,2,4,1,OK,a,7,H
+Homer,Odyssey,odyssey-book-21,2191389,21,194,true,10,4,1,φάσθαι,φημί,-4,v,-,-,p,n,e,-,-,-,2,HH,3,2,4,1,OK,a,7,H
 Homer,Odyssey,odyssey-book-21,2191389,21,194,true,10,4,2,δέ,δέ,0,g,-,-,-,-,-,-,-,-,1,L,4,2,4,2,OK,,
 Homer,Odyssey,odyssey-book-21,2191389,21,194,true,10,4,3,με,ἐγώ,2,p,-,s,-,-,-,m,a,-,1,L,4,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-21,2191389,21,194,true,10,4,4,θυμὸς,θυμός,-1,n,-,s,-,-,-,m,n,-,2,HL,5,1,5,2,OK,,
@@ -201834,7 +201834,7 @@ Homer,Odyssey,odyssey-book-21,2191431,21,260,true,32,8,5,εἴ,εἰ,-4,c,-,-,-,
 Homer,Odyssey,odyssey-book-21,2191431,21,260,true,32,8,6,κ’,ἄν,-1,g,-,-,-,-,-,-,-,-,0,,4,2,4,2,OK_ELIDED,,
 Homer,Odyssey,odyssey-book-21,2191431,21,260,true,32,8,7,εἰῶμεν,ἐάω,2,v,1,p,p,s,a,-,-,-,3,HHL,4,2,5,2,OK,,
 Homer,Odyssey,odyssey-book-21,2191431,21,260,true,32,8,8,ἅπαντας,ἅπας,6,a,-,p,-,-,-,f,a,-,3,LHH,5,3,6,2,OK,,
-Homer,Odyssey,odyssey-book-21,2191431,21,261,true,32,8,9,ἑστάμεν,ἵστημι,0,v,-,-,r,n,a,-,-,-,3,HLL,1,1,1,3,OK,,
+Homer,Odyssey,odyssey-book-21,2191431,21,261,true,32,8,9,ἑστάμεν,ἵστημι,0,v,-,-,r,n,a,-,-,-,3,HLL,1,1,1,3,OK,a,2,HL
 Homer,Odyssey,odyssey-book-21,2191432,21,261,true,23,10,1,οὐ,οὐ,-5,d,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-21,2191432,21,261,true,23,10,2,μὲν,μέν,-4,g,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
 Homer,Odyssey,odyssey-book-21,2191432,21,261,true,23,10,3,γάρ,γάρ,-3,g,-,-,-,-,-,-,-,-,1,H,3,1,3,1,OK,,
@@ -203389,7 +203389,7 @@ Homer,Odyssey,odyssey-book-22,2191553,22,40,true,150,40,45,τιν’,τις,-2,p
 Homer,Odyssey,odyssey-book-22,2191553,22,40,true,150,40,46,ἀνθρώπων,ἄνθρωπος,-1,n,-,p,-,-,-,m,g,-,3,HHH,2,1,3,1,OK,,
 Homer,Odyssey,odyssey-book-22,2191553,22,40,true,150,40,47,νέμεσιν,νέμεσις,-2,n,-,s,-,-,-,f,a,-,3,LLH,3,2,4,1,OK,,
 Homer,Odyssey,odyssey-book-22,2191553,22,40,true,150,40,48,κατόπισθεν,κατόπισθεν,-1,d,-,-,-,-,-,-,-,-,4,LLHL,4,2,5,2,OK,,
-Homer,Odyssey,odyssey-book-22,2191553,22,40,true,150,40,49,ἔσεσθαι,εἰμί,5,v,-,-,f,n,-,-,-,-,3,LHH,5,3,6,2,OK,s,7,LH
+Homer,Odyssey,odyssey-book-22,2191553,22,40,true,150,40,49,ἔσεσθαι,εἰμί,5,v,-,-,f,n,m,-,-,-,3,LHH,5,3,6,2,OK,s,7,LH
 Homer,Odyssey,odyssey-book-22,2191554,22,41,true,19,6,1,νῦν,νῦν,-6,d,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-22,2191554,22,41,true,19,6,2,ὑμῖν,σύ,-5,p,-,p,-,-,-,-,d,-,2,HH,1,2,2,1,OK,,
 Homer,Odyssey,odyssey-book-22,2191554,22,41,true,19,6,3,καὶ,καί,-4,d,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
@@ -203852,7 +203852,7 @@ Homer,Odyssey,odyssey-book-22,2191586,22,104,true,95,25,27,καὶ,καί,3,c,-,
 Homer,Odyssey,odyssey-book-22,2191586,22,104,true,95,25,28,τῷ,ὁ,-1,l,-,-,-,-,-,-,-,-,1,H,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-22,2191586,22,104,true,95,25,29,βουκόλῳ,βουκόλος,2,n,-,s,-,-,-,m,d,-,3,HLL,2,1,2,3,OK,,
 Homer,Odyssey,odyssey-book-22,2191586,22,104,true,95,25,30,ἄλλα,ἄλλος,6,a,-,p,-,-,-,n,a,-,2,HL,3,1,3,2,OK,,
-Homer,Odyssey,odyssey-book-22,2191587,22,104,false,12,3,1,τετευχῆσθαι,τετευχῆσθαι,-5,v,-,-,r,n,p,-,-,-,4,LHHH,3,3,5,1,OK,a,7,LHH
+Homer,Odyssey,odyssey-book-22,2191587,22,104,false,12,3,1,τετευχῆσθαι,τετευχῆσθαι,-5,v,-,-,r,n,e,-,-,-,4,LHHH,3,3,5,1,OK,a,7,LHH
 Homer,Odyssey,odyssey-book-22,2191587,22,104,false,12,3,2,γὰρ,γάρ,-4,g,-,-,-,-,-,-,-,-,1,L,5,2,5,2,OK,,
 Homer,Odyssey,odyssey-book-22,2191587,22,104,false,12,3,3,ἄμεινον,ἀμείνων,-3,a,-,s,-,-,-,n,n,c,3,LHH,5,3,6,2,OK,,
 Homer,Odyssey,odyssey-book-22,2191588,22,105,true,9,5,1,τὸν,ὁ,-3,p,-,s,-,-,-,m,a,-,1,H,1,1,1,1,OK,,
@@ -206236,7 +206236,7 @@ Homer,Odyssey,odyssey-book-22,2191774,22,439,true,35,10,7,ὕδατι,ὕδωρ,
 Homer,Odyssey,odyssey-book-22,2191774,22,439,true,35,10,8,καὶ,καί,-3,c,-,-,-,-,-,-,-,-,1,H,2,1,2,1,OK,,
 Homer,Odyssey,odyssey-book-22,2191774,22,439,true,35,10,9,σπόγγοισι,σπόγγος,1,n,-,p,-,-,-,m,d,-,3,HHL,2,2,3,2,OK,,
 Homer,Odyssey,odyssey-book-22,2191774,22,439,true,35,10,10,πολυτρήτοισι,πολύτρητος,1,a,-,p,-,-,-,m,d,-,5,LHHHL,3,3,5,2,OK,,
-Homer,Odyssey,odyssey-book-22,2191774,22,439,true,35,10,11,καθαίρειν,καθαίρω,0,v,-,-,p,n,a,-,-,-,3,LHH,5,3,6,2,OK,,
+Homer,Odyssey,odyssey-book-22,2191774,22,439,true,35,10,11,καθαίρειν,καθαίρω,0,v,-,-,p,n,a,-,-,-,3,LHH,5,3,6,2,OK,t,1,LH
 Homer,Odyssey,odyssey-book-22,2191775,22,440,true,142,36,1,αὐτὰρ,ἀτάρ,-20,g,-,-,-,-,-,-,-,-,2,HL,1,1,1,2,OK,,
 Homer,Odyssey,odyssey-book-22,2191775,22,440,true,142,36,2,ἐπὴν,ἐπήν,-19,c,-,-,-,-,-,-,-,-,2,LH,1,3,2,1,OK,,
 Homer,Odyssey,odyssey-book-22,2191775,22,440,true,142,36,3,δὴ,δή,-3,g,-,-,-,-,-,-,-,-,1,H,2,2,2,2,OK,,
@@ -206254,7 +206254,7 @@ Homer,Odyssey,odyssey-book-22,2191775,22,442,true,142,36,16,καὶ,καί,3,c,-
 Homer,Odyssey,odyssey-book-22,2191775,22,442,true,142,36,17,ἀμύμονος,ἀμύμων,-2,a,-,s,-,-,-,-,g,-,4,LHLL,3,3,4,3,OK,,
 Homer,Odyssey,odyssey-book-22,2191775,22,442,true,142,36,18,ἕρκεος,ἕρκος,2,n,-,s,-,-,-,n,g,-,3,HLL,5,1,5,3,OK,,
 Homer,Odyssey,odyssey-book-22,2191775,22,442,true,142,36,19,αὐλῆς,αὐλή,1,n,-,s,-,-,-,f,g,-,2,HH,6,1,6,2,OK,,
-Homer,Odyssey,odyssey-book-22,2191775,22,443,true,142,36,21,θεινέμεναι,θείνω,0,v,-,-,p,n,a,-,-,-,4,HLLH,1,1,2,1,OK,,
+Homer,Odyssey,odyssey-book-22,2191775,22,443,true,142,36,21,θεινέμεναι,θείνω,0,v,-,-,p,n,a,-,-,-,4,HLLH,1,1,2,1,OK,t,3,H
 Homer,Odyssey,odyssey-book-22,2191775,22,443,true,142,36,22,ξίφεσιν,ξίφος,1,n,-,p,-,-,-,n,d,-,3,LLH,2,2,3,1,OK,,
 Homer,Odyssey,odyssey-book-22,2191775,22,443,true,142,36,23,τανυήκεσιν,τανυήκης,1,a,-,p,-,-,-,n,d,-,5,LLHLL,3,2,4,3,OK,,
 Homer,Odyssey,odyssey-book-22,2191775,22,443,true,142,36,25,εἰς,εἰς,4,r,-,-,-,-,-,-,-,-,1,H,5,1,5,1,OK,,
@@ -212453,7 +212453,7 @@ Homer,Odyssey,odyssey-book-24,2192221,24,430,false,178,25,14,ἢ,ἤ,-5,c,-,-,-,
 Homer,Odyssey,odyssey-book-24,2192221,24,430,false,178,25,15,ἐς,εἰς,-3,r,-,-,-,-,-,-,-,-,1,H,4,1,4,1,OK,,
 Homer,Odyssey,odyssey-book-24,2192221,24,430,false,178,25,16,Πύλον,Πύλος,-3,n,-,s,-,-,-,f,a,-,2,LL,4,2,4,3,OK,,
 Homer,Odyssey,odyssey-book-24,2192221,24,430,false,178,25,17,ὦκα,ὦκα,-1,d,-,-,-,-,-,-,-,-,2,HL,5,1,5,2,OK,,
-Homer,Odyssey,odyssey-book-24,2192221,24,430,false,178,25,18,ἱκέσθαι,ἱκνέομαι,6,v,-,-,a,n,-,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
+Homer,Odyssey,odyssey-book-24,2192221,24,430,false,178,25,18,ἱκέσθαι,ἱκνέομαι,6,v,-,-,a,n,m,-,-,-,3,LHH,5,3,6,2,OK,t,7,LH
 Homer,Odyssey,odyssey-book-24,2192221,24,431,false,178,25,19,ἢ,ἤ,1,c,-,-,-,-,-,-,-,-,1,H,1,1,1,1,OK,,
 Homer,Odyssey,odyssey-book-24,2192221,24,431,false,178,25,20,καὶ,καί,-1,d,-,-,-,-,-,-,-,-,1,L,1,2,1,2,OK,,
 Homer,Odyssey,odyssey-book-24,2192221,24,431,false,178,25,21,ἐς,εἰς,2,r,-,-,-,-,-,-,-,-,1,L,1,3,1,3,OK,,

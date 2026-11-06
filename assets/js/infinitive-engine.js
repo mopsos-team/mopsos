@@ -22,13 +22,13 @@
   const TAGS = {
     t: { name: "thematic", tags: { "1": "‑ειν", "2": "‑έμεν", "3": "‑έμεναι", "4": "‑έειν", ...MORE } },
     a: { name: "athematic", tags: { "1": "‑ναι", "2": "‑μεν", "3": "‑μεναι", [MIDDLE_NUM]: MIDDLE_TAG } },
-    s: { name: "sigmatic", tags: { "1": "‑σαι", [MIDDLE_NUM]: MIDDLE_TAG } },
+    s: { name: "sigmatic", tags: { "1": "‑σαι", "3": "‑σέμεναι", [MIDDLE_NUM]: MIDDLE_TAG } },
     sf: { name: "future thematic", tags: { "1": "‑σειν", "2": "‑σέμεν", "3": "‑σέμεναι", [MIDDLE_NUM]: MIDDLE_TAG } },
     c: { name: "contract", tags: { "1": "‑ειν", "2": "‑έμεν", "3": "‑έμεναι", "4": "‑έειν", ...MORE } },
     cf: { name: "future contract", tags: { "1": "‑ειν", [MIDDLE_NUM]: MIDDLE_TAG } },
   };
   const isMiddle = (voice) => voice === "m" || voice === "e";
-  const endingClass = (conj, tense) => ((conj === "s" || conj === "c") && tense === "f" ? conj + "f" : conj);
+  const endingClass = (conj, tense) => ((conj === "s" || conj === "c") && (tense === "f" || tense === "t") ? conj + "f" : conj);
   const endingTag = (conj, tense, m, voice) => {
     if (isMiddle(voice) || String(m) === MIDDLE_NUM) return MIDDLE_TAG;
     const c = TAGS[endingClass(conj, tense)];
@@ -237,9 +237,20 @@
   /* Verbs a stem could belong to. Sigmatic stems lose their final consonant, so
    * those are tried back; ix.cix.verbStem already holds the -η- and -ε- stems. */
   const BACK = { σ: ["", "ζ", "δ", "θ", "τ", "σσ"], ξ: ["κ", "γ", "χ", "σσ", "ζ"], ψ: ["π", "β", "φ", "πτ"] };
-  function verbsFor(ix, stem, consonant, exclude, excludeForm) {
+  function verbsFor(ix, stem, consonant, exclude, excludeForm, formsFirst) {
     const cix = ix.cix, seen = new Map();
     const take = (e) => { if (e.lemma !== exclude && e.pos === "v") seen.set(e.lemma, e); };
+    const fromForms = () => {
+      const m = ix.formStems.get(stem);
+      if (m) m.forEach((forms, lemma) => {
+        if ([...forms].some((f) => f !== excludeForm)) (cix.lemmaByKey.get(strip(lemma)) || []).forEach(take);
+      });
+    };
+    // A strong aorist stem is not a present stem: λαβ- is λαμβάνω, not λάπτω.
+    if (formsFirst) {
+      fromForms();
+      if (seen.size) return [...seen.values()].sort((a, b) => b.n - a.n);
+    }
     (consonant ? BACK[consonant] : [""]).forEach((b) => {
       const s = stem + b;
       ["ω", "ομαι", "εω", "αω", "οω", "μι"].forEach((end) => (cix.lemmaByKey.get(s + end) || []).forEach(take));
@@ -251,13 +262,8 @@
         (cix.stemTo.get(s) || []).forEach(take);
       });
     }
-    if (!seen.size) {
-      // A strong aorist or suppletive stem shows up in the verb's other forms.
-      const m = ix.formStems.get(stem);
-      if (m) m.forEach((forms, lemma) => {
-        if ([...forms].some((f) => f !== excludeForm)) (cix.lemmaByKey.get(strip(lemma)) || []).forEach(take);
-      });
-    }
+    // Failing that, the verb's other forms may still show the stem.
+    if (!seen.size) fromForms();
     return [...seen.values()].sort((a, b) => b.n - a.n);
   }
   const PREVERBS = ["απο", "απ", "αφ", "επι", "επ", "εφ", "περι", "προ", "προσ", "κατα", "κατ", "καθ", "μετα", "μετ", "μεθ", "παρα", "παρ", "ανα", "αν", "δια", "δι", "υπο", "υπ", "υφ", "υπερ", "αμφι", "εισ", "εκ", "εξ", "εν", "εμ", "εγ", "συν", "συμ", "συγ", "ξυν", "αντι", "αντ"]
@@ -302,7 +308,7 @@
       }
       const m = rule[0].exec(k);
       const consonant = /^[σξψ]/.test(m[0]) ? m[0][0] : "";
-      const verbs = verbsFor(ix, k.slice(0, m.index), consonant, opts.excludeLemma, exclude);
+      const verbs = verbsFor(ix, k.slice(0, m.index), consonant, opts.excludeLemma, exclude, tense === "a" && conj === "t");
       add({ lemma: verbs[0] ? verbs[0].lemma : "", tense, voice, conj, morph, stem: "" }, w + (verbs[0] ? 3 : 0));
     });
     // A real present settles what the ending alone cannot: ἀέξειν is not a future.
