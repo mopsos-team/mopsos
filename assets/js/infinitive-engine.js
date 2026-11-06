@@ -43,6 +43,27 @@
   const SYLLABLES = { "‑ειν": 1, "‑ναι": 1, "‑μεν": 1, "‑σαι": 1, "‑σειν": 1, "‑μεναι": 2, "‑έμεν": 2, "‑έειν": 2, "‑σέμεν": 2, "‑έμεναι": 3, "‑σέμεναι": 3 };
   const endingSyllables = (conj, tense, m, voice) => SYLLABLES[endingTag(conj, tense, m, voice)] || 1;
 
+  /* A stem shape is what is left of this form once its ending is off, so it never
+   * comes from the verb's other forms. A theme vowel counts with the ending, as in
+   * the active (φέρ-ειν, φερ-έμεν), so ἀνελ-έσθαι is LL; so does the α of a sigmatic
+   * aorist (μυθή-σασθαι). Athematic stems take -σθαι directly (τίθε-σθαι). A contract
+   * vowel belongs to the stem even where contraction hides it, so ὁρᾶσθαι is LL like
+   * ὁράασθαι, and ὁρᾶν LL like περάαν. A contract future stands on its tense stem:
+   * βαλε-ειν is LL. A stem with no vowel of its own is 0, as in σχ-εῖν. */
+  const UNCONTRACTED = /(?:αα|οω|ε)σθ(?:αι)?$/;
+  const CONTRACTED_ACTIVE = /(?:[^α]αν|[^αεηιουω](?:ειν|ουν|ην|ων))$/;
+  const LONG_CONTRACT = /[αηω]μεν(?:αι)?$/;
+  function stemShape(form, shape, conj, tense, morph, voice) {
+    if (!shape) return "";
+    const k = strip(form), elided = /σθ$/.test(k), middle = elided || isMiddle(voice) || String(morph) === MIDDLE_NUM;
+    // φιλή-μεναι: a contract stem with its long vowel takes the ending as an athematic stem does.
+    const direct = !middle && conj === "c" && LONG_CONTRACT.test(k);
+    const off = middle ? (conj && conj !== "a" ? 2 : 1) - (elided ? 1 : 0) : direct ? (/αι$/.test(k) ? 2 : 1) : endingSyllables(conj, tense, morph, voice);
+    const left = shape.slice(0, Math.max(0, shape.length - off));
+    const hidden = conj === "c" && (middle ? !UNCONTRACTED.test(k) : String(morph) === "6" || CONTRACTED_ACTIVE.test(k));
+    return (hidden ? left + "L" : left) || "0";
+  }
+
   /* ---- syllables and weight ------------------------------------------- */
   const VOWEL = "αεηιουω";
   const DIPH = new Set(["αι", "ει", "οι", "υι", "αυ", "ευ", "ηυ", "ου"]);
@@ -129,7 +150,7 @@
 
   const VERB_END = /(?:οντες|οντας|οντα|οντι|οντων|ουσαν|ουσα|ουσι|ουσιν|ομενος|ομενοι|ομενον|ομενην|ομενη|εσθαι|εσθε|οντο|ομεν|ειεν|οιεν|οιτο|ετε|ητε|ετο|ειν|ων|ον|ες|εν|ε|ω|οι|η)$/;
   function buildIndex(lexicon, inf) {
-    const ix = { cix: C.buildIndex(lexicon), known: new Map(), middle: new Map(), others: new Map(), partial: new Map(), stems: new Map(), shapes: new Map(), verbs: [], formStems: new Map() };
+    const ix = { cix: C.buildIndex(lexicon), known: new Map(), middle: new Map(), others: new Map(), partial: new Map(), stems: new Map(), verbs: [], formStems: new Map() };
     lexicon.lemmas.forEach(([lemma, pos, , , , , forms]) => {
       if (pos !== "v") return;
       forms.split(" ").forEach((f) => {
@@ -151,10 +172,6 @@
           if (!ix.stems.has(s)) ix.stems.set(s, []);
           ix.stems.get(s).push({ ...a, from: k });
         }
-        const key = a.lemma + "|" + a.tense;
-        if (!ix.shapes.has(key)) ix.shapes.set(key, new Map());
-        const m = ix.shapes.get(key);
-        m.set(a.stem, (m.get(a.stem) || 0) + a.n);
       });
     });
     Object.entries(inf.middle || {}).forEach(([k, rows]) => {
@@ -175,10 +192,6 @@
     lexicon.lemmas.forEach(([lemma, pos, , , , n]) => { if (pos === "v") ix.verbs.push({ lemma, key: strip(lemma), n }); });
     ix.verbs.sort((a, b) => b.n - a.n);
     return ix;
-  }
-  function usualStem(ix, lemma, tense) {
-    const m = ix.shapes.get(lemma + "|" + tense);
-    return m ? [...m.entries()].sort((a, b) => b[1] - a[1])[0][0] : "";
   }
 
   /* ---- reading the ending of an unseen form ---------------------------- */
@@ -277,7 +290,8 @@
     const add = (a, w) => {
       const id = [a.lemma, a.tense, a.voice, a.conj, a.morph].join("|");
       const prev = out.get(id);
-      if (!prev || prev.w < w) out.set(id, { ...a, w });
+      // A later rule can reach the same analysis; the stem a kin form gave still stands.
+      if (!prev || prev.w < w) out.set(id, { ...a, stem: a.stem || (prev && prev.stem) || "", kin: a.kin || (prev && prev.kin), w });
     };
     // Another infinitive with this stem settles most of the fields at once. A
     // compound verb inherits from the simple verb: διελθέμεν from ἐλθεῖν.
@@ -347,7 +361,7 @@
     if (finalCircumflex(form) && /ειν$/.test(k)) out.forEach((a) => { if (a.tense === "p" && a.conj === "t" && a.morph === "1") a.w -= 5; });
     const shape = scan(form, opts.next);
     return [...out.values()].sort((a, b) => b.w - a.w).slice(0, 4).map((a) => {
-      const stem = a.stem || (isMiddle(a.voice) ? "" : usualStem(ix, a.lemma, a.tense)) || shape.slice(0, Math.max(0, shape.length - endingSyllables(a.conj, a.tense, a.morph, a.voice)));
+      const stem = a.stem || stemShape(form, shape, a.conj, a.tense, a.morph, a.voice);
       return { ...a, stem, shape, tag: endingTag(a.conj, a.tense, a.morph, a.voice) };
     });
   }
@@ -394,7 +408,7 @@
       const also = ix.others.get(k) || 0;
       const analyses = distinct(mids).map((a) => {
         const shape = fitShape(a.shape, form, opts.next);
-        return { ...a, shape, stem: /σθ$/.test(k) ? shape : shape.slice(0, -1), tag: MIDDLE_TAG };
+        return { ...a, shape, stem: stemShape(form, shape, a.conj, a.tense, a.morph, a.voice), tag: MIDDLE_TAG };
       });
       return { kind: also || analyses.length > 1 || opts.elided ? "check" : "new", k, analyses, also, fromCorpus: true };
     }
@@ -408,7 +422,7 @@
     // An elided -σθ’ may be -σθαι or an imperative, so it always goes to a person.
     if (opts.elided && /σθ$/.test(k)) {
       const shape = scan(form, opts.next);
-      const elided = guess(ix, form + "αι", opts).map((p) => ({ ...p, shape, stem: shape }));
+      const elided = guess(ix, form + "αι", opts).map((p) => ({ ...p, shape, stem: stemShape(form, shape, p.conj, p.tense, p.morph, p.voice) }));
       return elided.length ? { kind: "check", k, analyses: elided } : plain;
     }
     const props = guess(ix, form, opts);
@@ -423,7 +437,7 @@
     return !!p.lemma && strip(p.lemma).slice(0, 2) === k.slice(0, 2);
   }
 
-  const api = { MIDDLE_TAG, MIDDLE_NUM, isMiddle, middleClass, accentFromEnd, TAGS, endingClass, endingTag, endingOptions, endingSyllables, scan, syllables, buildIndex, guess, classify, usualStem, strip };
+  const api = { MIDDLE_TAG, MIDDLE_NUM, isMiddle, middleClass, accentFromEnd, TAGS, endingClass, endingTag, endingOptions, endingSyllables, stemShape, scan, syllables, buildIndex, guess, classify, strip };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.InfinitiveEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);

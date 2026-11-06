@@ -205,9 +205,7 @@
   }
   function stemFromShape() {
     if (!F.autoStem) return;
-    // An elided -σθ’ has lost the syllable the ending would take.
-    const cut = /σθ$/.test(strip(F.form)) ? 0 : F.conj && F.morph ? I.endingSyllables(F.conj, F.tense, F.morph, F.voice) : 1;
-    F.stem = F.shape.slice(0, Math.max(0, F.shape.length - cut));
+    F.stem = I.stemShape(F.form, F.shape, F.conj, F.tense, F.morph, F.voice);
     const el = $("fStem"); if (el) el.value = F.stem;
   }
   const options = (list, v) => '<option value=""></option>' + list.map(([k, t]) => '<option value="' + esc(k) + '"' + (k === v ? " selected" : "") + ">" + esc(t) + "</option>").join("");
@@ -314,7 +312,7 @@
     if (!F.conj) return showErr("Give the conjugation.");
     if (!F.morph) return showErr("Give the ending.");
     if (F.shape && !/^[HL]+$/.test(F.shape)) return showErr("Metrical shapes use H and L only.");
-    if (F.stem && !/^[HL]+$/.test(F.stem)) return showErr("Metrical shapes use H and L only.");
+    if (F.stem && !/^(?:[HL]+|0)$/.test(F.stem)) return showErr("Stem shapes use H and L, or 0 for a stem with no vowel.");
     if (!F.work.trim() || !String(F.line).trim()) return showErr("Give the work and line.");
     const id = F.id || hash([F.work, F.book, F.line, F.form].join("|")), prev = store.inf.get(id) || null;
     put("inf", id, record(F, Date.now()));
