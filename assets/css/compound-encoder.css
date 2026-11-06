@@ -1,6 +1,6 @@
 /* Compound encoder: only what style.css has no class for. Every value is one of
-   its tokens; the word states borrow the Scansion, Phonology and clustering
-   palettes. */
+   its tokens; the word states borrow the Scansion, Phonology, Syntax and
+   clustering palettes. */
 .enc-toast[hidden] { display: none; }
 .enc-toprow { display: flex; flex-wrap: wrap; align-items: end; gap: .55rem .8rem; }
 .enc-toprow .field { flex: 1 1 240px; margin-bottom: 0; }
@@ -16,7 +16,7 @@
 .w.new { background: #fbedbc; box-shadow: inset 0 -2px 0 #f9dc78; }
 .w.known { box-shadow: inset 0 -2px 0 #239938; }
 .w.check { box-shadow: inset 0 -2px 0 #a61c00; }
-.w.done { color: #1d7e2f; text-decoration: underline dotted #91cc9b; text-underline-offset: 3px; }
+.w.done { background: #f3d0e3; box-shadow: inset 0 -2px 0 #e7a2c8; }
 .w.skip { color: var(--muted); text-decoration: line-through; }
 .w.cur { outline: 2px solid var(--acc); outline-offset: 1px; }
 .help .w { cursor: default; font-family: var(--greek); }
