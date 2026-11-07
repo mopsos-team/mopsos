@@ -634,6 +634,14 @@
     return [...seen.values()].sort((a, b) => b.n - a.n || a.len - b.len).slice(0, limit).map((x) => x.lemma);
   }
 
+  // Derivatives the catalogue counts under a compound, by their opening letters.
+  function searchDerivatives(ix, q, limit) {
+    const k = strip(q), out = [];
+    if (!k) return out;
+    ix.items.forEach((it) => it.include.forEach((word) => { if (strip(word).startsWith(k)) out.push({ word, base: it.lemma }); }));
+    return out.sort((a, b) => a.word.length - b.word.length).slice(0, limit);
+  }
+
   function proposalRow(word, p) {
     const seg = p.seam ? seamSegmentation(word, p) : segmentation(word, p.i);
     return { segmentation: seg, member1: p.m1.member, member1_category: p.m1.cat, member1_subcategory: p.m1.sub,
@@ -641,7 +649,7 @@
   }
 
   const api = { strip, hasGreek, citeAccent, sideOptions, linkSuggestions, memberIsCompound, searchMembers, searchCompounds, buildIndex, decompose, flagged, flags, classify, tokenize, segmentation, headwordFor, proposalRow,
-    memberProfile, guessSub, catalogueHit, citeStems, tokenStems, cutAt, baseCandidates };
+    memberProfile, guessSub, catalogueHit, citeStems, tokenStems, cutAt, baseCandidates, searchDerivatives };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.CompoundEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);

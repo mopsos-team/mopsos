@@ -1016,7 +1016,7 @@
    * the Greek lemma in the browser via betaOf() (see scripts/greek_text.py for
    * the equivalent Python). ------------------------------------------------- */
   let compoundItems = null, compoundAttestations = null, infinitiveItems = null;
-  let compoundRows = null, compoundByLemma = null, compoundByKey = null;
+  let compoundRows = null, compoundByLemma = null, compoundByKey = null, compoundLookup = null;
   let compoundDetailActive = false;
   let compoundDetailKey = null;
 
@@ -1069,6 +1069,9 @@
       it.meta = (r.member1 || "\u2013") + " + " + (r.member2 || "\u2013") + (n > 1 ? " \u00b7 " + n + " analyses" : "") +
         (tag ? " \u00b7 " + tag : "");
     });
+    // A derivative can be looked up too: it opens the record of its compound.
+    compoundLookup = compoundItems.concat(compoundItems.flatMap((it) => it.include.map((d) => (
+      { key: d.key, display: d.form, beta: betaOf(d.form), meta: "derivative of " + it.lemma, base: it }))));
     compoundAttestations = SQL.objects("SELECT compound, work, book, line_num FROM " + q("ncompounds_attestations") + ";");
   }
   const isUncertain = (r) => String(r.uncertain) === "1";
@@ -1399,11 +1402,11 @@
         // browse only the compounds the current filters allow, so the list
         // refreshes with every option change; unfiltered = the full catalogue
         const rows = filteredCompounds(compoundFilters());
-        if (rows.length === compoundRows.length) return compoundItems;
+        if (rows.length === compoundRows.length) return compoundLookup;
         const allowed = new Set(rows.map((r) => r.lemma));
-        return compoundItems.filter((it) => allowed.has(it.lemma));
+        return compoundLookup.filter((it) => allowed.has((it.base || it).lemma));
       },
-      onSelect(it) { el.cmpSearch.value = it.display; renderCompoundDetail(it); }
+      onSelect(it) { el.cmpSearch.value = it.display; renderCompoundDetail(it.base || it); }
     });
     // emptying the lookup closes the record and brings the member charts back
     el.cmpSearch.addEventListener("input", () => {

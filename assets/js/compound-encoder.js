@@ -63,6 +63,14 @@
     EX = { byKey, byStem };
     refreshDone();
   }
+  // Every derivative saved on this page: a saved base lists its own, and a
+  // catalogue base has it on the attestation.
+  function savedDerivatives() {
+    const out = new Map(), add = (word, base) => out.set(word + "|" + base, { word, base });
+    store.ent.forEach((e) => (e.include || []).forEach((w) => add(w, e.lemma)));
+    store.att.forEach((a) => { if (a.deriv) add(a.deriv, a.lemma); });
+    return [...out.values()];
+  }
   function refreshDone() {
     doneKeys = new Set();
     store.att.forEach((a) => doneKeys.add(doneKey(a.work, a.book, a.line, a.form)));
@@ -549,8 +557,12 @@
         return { value: m.member, meta: p ? [CATLABEL[p.cat] || p.cat, p.sub].filter(Boolean).join(", ") : "" };
       });
     } else if (E.strip(q).length >= 2) {
-      items = E.searchCompounds(ix, q, 9).map((it) => ({ value: it.lemma, meta: "in the catalogue" }));
-      [...store.ent.values()].filter((e) => E.strip(e.lemma).startsWith(E.strip(q))).slice(0, 4).forEach((e) => items.push({ value: e.lemma, meta: "encoded here" }));
+      const k = E.strip(q), found = new Map(), add = (it) => found.set(it.value + "|" + (it.base || ""), it);
+      E.searchCompounds(ix, q, 9).forEach((it) => add({ value: it.lemma, meta: "in the catalogue" }));
+      [...store.ent.values()].filter((e) => E.strip(e.lemma).startsWith(k)).slice(0, 4).forEach((e) => add({ value: e.lemma, meta: "encoded here" }));
+      E.searchDerivatives(ix, q, 6).concat(savedDerivatives().filter((d) => E.strip(d.word).startsWith(k)))
+        .forEach((d) => add({ value: d.word, base: d.base, meta: "derivative of " + d.base }));
+      items = [...found.values()].sort((a, b) => E.strip(a.value).length - E.strip(b.value).length).slice(0, 12);
     }
     Combo.input = input; Combo.items = items; Combo.idx = -1;
     const el = $("menu");
@@ -577,8 +589,8 @@
     if (!input || !it) return;
     input.value = it.value;
     if (input.dataset.combo === "member") applyMember(+input.dataset.a, +input.dataset.slot, it.value, input);
-    else if (input.dataset.combo === "base") setBase(it.value, "primary");
-    else openHeadword(it.value);
+    else if (input.dataset.combo === "base") setBase(it.base || it.value, "primary");
+    else openHeadword(it.value, null, it.base ? "derivative" : "");
   }
   function setField(id, value, cls) {
     const el = $(id); if (!el) return;
@@ -619,11 +631,18 @@
   // F is the form for the base and F.deriv holds the word itself; F.deriv.back is
   // the word's own form, ready for when the box is unticked.
   function newDerivative() { return F.deriv && !F.deriv.known ? F.deriv : null; }
+  // The compounds a word is already counted under, saved here or in the catalogue.
+  function basesOf(v) {
+    const k = E.strip(v), hit = EX.byKey.get(k);
+    if (hit && hit.via === "derivative") return { items: hit.local ? [{ lemma: hit.local.lemma, entry: hit.local }] : hit.items, word: hit.word };
+    const inc = ix.include.get(k);
+    return inc ? { items: [...inc], word: v } : null;
+  }
   function listedBase(v) {
     const own = store.ent.get(hash(v)) || [...store.ent.values()].find((e) => E.strip(e.lemma) === E.strip(v));
     if (own) return [{ lemma: own.lemma, entry: own }];
-    const exact = ix.items.get(v);
-    return exact ? [exact] : ix.byKey.get(E.strip(v)) || null;
+    const exact = ix.items.get(v), near = ix.byKey.get(E.strip(v)), counted = basesOf(v);
+    return exact ? [exact] : near || (counted && counted.items) || null;
   }
   function setDerivative(on) {
     flushFields();
@@ -635,7 +654,7 @@
     const d = F.deriv, att = F.att;
     if (att) att.star = d.star;
     F.deriv = null;
-    if (!d.back) { F.ctx = null; openHeadword(d.word); return; }
+    if (!d.back) { F.ctx = null; openHeadword(d.word, null, "own"); return; }
     F = d.back; F.deriv = null; F.att = att;
     if (F.mode === "new" && F.headword !== d.word) { F.headword = d.word; F.props = E.decompose(ix, d.word, { limit: 6 }); }
     renderDesk();
@@ -661,20 +680,24 @@
     F.deriv = { ...d, base: items ? items[0].lemma : v, known: false };
     renderDesk({ focusId: focusId || "primary" });
   }
-  function openHeadword(word, focusId) {
+  // as: "own" when the person has said this word is not a derivative, and
+  // "derivative" when they chose it as one; a word can be a headword as well.
+  function openHeadword(word, focusId, as) {
     const v = toGreek(word).trim();
     if (!v) return;
-    if (F && F.deriv) { F.deriv.word = v; renderDesk({ focusId: focusId || "primary" }); return; }
+    if (F && newDerivative()) { F.deriv.word = v; renderDesk({ focusId: focusId || "primary" }); return; }
     const prev = F ? F.att : null;
     const keep = !!(prev && prev.form && sameWord(v, prev.form));
     const att = keep ? prev : handAtt(prev);
     const ctx = keep && F ? F.ctx : null;
     const typed = !keep;
     const show = () => { F.typed = typed; renderDesk({ focusId: focusId || "primary" }); };
-    if (store.ent.has(hash(v))) { F = entryForm(store.ent.get(hash(v)), att, ctx); return show(); }
+    if (as !== "derivative" && store.ent.has(hash(v))) { F = entryForm(store.ent.get(hash(v)), att, ctx); return show(); }
     const exact = ix.items.get(v);
     const near = ix.byKey.get(E.strip(v));
-    if (exact || near) { F = catalogueForm(exact ? [exact] : near, att, ctx || { kind: "known", k: E.strip(v) }); return show(); }
+    if (as !== "derivative" && (exact || near)) { F = catalogueForm(exact ? [exact] : near, att, ctx || { kind: "known", k: E.strip(v) }); return show(); }
+    const counted = as === "own" ? null : basesOf(v);
+    if (counted) { F = catalogueForm(counted.items, att, { kind: "known", k: E.strip(v), via: "derivative", word: counted.word }); return show(); }
     if (keep && F && F.mode === "new" && F.ana.some((a) => a.touched)) {
       F.headword = v;
       F.props = E.decompose(ix, v, { limit: 6 });
@@ -891,24 +914,34 @@
   /* ---- entries -------------------------------------------------------- */
   let entryQuery = "", attText = "", confirmDel = null;
   function incomplete(e) { return e.analyses.some((a) => !a.m1 || !a.m2 || !a.seg.includes("+")); }
+  // A logged form belongs to a derivative when it shares the derivative's stem.
+  function derivativeAtts(d) {
+    const stems = E.citeStems(E.strip(d.word));
+    return [...store.att.values()].filter((a) => a.lemma === d.base && (a.deriv === d.word || (a.star && [...E.tokenStems(E.strip(a.form)).keys()].some((s) => stems.has(s))))).length;
+  }
   function attCountByLemma() {
     const c = new Map();
     store.att.forEach((a) => c.set(a.lemma, (c.get(a.lemma) || 0) + 1));
     return c;
   }
   function renderEntries() {
-    const q = E.strip(toGreek(entryQuery));
-    const ents = [...store.ent.entries()].sort((a, b) => WORK_ORDER(a[1]).localeCompare(WORK_ORDER(b[1]), "el"))
-      .filter(([, e]) => !q || E.strip(e.lemma).includes(q) || e.analyses.some((a) => E.strip(a.m1).includes(q) || E.strip(a.m2).includes(q)));
+    const q = E.strip(toGreek(entryQuery)), has = (w) => E.strip(w).includes(q);
+    const ents = [...store.ent.entries()]
+      .filter(([, e]) => !q || has(e.lemma) || (e.include || []).some(has) || e.analyses.some((a) => has(a.m1) || has(a.m2)));
+    const derivs = savedDerivatives().filter((d) => !q || has(d.word) || has(d.base));
     const counts = attCountByLemma();
-    const rows = ents.map(([id, e]) => e.analyses.map((a, i) => "<tr>" +
+    const derivRow = (d) => '<tr><td class="enc-greek">' + esc(d.word) + '</td><td colspan="3">Derivative of <span class="enc-greek">' + esc(d.base) + "</span></td>" +
+      "<td>" + derivativeAtts(d) + '</td><td></td><td><button class="fig-dl" data-deriv="' + esc(d.word) + '">Open</button></td></tr>';
+    const entryRow = ([id, e]) => e.analyses.map((a, i) => "<tr>" +
       (i === 0 ? '<td class="enc-greek" rowspan="' + e.analyses.length + '">' + esc(e.lemma) + (e.inferred ? "*" : "") + "</td>" : "") +
       '<td class="enc-greek">' + esc(a.seg) + "</td>" +
       '<td><span class="pdg-form">' + esc(a.m1) + '</span><span class="pdg-c">' + esc(tagOf(a.m1c, a.m1s)) + "</span></td>" +
       '<td><span class="pdg-form">' + esc(a.m2) + '</span><span class="pdg-c">' + esc(tagOf(a.m2c, a.m2s)) + "</span></td>" +
       (i === 0 ? '<td rowspan="' + e.analyses.length + '">' + (counts.get(e.lemma) || 0) + "</td>" +
         '<td rowspan="' + e.analyses.length + '">' + (incomplete(e) ? '<span class="cmp-warn">Incomplete</span> ' : "") + esc(e.note || "") + "</td>" +
-        '<td rowspan="' + e.analyses.length + '" style="white-space:nowrap"><button class="fig-dl" data-edit="' + id + '">Edit</button> <button class="fig-dl" data-del="' + id + '">' + (confirmDel === id ? "Delete it?" : "Delete") + "</button></td>" : "") + "</tr>").join("")).join("");
+        '<td rowspan="' + e.analyses.length + '" style="white-space:nowrap"><button class="fig-dl" data-edit="' + id + '">Edit</button> <button class="fig-dl" data-del="' + id + '">' + (confirmDel === id ? "Delete it?" : "Delete") + "</button></td>" : "") + "</tr>").join("");
+    const rows = ents.map((x) => [x[1].lemma, entryRow(x)]).concat(derivs.map((d) => [d.word, derivRow(d)]))
+      .sort((a, b) => E.strip(a[0]).localeCompare(E.strip(b[0]), "el")).map((x) => x[1]).join("");
     const atts = [...store.att.entries()].filter(([, a]) => !attText || a.doc === attText)
       .sort((a, b) => (a[1].work + a[1].book).localeCompare(b[1].work + b[1].book) || (parseInt(a[1].line, 10) - parseInt(b[1].line, 10)));
     const docs = [...new Set([...store.att.values()].map((a) => a.doc))];
@@ -916,9 +949,9 @@
     const attRows = atts.slice(0, 400).map(([id, a]) => '<tr><td class="enc-greek">' + esc(a.lemma) + (a.star ? " (*)" : "") + "</td><td>" + esc(a.work) + "</td><td>" + esc(a.book) + "</td><td>" + esc(a.line) + '</td><td class="enc-greek">' + esc(a.form) + '</td><td><button class="fig-dl" data-unatt="' + id + '">Remove</button></td></tr>').join("");
     const nots = [...store.not.entries()].sort((a, b) => a[1].k.localeCompare(b[1].k, "el"));
     $("entriesIn").innerHTML =
-      '<div class="card"><h2>1. New compounds</h2><div class="field" style="max-width:340px"><label for="entryQ"><strong>Search</strong> <span class="help">headwords and members</span></label><input type="text" id="entryQ" value="' + esc(entryQuery) + '"></div>' +
+      '<div class="card"><h2>1. New compounds</h2><div class="field" style="max-width:340px"><label for="entryQ"><strong>Search</strong> <span class="help">headwords, members and derivatives</span></label><input type="text" id="entryQ" value="' + esc(entryQuery) + '"></div>' +
       (rows ? '<div class="table-wrap enc-table"><table class="paradigm-table"><thead><tr><th>Headword</th><th>Segmentation</th><th>First member</th><th>Second member</th><th>Attested</th><th>Notes</th><th></th></tr></thead><tbody>' + rows + "</tbody></table></div>"
-        : '<p class="help">' + (store.ent.size ? "Nothing matches that search." : "Compounds saved in the encoder will appear here.") + "</p>") + "</div>" +
+        : '<p class="help">' + (store.ent.size || derivs.length || savedDerivatives().length ? "Nothing matches that search." : "Compounds saved in the encoder will appear here.") + "</p>") + "</div>" +
       '<div class="card"><h2>2. Attestations</h2><div class="field" style="max-width:340px"><label for="attFilter"><strong>Text</strong></label><select id="attFilter"><option value="">All texts (' + store.att.size + ")</option>" +
       docs.map((d) => '<option value="' + esc(d) + '"' + (d === attText ? " selected" : "") + ">" + esc(titleOf(d)) + "</option>").join("") + "</select></div>" +
       (attRows ? '<div class="table-wrap enc-table"><table class="paradigm-table"><thead><tr><th>Compound</th><th>Work</th><th>Book or hymn</th><th>Line</th><th>Form</th><th></th></tr></thead><tbody>' + attRows + "</tbody></table></div>" +
@@ -937,6 +970,12 @@
       S.pos = -1; F = entryForm(e, null, null);
       if (!panelOpen("panelEncode")) document.querySelector("#panelEncode .panel-head").click();
       markCurrent(false); renderDesk();
+      $("deskBody").scrollIntoView({ block: "nearest" });
+    } else if (t.dataset.deriv) {
+      S.pos = -1; F = null;
+      if (!panelOpen("panelEncode")) document.querySelector("#panelEncode .panel-head").click();
+      openHeadword(t.dataset.deriv);
+      markCurrent(false);
       $("deskBody").scrollIntoView({ block: "nearest" });
     } else if (t.dataset.del) {
       if (confirmDel !== t.dataset.del) { confirmDel = t.dataset.del; renderEntries(); return; }
@@ -967,10 +1006,7 @@
       .map((a) => [a.lemma + (a.star ? " (*)" : ""), a.work, a.book, a.line]);
   }
   function includeRows() {
-    const out = new Map(), add = (lemma, w) => out.set(lemma + "|" + w, [lemma, w]);
-    store.ent.forEach((e) => (e.include || []).forEach((w) => add(e.lemma, w)));
-    store.att.forEach((a) => { if (a.deriv) add(a.lemma, a.deriv); });
-    return [...out.values()];
+    return savedDerivatives().map((d) => [d.base, d.word]);
   }
   const FILES = {
     analysis: { name: "ncompounds_analysis.csv", head: () => D.columns, rows: analysisRows, about: "One row per analysis of each new compound." },
