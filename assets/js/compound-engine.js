@@ -524,7 +524,7 @@
     if (k.length < 3) return { kind: "plain", k };
     if (extra) {
       const hit = extra.byKey.get(k) || [...tokenStems(k).keys()].filter((s) => s.length >= 4).map((s) => extra.byStem.get(s)).find(Boolean);
-      if (hit) return { kind: "known", k, local: hit };
+      if (hit) return { kind: "known", k, ...hit };
     }
 
     const lemmas = ix.formTo.get(k);
@@ -541,7 +541,7 @@
         // A form that mostly belongs to another lemma is that lemma.
         if (others.length && n1 * 5 < n2) return { kind: "plain", k, lemma: others.slice().sort((a, b) => b.n - a.n)[0] };
         const via = compounds.every((c) => c.deriv) ? "derivative" : "headword";
-        return { kind: others.length || items.length > 1 ? "check" : "known", k, items, also: others, via };
+        return { kind: others.length || items.length > 1 ? "check" : "known", k, items, also: others, via, word: via === "derivative" ? compounds[0].e.lemma : "" };
       }
       const top = lemmas.slice().sort((a, b) => b.n - a.n)[0];
       const viaStem = lemmaVariant(ix, top.key);
@@ -621,6 +621,19 @@
     return out.sort((a, b) => a.key.length - b.key.length).slice(0, limit);
   }
 
+  // Likely bases for a derivative: headwords that open the same way, closest first.
+  // Half the word has to match, so a shared prefix like πολυ- is not enough.
+  function baseCandidates(ix, word, saved, limit) {
+    const k = strip(word);
+    const shared = (o) => { let n = 0; while (n < k.length && n < o.length && k[n] === o[n]) n++; return n; };
+    const seen = new Map();
+    [...ix.items.values()].map((it) => it.lemma).concat(saved).forEach((lemma) => {
+      const o = strip(lemma), n = shared(o);
+      if (o !== k && n >= 4 && n * 2 >= k.length) seen.set(lemma, { lemma, n, len: o.length });
+    });
+    return [...seen.values()].sort((a, b) => b.n - a.n || a.len - b.len).slice(0, limit).map((x) => x.lemma);
+  }
+
   function proposalRow(word, p) {
     const seg = p.seam ? seamSegmentation(word, p) : segmentation(word, p.i);
     return { segmentation: seg, member1: p.m1.member, member1_category: p.m1.cat, member1_subcategory: p.m1.sub,
@@ -628,7 +641,7 @@
   }
 
   const api = { strip, hasGreek, citeAccent, sideOptions, linkSuggestions, memberIsCompound, searchMembers, searchCompounds, buildIndex, decompose, flagged, flags, classify, tokenize, segmentation, headwordFor, proposalRow,
-    memberProfile, guessSub, catalogueHit, citeStems, tokenStems, cutAt };
+    memberProfile, guessSub, catalogueHit, citeStems, tokenStems, cutAt, baseCandidates };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   root.CompoundEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);

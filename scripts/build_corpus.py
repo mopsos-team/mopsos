@@ -51,6 +51,18 @@ TMP = os.path.join(DATA, ".corpus.build.sqlite")
 # Numeric SQL types -> the Python parser used to coerce their values.
 NUMERIC_PARSERS = {"INTEGER": int, "REAL": float}
 
+
+
+def hold_back_unreviewed(row):
+    """Medial and mediopassive infinitives (morpheme 7) were filled in by rule and
+    are under review. The site's infinitive search, menus and figures all rely on
+    these fields, so the database carries such rows without them. The CSV keeps
+    them. Remove the row_hook below, and the morpheme test in VIZ_BASE, once the
+    rows are reviewed."""
+    if row.get("morpheme") == "7":
+        row["conjugation"] = row["morpheme"] = row["metrical_stem_shape"] = ""
+
+
 # --- one CSV -> one table ---------------------------------------------------
 #   columns        : subset/order of CSV columns to keep (None = every column)
 #   column_mapping : {csv_header: new_column_name}            (Zach's pattern)
@@ -60,10 +72,12 @@ NUMERIC_PARSERS = {"INTEGER": int, "REAL": float}
 #   indexes        : columns to index (skipped if not kept)
 #   derived_columns: {new_column: (source_column, callable)}  computed after
 #                    the source column is coerced; appended as TEXT columns
+#   row_hook       : callable that may change a raw CSV row before it is read
 TABLES = [
     dict(
         file_path=os.path.join(DATA, "morphology", "morphology.csv"),
         table_name="morphology",
+        row_hook=hold_back_unreviewed,
         columns=None,
         column_mapping={},
         sql_types=dict(total_distance="REAL", word_count="INTEGER", distance="REAL",
@@ -234,7 +248,10 @@ def load_table(con, cfg):
 
         n, batch = 0, []
         con.execute("BEGIN")
+        hook = cfg.get("row_hook")
         for row in reader:
+            if hook:
+                hook(row)
             values = [coercers[i](row.get(src_cols[i], "") or "") for i in range(len(src_cols))]
             for new_col in derived_names:
                 source_col, fn = derived[new_col]

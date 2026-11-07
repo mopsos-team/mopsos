@@ -21,7 +21,7 @@
     ui: () => ({ textId: S.text && S.text.id, onlyTodo: S.onlyTodo, pos: S.pos }),
     onRemote: (kinds) => {
       rebuildDerived();
-      if (kinds.has("ent")) classifyAll();
+      if (kinds.has("ent") || kinds.has("att")) classifyAll();
       populateTexts();
       renderReader();
       renderCounts();
@@ -42,11 +42,23 @@
   const doneKey = (work, book, line, form) => work + "|" + book + "|" + line + "|" + form;
   function rebuildDerived() {
     const byKey = new Map(), byStem = new Map();
+    const add = (k, hit) => { E.citeStems(k).forEach((s) => { if (s.length >= 4 && !byStem.has(s)) byStem.set(s, hit); }); };
     store.ent.forEach((e) => {
-      const k = E.strip(e.lemma);
-      byKey.set(k, e);
-      E.citeStems(k).forEach((s) => { if (s.length >= 4 && !byStem.has(s)) byStem.set(s, e); });
-      (e.include || []).forEach((inc) => { const ik = E.strip(inc); if (ik) byKey.set(ik, e); });
+      const k = E.strip(e.lemma), hit = { local: e };
+      byKey.set(k, hit);
+      add(k, hit);
+    });
+    const derivative = (word, base) => {
+      const k = E.strip(word), hit = { ...base, via: "derivative", word };
+      if (!k) return;
+      if (!byKey.has(k)) byKey.set(k, hit);
+      add(k, hit);
+    };
+    store.ent.forEach((e) => (e.include || []).forEach((w) => derivative(w, { local: e })));
+    // A catalogue compound has no entry to hold a derivative, so its attestation does.
+    store.att.forEach((a) => {
+      const e = store.ent.get(hash(a.lemma)), it = ix.items.get(a.lemma);
+      if (a.deriv && (e || it)) derivative(a.deriv, e ? { local: e } : { items: [it] });
     });
     EX = { byKey, byStem };
     refreshDone();
@@ -227,7 +239,9 @@
   const itemInferred = (it) => (it.rows ? it.rows.every((r) => String(r.inferred) === "1") : !!(it.entry && it.entry.inferred));
   function catalogueForm(items, att, c) {
     const via = c && c.via;
-    return { mode: "catalogue", items, pick: 0, att: att ? { ...att, star: via === "derivative" || itemInferred(items[0]) } : null, ctx: c || null };
+    const f = { mode: "catalogue", items, pick: 0, att: att ? { ...att, star: via === "derivative" || itemInferred(items[0]) } : null, ctx: c || null };
+    if (via === "derivative" && att) f.deriv = { word: c.word || E.citeAccent(att.form), base: items[0].lemma, known: true, back: null, star: false };
+    return f;
   }
   function makeForm(l, t) {
     const c = t.c;
@@ -241,9 +255,11 @@
   const attId = (lemma, a) => hash([lemma, a.work, a.book, a.line, a.form].join("|"));
   const isLogged = (lemma, a) => !!a && store.att.has(attId(lemma, a));
   function statusHtml() {
+    if (newDerivative()) return "";
     if (F.mode === "catalogue") {
       const it = curItem(), logged = isLogged(it.lemma, F.att);
-      const state = (it.entry ? "Encoded on this page" : "In the catalogue") + (logged ? ", attestation logged." : ".");
+      const place = F.deriv ? 'Derivative of <span class="enc-greek">' + esc(it.lemma) + "</span>" : it.entry ? "Encoded on this page" : "In the catalogue";
+      const state = place + (logged ? ", attestation logged." : ".");
       const also = F.ctx && F.ctx.capital ? " Capitalized here, but this headword is lowercase. If it is a name, type the name as the headword."
         : F.ctx && F.ctx.nameStem ? " A name matched by its stem only. If it is a different name, type it as the headword."
         : F.ctx && F.ctx.also && F.ctx.also.length ? " This spelling can also be " + F.ctx.also.slice(0, 3).map((e) => '<span class="enc-greek">' + esc(e.lemma) + "</span>").join(", ") + "." : "";
@@ -316,6 +332,23 @@
       '<div class="field"><label for="note"><strong>Note for the team</strong> <span class="help">not exported to the site</span></label><input type="text" id="note" value="' + esc(F.note) + '"></div>' +
       "</div>";
   }
+  function derivHtml() {
+    const d = F.deriv;
+    const box = '<label class="regex-toggle" style="white-space:normal"><input type="checkbox" id="derivBox"' + (d ? " checked" : "") + "> This compound is a derivative of another compound</label>";
+    if (!d) return '<div class="field">' + box + "</div>";
+    const greek = (w) => '<span class="enc-greek">' + esc(w) + "</span>";
+    const likely = d.base ? [] : E.baseCandidates(ix, d.word, [...store.ent.values()].map((e) => e.lemma), 5);
+    let hint = "";
+    if (!d.base) hint = "Choose a listed compound, or type a new one to add its analysis.";
+    else if (!d.known) hint = F.mode === "new" ? greek(d.base) + " is not listed yet. Add its analysis below." : greek(d.word) + " will be logged under " + greek(d.base) + " with (*).";
+    const own = !d.known && d.base && store.ent.get(hash(d.word)), n = !d.known && d.base ? [...store.att.values()].filter((a) => a.lemma === d.word).length : 0;
+    const warn = own || n ? "Saving moves " + plural(n, "attestation") + " of " + greek(d.word) + " to " + greek(d.base) + (own ? " and removes it as a compound of its own" : "") + "." : "";
+    return '<div class="word-inline"><div class="field">' + box + "</div>" +
+      '<div class="field"><label for="base"><strong>Base compound</strong> <span class="help">Greek or Beta Code</span></label><div class="combo"><input type="text" id="base" data-combo="base" value="' + esc(d.base) + '" autocomplete="off" spellcheck="false"></div></div>' +
+      (likely.length ? '<div class="enc-chips"><span class="small-muted">Likely base:</span>' + likely.map((l) => '<button type="button" class="fig-dl enc-greek" data-act="base" data-v="' + esc(l) + '">' + esc(l) + "</button>").join("") + "</div>" : "") +
+      (hint ? '<p class="help" style="margin:0">' + hint + "</p>" : "") +
+      (warn ? '<p class="cmp-warn" style="margin:.3rem 0 0">' + warn + "</p>" : "") + "</div>";
+  }
   function attHtml() {
     const a = F.att;
     if (!a) return "";
@@ -324,10 +357,10 @@
       '<div class="field"><label for="attBook"><strong>Book or hymn</strong></label><input type="text" id="attBook" data-att="book" value="' + esc(a.book) + '"></div>' +
       '<div class="field"><label for="attLine"><strong>Line</strong></label><input type="text" id="attLine" data-att="line" value="' + esc(a.line) + '"></div></div>' +
       '<div class="field"><label for="attForm"><strong>Form in the text</strong></label><input type="text" id="attForm" class="enc-greek" data-att="form" value="' + esc(a.form) + '" spellcheck="false"></div>' +
-      '<label class="regex-toggle" style="white-space:normal"><input type="checkbox" id="attStar" data-att="star"' + (a.star ? " checked" : "") + "> Attested through a derivative or related form (*)</label></div>";
+      (F.mode === "catalogue" && a.star && !F.deriv ? '<p class="help" style="margin:0">The headword is inferred, so this is logged with (*).</p>' : "") + "</div>";
   }
-  function hwField(v) {
-    return '<div class="field"><label for="hw"><strong>Headword</strong> <span class="help">Greek or Beta Code</span></label><div class="combo"><input type="text" id="hw" data-combo="head" value="' + esc(v) + '" autocomplete="off" spellcheck="false"></div></div>';
+  function hwField(v, label) {
+    return '<div class="field"><label for="hw"><strong>' + (label || "Headword") + '</strong> <span class="help">Greek or Beta Code</span></label><div class="combo"><input type="text" id="hw" data-combo="head" value="' + esc(v) + '" autocomplete="off" spellcheck="false"></div></div>';
   }
   function renderDesk(opts) {
     opts = opts || {};
@@ -339,9 +372,12 @@
       return;
     }
     let html = "";
-    if (F.mode === "catalogue") {
+    const d = F.deriv, pending = d && !d.base, adding = newDerivative();
+    html += d ? hwField(d.word, "Derivative") : hwField(F.mode === "catalogue" ? curItem().lemma : F.headword);
+    html += statusHtml() + contextHtml() + derivHtml();
+    if (pending) html += attHtml();
+    else if (F.mode === "catalogue") {
       const it = curItem();
-      html += hwField(it.lemma) + statusHtml() + contextHtml();
       if (F.items.length > 1) html += '<div class="enc-chips">' + F.items.map((x, i) => '<button type="button" class="' + (i === F.pick ? "btn" : "fig-dl") + ' enc-greek" data-act="pick" data-i="' + i + '">' + esc(x.lemma) + "</button>").join("") + "</div>";
       const rows = it.rows || it.entry.analyses.map((a) => ({ segmentation: a.seg, member1: a.m1, member1_category: a.m1c, member1_subcategory: a.m1s, member2: a.m2, member2_category: a.m2c, member2_subcategory: a.m2s, uncertain: a.unc ? "1" : "0" }));
       html += rows.map((r, i) => '<table class="paradigm-table" style="margin-bottom:.45rem"><tbody>' +
@@ -352,7 +388,6 @@
         (String(r.uncertain) === "1" ? '<tr><td colspan="2" class="cmp-warn">This analysis is uncertain.</td></tr>' : "") + "</tbody></table>").join("");
       html += attHtml();
     } else {
-      html += hwField(F.headword) + statusHtml() + contextHtml();
       html += '<div class="enc-sub">Suggestions</div>' + propsHtml();
       html += F.ana.map((a, i) => anaHtml(a, i, F.ana.length)).join("");
       html += '<div class="btn-row"><button type="button" class="fig-dl" data-act="more-ana">Add another analysis</button></div>';
@@ -361,11 +396,11 @@
     html += '<p class="cmp-warn" id="formErr" hidden></p>';
     body.innerHTML = html;
     const logged = F.mode === "catalogue" && isLogged(curItem().lemma, F.att);
-    const label = F.mode === "new" ? (F.editing ? "Save changes" : "Save compound") : (logged || (!hasAtt(F.att) && !F.typed) ? "Next word" : "Log attestation");
+    const label = adding ? "Save derivative" : F.mode === "new" ? (F.editing ? "Save changes" : "Save compound") : (logged || (!hasAtt(F.att) && !F.typed) ? "Next word" : "Log attestation");
     foot.innerHTML = '<div class="btn-row"><button type="button" class="btn" id="primary">' + label + "</button>" +
       (F.att && !F.typed && F.att.doc === (S.text && S.text.id) ? '<button type="button" class="btn btn-warn" id="notBtn">Not a compound</button>' : "") +
       '<button type="button" class="btn btn-warn" id="skipBtn">Skip</button></div>' +
-      '<p class="help enc-keys"><kbd>Enter</kbd> ' + esc(label.toLowerCase()) + (F.mode === "new" && F.props.length ? " · <kbd>1</kbd>–<kbd>" + F.props.length + "</kbd> suggestion" : "") + " · <kbd>X</kbd> not a compound · <kbd>N</kbd> skip · <kbd>B</kbd> back</p>";
+      '<p class="help enc-keys"><kbd>Enter</kbd> ' + esc(label.toLowerCase()) + (F.mode === "new" && !pending && F.props.length ? " · <kbd>1</kbd>–<kbd>" + F.props.length + "</kbd> suggestion" : "") + " · <kbd>X</kbd> not a compound · <kbd>N</kbd> skip · <kbd>B</kbd> back</p>";
     if (opts.focusPrimary && matchMedia("(min-width: 901px)").matches) $("primary").focus({ preventScroll: true });
     if (opts.focusId) {
       const el = $(opts.focusId);
@@ -385,6 +420,7 @@
     const id = attId(lemma, a);
     const had = store.att.get(id) || null;
     const row = { lemma, work: a.work, book: a.book, line: a.line, form: a.form || lemma, star: a.star ? 1 : 0, doc: a.doc || "misc", at: Date.now() };
+    if (a.deriv) row.deriv = a.deriv;
     put("att", id, row);
     return () => put("att", id, had);
   }
@@ -397,7 +433,7 @@
   }
   function after(undos, msg) {
     rebuildDerived(); classifyAll(); renderCounts();
-    toast(msg, () => { undos.forEach((u) => u()); rebuildDerived(); classifyAll(); renderReader(); renderCounts(); if (S.pos >= 0) openPos(S.pos, { noFocus: true }); });
+    toast(msg, () => { undos.slice().reverse().forEach((u) => u()); rebuildDerived(); classifyAll(); renderReader(); renderCounts(); if (S.pos >= 0) openPos(S.pos, { noFocus: true }); });
     goNext(1);
   }
   function commitNew() {
@@ -406,25 +442,71 @@
     if (!head || !E.hasGreek(head)) return showErr("Enter the headword in Greek or Beta Code.");
     const ana = F.ana.filter((a) => a.m1 || a.m2 || (a.seg && a.seg !== head));
     if (!ana.length) return showErr("Give at least one member, or mark the word as not a compound.");
+    const d = newDerivative(), derErr = d ? derivErr(d, head) : ""; if (derErr) return showErr(derErr);
     const attErr = validAtt(F.att); if (attErr) return showErr(attErr);
     const id = hash(head), prev = store.ent.get(id) || null;
     const cleaned = ana.map((a) => ({ seg: a.seg.trim(), m1: a.m1.trim(), m1c: a.m1c || (a.m1 ? "u" : ""), m1s: a.m1s, m2: a.m2.trim(), m2c: a.m2c || (a.m2 ? "u" : ""), m2s: a.m2s, unc: a.unc ? 1 : 0 }));
+    const include = F.inc.split(",").map((s) => s.trim()).filter(Boolean);
+    if (d && !include.includes(d.word)) include.push(d.word);
     const entry = { lemma: head, inferred: F.inferred ? 1 : 0, analyses: cleaned, member_count: parseInt(F.mc, 10) || 2, link_to: F.link.trim(),
-      include: F.inc.split(",").map((s) => s.trim()).filter(Boolean), note: F.note.trim(), at: Date.now() };
+      include, note: F.note.trim(), at: Date.now() };
     putEntry(id, entry);
     const undos = [() => putEntry(id, prev)];
+    if (F.att) F.att.star = !!(d || F.inferred);
     if (hasAtt(F.att)) undos.push(logAtt(head, F.att));
-    after(undos, "Saved " + head);
+    if (d) settleDerivative(undos, d.word, head, "");
+    after(undos, d ? "Saved " + head + " with its derivative " + d.word : "Saved " + head);
   }
   function commitCatalogue() {
     flushFields();
-    const it = curItem();
+    const it = curItem(), d = newDerivative();
+    if (d) return commitDerivative(it, d);
     if (!hasAtt(F.att)) { if (F.typed) showErr("Give the line for this attestation."); else goNext(1); return; }
     if (isLogged(it.lemma, F.att)) return goNext(1);
     const attErr = validAtt(F.att); if (attErr) return showErr(attErr);
     after([logAtt(it.lemma, F.att)], "Logged " + it.lemma + " at line " + F.att.line);
   }
-  function primary() { if (!F) return; if (F.mode === "new") commitNew(); else commitCatalogue(); }
+  function derivErr(d, base) {
+    if (!d.word || !E.hasGreek(d.word)) return "Enter the derivative in Greek or Beta Code.";
+    if (E.strip(d.word) === E.strip(base)) return "The base has to be a different compound from the derivative.";
+    const own = store.ent.get(hash(d.word));
+    if (own && (own.include || []).length) return own.lemma + " has derivatives of its own. Move them to the base under Headword details first.";
+    return "";
+  }
+  // Whatever the page held for this word as a compound of its own now belongs to
+  // the base, and so does any earlier log of this same token.
+  function settleDerivative(undos, word, base, deriv) {
+    const a = F.att, token = (r) => hasAtt(a) && r.work === a.work && r.book === a.book && r.line === a.line && r.form === a.form;
+    [...store.att.entries()].filter(([, r]) => r.lemma !== base && (r.lemma === word || token(r))).forEach(([id, r]) => {
+      put("att", id, null);
+      undos.push(() => put("att", id, r));
+      if (r.lemma === word) undos.push(logAtt(base, { ...r, star: true, deriv }));
+    });
+    const id = hash(word), own = store.ent.get(id);
+    if (own) { putEntry(id, null); undos.push(() => putEntry(id, own)); }
+  }
+  function commitDerivative(it, d) {
+    const err = derivErr(d, it.lemma) || validAtt(F.att); if (err) return showErr(err);
+    const id = hash(it.lemma), e = store.ent.get(id);
+    if (!e && !hasAtt(F.att) && ![...store.att.values()].some((a) => a.lemma === d.word)) return showErr("Give the line for this attestation.");
+    const undos = [], deriv = e ? "" : d.word;
+    if (e && !(e.include || []).includes(d.word)) {
+      putEntry(id, { ...e, include: [...(e.include || []), d.word], at: Date.now() });
+      undos.push(() => putEntry(id, e));
+    }
+    if (hasAtt(F.att)) undos.push(logAtt(it.lemma, { ...F.att, star: true, deriv }));
+    settleDerivative(undos, d.word, it.lemma, deriv);
+    after(undos, "Logged " + d.word + " under " + it.lemma);
+  }
+  function primary() {
+    if (!F) return;
+    if (F.deriv && !F.deriv.base) {
+      const b = $("base");
+      if (b && b.value.trim()) setBase(b.value, "primary"); else showErr("Choose the base compound, or type a new one.");
+      return;
+    }
+    if (F.mode === "new") commitNew(); else commitCatalogue();
+  }
   function markNot() {
     const x = tokenAt(S.pos);
     if (!x || (F && F.typed)) return;
@@ -445,8 +527,10 @@
       const v = toGreek(el.value);
       if (v !== el.value) { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); }
     });
+    const hw = $("hw");
+    if (hw && F.deriv) F.deriv.word = toGreek(hw.value).trim();
     if (F.mode === "new") {
-      const hw = $("hw"); if (hw) F.headword = toGreek(hw.value).trim();
+      if (hw && !F.deriv) F.headword = toGreek(hw.value).trim();
       const read = (id) => { const e = $(id); return e ? e.value : null; };
       const mc = read("mc"), link = read("link"), inc = read("inc"), note = read("note");
       if (mc != null) F.mc = mc; if (link != null) F.link = toGreek(link); if (inc != null) F.inc = toGreek(inc); if (note != null) F.note = note;
@@ -493,6 +577,7 @@
     if (!input || !it) return;
     input.value = it.value;
     if (input.dataset.combo === "member") applyMember(+input.dataset.a, +input.dataset.slot, it.value, input);
+    else if (input.dataset.combo === "base") setBase(it.value, "primary");
     else openHeadword(it.value);
   }
   function setField(id, value, cls) {
@@ -528,9 +613,58 @@
   function handAtt(att) {
     return { work: att ? att.work : (S.text ? S.text.work : ""), book: att ? att.book : (S.text ? S.text.book : ""), line: "", form: "", star: false, doc: att ? att.doc : (S.text ? S.text.id : "misc") };
   }
+  /* ---- derivatives ---------------------------------------------------- */
+  // A derivative takes no analysis of its own. The analysis belongs to its base,
+  // and the derivative counts under the base with a star. While the box is ticked,
+  // F is the form for the base and F.deriv holds the word itself; F.deriv.back is
+  // the word's own form, ready for when the box is unticked.
+  function newDerivative() { return F.deriv && !F.deriv.known ? F.deriv : null; }
+  function listedBase(v) {
+    const own = store.ent.get(hash(v)) || [...store.ent.values()].find((e) => E.strip(e.lemma) === E.strip(v));
+    if (own) return [{ lemma: own.lemma, entry: own }];
+    const exact = ix.items.get(v);
+    return exact ? [exact] : ix.byKey.get(E.strip(v)) || null;
+  }
+  function setDerivative(on) {
+    flushFields();
+    if (on) {
+      F.deriv = { word: F.mode === "catalogue" ? curItem().lemma : F.headword, base: "", known: false, back: F, star: !!(F.att && F.att.star) };
+      renderDesk({ focusId: "base" });
+      return;
+    }
+    const d = F.deriv, att = F.att;
+    if (att) att.star = d.star;
+    F.deriv = null;
+    if (!d.back) { F.ctx = null; openHeadword(d.word); return; }
+    F = d.back; F.deriv = null; F.att = att;
+    if (F.mode === "new" && F.headword !== d.word) { F.headword = d.word; F.props = E.decompose(ix, d.word, { limit: 6 }); }
+    renderDesk();
+  }
+  function setBase(value, focusId) {
+    const d = F && F.deriv;
+    if (!d) return;
+    const v = toGreek(value).trim(), hw = $("hw");
+    if (hw) d.word = toGreek(hw.value).trim();
+    if (v === d.base) { if (focusId && $(focusId)) $(focusId).focus({ preventScroll: true }); return; }
+    const att = F.att, typed = F.typed;
+    if (!v) {
+      if (d.back) { F = d.back; F.att = att; F.deriv = { ...d, base: "" }; }
+      renderDesk({ focusId: "base" });
+      return;
+    }
+    if (E.strip(v) === E.strip(d.word)) { showErr("The base has to be a different compound from the derivative."); return; }
+    const items = listedBase(v);
+    if (items) { F = catalogueForm(items, null, null); F.att = att; }
+    // A new base is known only from its derivative so far, as with most inferred headwords.
+    else { F = newForm(v, att, null); F.inferred = true; }
+    F.typed = typed;
+    F.deriv = { ...d, base: items ? items[0].lemma : v, known: false };
+    renderDesk({ focusId: focusId || "primary" });
+  }
   function openHeadword(word, focusId) {
     const v = toGreek(word).trim();
     if (!v) return;
+    if (F && F.deriv) { F.deriv.word = v; renderDesk({ focusId: focusId || "primary" }); return; }
     const prev = F ? F.att : null;
     const keep = !!(prev && prev.form && sameWord(v, prev.form));
     const att = keep ? prev : handAtt(prev);
@@ -551,7 +685,7 @@
   }
   function commitHeadword(el, focusId) {
     const v = toGreek(el.value).trim();
-    const cur = !F ? "" : F.mode === "catalogue" ? curItem().lemma : F.headword;
+    const cur = !F ? "" : F.deriv ? F.deriv.word : F.mode === "catalogue" ? curItem().lemma : F.headword;
     if (v && v !== cur) openHeadword(v, focusId);
     else if (focusId && $(focusId)) $(focusId).focus({ preventScroll: true });
   }
@@ -648,16 +782,13 @@
   });
   body.addEventListener("change", (ev) => {
     const el = ev.target;
-    if (el.id === "hw") return;
-    if (el.dataset.att === "star" && F && F.att) { F.att.star = el.checked; return; }
+    if (el.id === "hw" || el.id === "base") return;
+    if (el.id === "derivBox") { setDerivative(el.checked); return; }
     if (el.id === "mc") { F.touchedMc = true; F.mc = el.value; return; }
     if (el.id === "link") { F.touchedLink = true; F.link = toGreek(el.value); el.value = F.link; syncExtras(); return; }
     if (el.id === "inferred") {
       F.inferred = el.checked;
-      if (el.checked && F.att) {
-        F.att.star = true; const s = $("attStar"); if (s) s.checked = true;
-        if (!F.inc && E.strip(F.att.form) !== E.strip(F.headword)) { F.inc = F.att.form; const inc = $("inc"); if (inc) inc.value = F.inc; }
-      }
+      if (el.checked && F.att && !F.inc && E.strip(F.att.form) !== E.strip(F.headword)) { F.inc = F.att.form; const inc = $("inc"); if (inc) inc.value = F.inc; }
       return;
     }
     const i = el.dataset.a, field = el.dataset.field;
@@ -680,7 +811,8 @@
     else if (act === "more-ana") { flushFields(); const x = blankAna(); x.seg = F.ana[0] ? F.ana[0].seg : F.headword; F.ana.push(x); renderDesk({ focusId: "m1_" + (F.ana.length - 1) }); }
     else if (act === "more") { const m = $("more"); m.hidden = !m.hidden; detailsOpen = !m.hidden; b.textContent = "Headword details " + (m.hidden ? "▾" : "▴"); }
     else if (act === "link") { F.touchedLink = true; F.link = [F.link, b.dataset.v].filter(Boolean).join(", "); syncExtras(); }
-    else if (act === "pick") { F.pick = +b.dataset.i; renderDesk(); }
+    else if (act === "pick") { F.pick = +b.dataset.i; if (F.deriv) F.deriv.base = curItem().lemma; renderDesk(); }
+    else if (act === "base") setBase(b.dataset.v, "primary");
   });
   body.addEventListener("focusin", (ev) => { if (ev.target.dataset.combo && ev.target.dataset.combo === "member") comboOpen(ev.target); });
   body.addEventListener("focusout", (ev) => {
@@ -695,6 +827,10 @@
       }
     }
     if (el.id === "hw") commitHeadword(el, ev.relatedTarget && ev.relatedTarget.id ? ev.relatedTarget.id : null);
+    if (el.id === "base") {
+      const to = ev.relatedTarget;
+      if (!to || (to.dataset.act !== "base" && to.id !== "derivBox")) setBase(el.value, to && to.id ? to.id : null);
+    }
   });
   body.addEventListener("keydown", (ev) => {
     const el = ev.target;
@@ -708,6 +844,7 @@
       if (open && Combo.idx >= 0) { comboPick(Combo.idx); return; }
       comboClose();
       if (el.id === "hw") { commitHeadword(el, "primary"); return; }
+      if (el.id === "base") { setBase(el.value, "primary"); return; }
       primary();
     }
   });
@@ -811,8 +948,7 @@
       rebuildDerived(); classifyAll(); renderCounts(); renderEntries();
       toast("Deleted " + e.lemma, () => { putEntry(id, e); gone.forEach(([aid, a]) => put("att", aid, a)); rebuildDerived(); classifyAll(); renderCounts(); renderEntries(); });
     } else if (t.dataset.unatt) {
-      const a = store.att.get(t.dataset.unatt);
-      put("att", t.dataset.unatt, null); refreshDone(); renderEntries();
+      put("att", t.dataset.unatt, null); rebuildDerived(); classifyAll(); renderReader(); renderEntries();
     } else if (t.dataset.unnot) {
       putNot(t.dataset.unnot, null); renderEntries();
     }
@@ -831,14 +967,15 @@
       .map((a) => [a.lemma + (a.star ? " (*)" : ""), a.work, a.book, a.line]);
   }
   function includeRows() {
-    const out = [];
-    [...store.ent.values()].forEach((e) => (e.include || []).forEach((i) => out.push([e.lemma, i])));
-    return out;
+    const out = new Map(), add = (lemma, w) => out.set(lemma + "|" + w, [lemma, w]);
+    store.ent.forEach((e) => (e.include || []).forEach((w) => add(e.lemma, w)));
+    store.att.forEach((a) => { if (a.deriv) add(a.lemma, a.deriv); });
+    return [...out.values()];
   }
   const FILES = {
     analysis: { name: "ncompounds_analysis.csv", head: () => D.columns, rows: analysisRows, about: "One row per analysis of each new compound." },
     attestations: { name: "ncompounds_attestations.csv", head: () => ["compound", "work", "book", "line_num"], rows: attestationRows, about: "Every logged occurrence, including catalogue compounds." },
-    include: { name: "ncompounds_include.csv", head: () => ["lemma", "include"], rows: includeRows, about: "Derivatives to count with a new compound." },
+    include: { name: "ncompounds_include.csv", head: () => ["lemma", "include"], rows: includeRows, about: "Derivatives to count with a compound." },
   };
   function renderExport() {
     const inc = [...store.ent.values()].filter(incomplete).length;
