@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Cardo:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css" />
   <link rel="stylesheet" href="assets/css/compound-encoder.css?v=4" />
-  <link rel="stylesheet" href="assets/css/verse-encoder.css?v=1" />
+  <link rel="stylesheet" href="assets/css/verse-encoder.css?v=2" />
 </head>
 <body class="page-prosody" data-sheet-url="https://script.google.com/macros/s/AKfycbx5U3c-Wmoqn6ABkD88cQGS6FuiY0Rggp7XcU5P36Rp3JlHtQZTGpaAwleN7qclxqqfqA/exec">
 
@@ -52,7 +52,7 @@
           <ul>
             <li><strong>Scansion</strong>: click a line to open it. Click a syllable to change its weight, the length of its vowel, or where it divides. You can also pick another foot pattern or correct the text itself. The line is scanned again at once, and everything below follows.</li>
             <li><strong>Digamma</strong>: words underlined in green once began with digamma. The page says what stands before each one and whether the digamma is observed or neglected there.</li>
-            <li><strong>Infinitives</strong>: words tinted yellow are active infinitives. The page puts each rival ending into the line and scans it again, so you can see which would also fit.</li>
+            <li><strong>Infinitives</strong>: words tinted yellow are active infinitives. The page puts each rival ending into the line and scans it again, so you can see which would also fit. It then fills in its own answers, tinted, for you to confirm or change. A field that takes Greek also takes Beta Code.</li>
             <li><strong>Overlong syllables, Wernicke's Law, Hermann's bridge</strong>: each case is listed under the line with the page's reading. Confirm it or correct it.</li>
           </ul>
           <p>Lines marked <em>review</em> are the ones the page could not settle: no scansion, a costly licence, two readings that are nearly as good, or a disagreement with the scansion stored on the site. Start with those.</p>
@@ -87,7 +87,7 @@
       <div class="card">
         <h2>2. Encode</h2>
         <p class="help" style="margin-top:-.35rem;"><span class="w vw-wau">Digamma</span> word · <span class="w vw-inf">Infinitive</span> · <span class="vs-chip vs-warn">review</span> the page was unsure · <span class="vs-chip vs-done">checked</span> · <span class="vs-chip">changed</span> corrected by hand</p>
-        <div class="enc-grid">
+        <div class="enc-grid vs-grid">
           <div class="table-wrap enc-lines" id="lines"></div>
           <div class="enc-form">
             <div class="enc-body" id="deskBody"></div>
@@ -116,10 +116,11 @@
 </main>
 <div class="enc-toast" id="toast" role="status" hidden></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/beta-code-js@3.1.0/bundle/beta-code.js"></script>
   <script src="assets/js/mopsos-text.js"></script>
   <script src="assets/js/mopsos-shared.js"></script>
-  <script src="assets/js/verse-engine.js?v=1"></script>
+  <script src="assets/js/verse-engine.js?v=2"></script>
   <script src="assets/js/encoder-store.js?v=3"></script>
-  <script src="assets/js/verse-encoder.js?v=1"></script>
+  <script src="assets/js/verse-encoder.js?v=2"></script>
 </body>
 </html>

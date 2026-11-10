@@ -78,7 +78,7 @@ function unitOf(textId, n) {
 /* ---- morphology: lemmas and the encoded infinitives --------------------------- */
 console.log("Reading morphology.csv");
 const MORPH_WORK = { Iliad: "Iliad", Odyssey: "Odyssey", Theogony: "Theogony", "Works and Days": "Works and Days" };
-const byVerse = new Map(), formLemma = new Map(), knownInf = new Set();
+const byVerse = new Map(), formLemma = new Map(), knownInf = new Set(), infSpelling = new Map();
 readCsv(path.join(DATA, "morphology", "morphology.csv")).forEach((r) => {
   const key = r.work + "|" + r.book + "|" + r.verse;
   if (!byVerse.has(key)) byVerse.set(key, []);
@@ -88,7 +88,13 @@ readCsv(path.join(DATA, "morphology", "morphology.csv")).forEach((r) => {
   if (!formLemma.has(row.k)) formLemma.set(row.k, new Map());
   const m = formLemma.get(row.k);
   m.set(row.lemma + "|" + row.pos, (m.get(row.lemma + "|" + row.pos) || 0) + 1);
-  if (row.pos === "v" && row.mood === "n") knownInf.add(row.k);
+  if (row.pos === "v" && row.mood === "n") {
+    knownInf.add(row.k);
+    // the form as the texts spell it, with a final grave turned back to an acute
+    const shown = r.form.normalize("NFD").replace(/\u0300/g, "\u0301").replace(/[\u2019\u02BC'\u1FBD]/g, "").normalize("NFC");
+    if (!infSpelling.has(row.k)) infSpelling.set(row.k, new Map());
+    infSpelling.get(row.k).set(shown, (infSpelling.get(row.k).get(shown) || 0) + 1);
+  }
 });
 const bestLemma = new Map();
 formLemma.forEach((m, k) => { const top = [...m.entries()].sort((a, b) => b[1] - a[1])[0][0].split("|"); bestLemma.set(k, { lemma: top[0], pos: top[1] }); });
@@ -233,7 +239,10 @@ ALL.forEach((L) => {
     tok.stemSyllables = tok.stem && tok.stem !== "0" ? tok.stem.length : 0;
     tok.signature = V.signature(tok.ending, tok.conj, tok.stemSyllables);
     const alts = w.elided ? [] : V.infinitiveAlternatives(w.form, tok);
-    tok.alts = alts.map((x) => ({ ...x, attested: knownInf.has(strip(x.form)) }));
+    tok.alts = alts.map((x) => {
+      const seen = infSpelling.get(strip(x.form));
+      return { ...x, attested: knownInf.has(strip(x.form)), shown: seen ? [...seen.entries()].sort((a, b) => b[1] - a[1])[0][0] : x.form };
+    });
     if (L.a.ok && alts.length) {
       const res = V.necessity(L.text, i, alts, { hints: L.hints, wau: L.wau.map((x) => x[0]) }).results;
       tok.alts.forEach((x, j) => { x.verdict = res[j] ? res[j].verdict : ""; });
@@ -310,6 +319,8 @@ ALL.forEach((L, li) => {
     const fams = [];
     [[i - 1, i], [i, i + 1]].forEach(([x, y]) => {
       if (x < 0 || y >= k.length) return;
+      // a particle, conjunction, preposition, article or pronoun beside the word is not a formula
+      if (/^[gcrlp]$/.test(L.info[x === i ? y : x].pos)) return;
       const m = pairLemma.get(lemKey(L, x) + " " + lemKey(L, y));
       const total = [...m.values()].reduce((s, v) => s + v.n, 0);
       if (total > 1) fams.push({ total, here: k[x] + " " + k[y], variants: [...m.entries()].sort((p, q) => q[1].n - p[1].n).slice(0, 6).map(([fk, v]) => [v.form, v.n, fk === k[x] + " " + k[y] ? 1 : 0]) });
@@ -360,7 +371,7 @@ TEXTS.forEach((t) => {
     if (L.wau.length) o.w = L.wau;
     if (L.ref) o.r = L.ref;
     if (L.unit !== t.id) o.u = L.unit;
-    if (L.inf.length) o.i = L.inf.map((x) => ({ wi: x.wi, lemma: x.lemma, tense: x.tense, voice: x.voice, conj: x.conj, morph: x.morph, stem: x.stem, src: x.src, rep: x.rep.n ? x.rep : undefined, fam: x.family ? x.family.variants : undefined, att: x.alts.filter((a) => a.attested).map((a) => a.form) }));
+    if (L.inf.length) o.i = L.inf.map((x) => ({ wi: x.wi, lemma: x.lemma, tense: x.tense, voice: x.voice, conj: x.conj, morph: x.morph, stem: x.stem, src: x.src, rep: x.rep.n ? x.rep : undefined, fam: x.family ? x.family.variants : undefined, att: x.alts.filter((a) => a.attested).map((a) => a.shown) }));
     if (L.density) o.d = L.density;
     const inn = L.innov.filter((x) => !/synizesis|stop and liquid|digamma|-έειν/.test(x.type));   // the page works the others out itself
     if (inn.length) o.c = inn.map((x) => [x.wi, x.type]);

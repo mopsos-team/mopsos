@@ -21,15 +21,35 @@
 .vs-desk .syl-col.ovq .syl-txt { border-bottom: 2px dotted #a61c00; }
 .vs-desk .syl-col.lic .syl-mark { color: var(--clay, #c0512c); }
 .vs-desk .syl-col.hand .syl-mark { font-weight: 700; text-decoration: underline; }
-.vs-row { display: flex; flex-wrap: wrap; gap: .45rem .6rem; align-items: end; }
-.vs-row .field { flex: 1 1 130px; margin-bottom: .45rem; }
+/* Fields sit side by side while there is room and drop below one another when
+   there is not. A wide field always takes the whole row. */
+.vs-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 185px), 1fr)); gap: .5rem .6rem; align-items: end; margin-bottom: .45rem; }
+.vs-row .field { margin-bottom: 0; min-width: 0; }
+.vs-row .vs-wide { grid-column: 1 / -1; }
+.vs-row select, .vs-row input[type="text"] { width: 100%; box-sizing: border-box; min-width: 0; }
+.vs-row label .help { font-weight: 400; font-size: .8rem; }
+select.vs-pat { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; font-size: .82rem; }
+.vs-filled { margin: .1rem 0 .4rem; font-size: .8rem; }
+/* Filled in by the page and not yet confirmed: the yellow of a suggested word. */
+.enc-form .vs-item select.auto, .enc-form .vs-item input.auto { background-color: #fbedbc; border-color: #f9dc78; }
+.vs-grid { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); }
+/* One column on a narrow page, as on the other encoders. */
+@media (max-width: 900px) {
+  .vs-grid { grid-template-columns: minmax(0, 1fr); }
+}
 .vs-item { margin-top: .5rem; }
 .vs-item .vs-head { display: flex; justify-content: space-between; gap: .5rem; align-items: baseline; font-weight: 700; font-size: .92rem; }
 .vs-item .vs-head .enc-greek { font-weight: 400; }
 .vs-item .vs-machine { margin: .15rem 0 .4rem; font-size: .88rem; }
 .vs-item.answered { border-left-color: #e7a2c8; background: rgba(243, 208, 227, .25); }
-.vs-alt-scan { display: block; font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; font-size: .74rem; color: var(--muted); white-space: nowrap; }
-.vs-alts td:last-child, .vs-alts th:last-child { white-space: nowrap; }
+/* The table of rival endings keeps its words whole and scrolls sideways if the
+   page is too narrow for it. */
+.vs-table { overflow-x: auto; margin-bottom: .4rem; }
+.vs-alts { width: 100%; table-layout: auto; margin-bottom: 0; }
+.vs-alts th, .vs-alts td { overflow-wrap: normal; word-break: normal; hyphens: manual; }
+.vs-alts td:first-child { min-width: 8rem; }
+.vs-alts th:last-child, .vs-alts td:last-child { white-space: nowrap; }
+.vs-alt-scan { display: block; font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; font-size: .74rem; color: var(--muted); }
 .vs-alts td.yes { color: #239938; font-weight: 600; }
 .vs-alts td.no { color: var(--muted); }
 .vs-alts td.licence { color: #a61c00; }

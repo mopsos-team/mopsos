@@ -13,7 +13,7 @@
 (function () {
   "use strict";
   const V = window.VerseEngine;
-  const { $, esc, plural, toast, saveFile, csv, createStore } = window.EncoderKit;
+  const { $, esc, plural, toast, toGreek, saveFile, csv, createStore } = window.EncoderKit;
   const DATA = "assets/data/verse/";
   const REVIEW_COST = 2.4, REVIEW_MARGIN = 0.5;
   const strip = V.strip;
@@ -94,15 +94,15 @@
     overlong: [
       { name: "answer", label: "Where the heavy syllable comes from", options: [["inherited", "inherited material"], ["Ionic innovation", "an Ionic innovation"], ["Aeolic or artificial", "an Aeolic or artificial ending"], ["unsure", "cannot tell"]] },
       { name: "restorable", label: "Can an older form remove it?", options: [["yes", "yes"], ["no", "no"], ["unsure", "cannot tell"]] },
-      { name: "older", label: "The older form", text: true },
+      { name: "older", label: "The older form", text: true, greek: true },
     ],
     wernicke: [{ name: "answer", label: "Wernicke's Law", options: [["breach", "breached"], ["no breach", "not breached"], ["unsure", "cannot tell"]] }],
     hermann: [{ name: "answer", label: "Hermann's bridge", options: [["breach", "breached"], ["no breach", "not breached"], ["unsure", "cannot tell"]] }],
     infinitive: [
-      { name: "answer", label: "Could another ending have stood here?", options: [["required", "no, the metre needs this one"], ["replaceable", "yes, as the line stands"], ["licence", "yes, with a licence"], ["word order", "only with a different word order"], ["unsure", "cannot tell"]] },
+      { name: "answer", label: "Could another ending have stood here?", options: [["required", "no, the metre needs this one"], ["replaceable", "yes, as the line stands"], ["licence", "yes, with a licence"], ["word order", "only with a different word order"], ["no rival", "no rival ending exists"], ["unsure", "cannot tell"]] },
       { name: "formula", label: "Its place in the formula", options: [["model", "the model form"], ["modification", "a modification"], ["not formulaic", "not formulaic"], ["unsure", "cannot tell"]] },
       { name: "reading", label: "Does a variant reading change the ending?", options: [["no", "no"], ["yes", "yes"], ["not checked", "not checked"]] },
-      { name: "variants", label: "The readings", text: true },
+      { name: "variants", label: "The readings", help: "Greek or Beta Code. Filled with the rival forms found elsewhere in the texts that would scan here; change it to what the editions read.", text: true, greek: true, wide: true },
     ],
     innovation: [
       { name: "answer", label: "Is it one?", options: YESNO },
@@ -113,6 +113,28 @@
   const partName = (s) => (s.part === "P" ? "princeps" : "biceps") + " of foot " + s.foot;
   const sylText = (l, s) => l.res.text.slice(s.s, s.e).replace(/[,.;·:—!?()"«»·;]/g, "").replace(/\s+/g, " ").trim();
   const TENSE = { p: "present", a: "aorist", f: "future", r: "perfect", t: "future perfect" }, VOICE = { a: "active", p: "passive" }, CONJ = { t: "thematic", a: "athematic", s: "sigmatic", c: "contract" };
+
+  const NEC_FILL = { "required by the metre": "required", "replaceable as the line stands": "replaceable", "replaceable with a licence": "licence", "no rival ending": "no rival", "no rival of the other dialect": "no rival" };
+  /* A first reading of the token's place in its formula, from what repeats. The
+   * same two words in the same forms is the model when it is the commonest way
+   * they occur together, and a modification when another form is commoner. */
+  function formulaPlace(t) {
+    const fam = t.fam || [], rep = t.rep && t.rep.n ? t.rep.n : 0;
+    if (!rep && fam.reduce((s, v) => s + v[1], 0) < 2) return "not formulaic";
+    if (fam.length < 2) return "model";
+    const here = fam.find((v) => v[2]);
+    return here && here[1] >= fam[0][1] ? "model" : "modification";
+  }
+  /* Roman typing to Greek, word by word, for the fields that hold Greek. A word
+   * that starts with a capital, ends in a full stop or holds a digit is left as
+   * typed, so that West, codd. and P.Oxy. 223 survive beside the reading. */
+  function greekTyped(value) {
+    return String(value || "").split(/(\s+)/).map((tok) => {
+      if (!/[a-z]/i.test(tok) || /[Ͱ-Ͽἀ-῿]/.test(tok) || /^[A-Z]/.test(tok) || /\d/.test(tok) || /\.$/.test(tok)) return tok;
+      const m = /^(.*?)([,;:·]*)$/.exec(tok);
+      return toGreek(m[1]) + m[2];
+    }).join("").normalize("NFC");
+  }
 
   function buildItems(l) {
     const res = l.res, m = res.measures, out = [], words = res.words;
@@ -126,7 +148,12 @@
       const nec = alts.length ? V.necessity(l.text, t.wi, alts, l.opts).results : [];
       const other = /Ionic/.test(sig) ? nec.filter((x) => !/Ionic/.test(x.signature)) : nec.filter((x) => /Ionic/.test(x.signature));
       const machine = !alts.length ? "no rival ending" : !other.length ? "no rival of the other dialect" : other.some((x) => x.verdict === "yes") ? "replaceable as the line stands" : other.some((x) => x.verdict === "licence") ? "replaceable with a licence" : "required by the metre";
-      add("infinitive", "i" + t.wi, t.wi, machine, { tok: t, ending, sig, nec, att: new Set((t.att || []).map(strip)) });
+      // The spelling the texts themselves give each rival form, where they have it.
+      const att = new Map((t.att || []).map((f) => [strip(f), f]));
+      nec.forEach((x) => { x.shown = att.get(strip(x.form)) || x.form; x.attested = att.has(strip(x.form)); });
+      // What the page fills in for the reader to confirm or change.
+      const fill = { answer: NEC_FILL[machine] || "", formula: formulaPlace(t), variants: nec.filter((x) => x.attested && x.verdict !== "no").map((x) => x.shown).join(", ") };
+      add("infinitive", "i" + t.wi, t.wi, machine, { tok: t, ending, sig, nec, fill });
     });
     l.wau.forEach(([wi, id]) => {
       const s = site.get(wi), verdict = s ? V.wauVerdict(s) : "no evidence";
@@ -271,8 +298,8 @@
       body += '<p class="vs-machine">' + esc([TENSE[t.tense] || t.tense, VOICE[t.voice] || t.voice, CONJ[t.conj] || t.conj].filter(Boolean).join(" ")) + " of <span class=\"enc-greek\">" + esc(t.lemma || "?") + "</span> · ending <span class=\"enc-greek\">-" + esc(it.ending || "?") + "</span> · " + esc(it.sig || "no dialect mark") +
         (t.src !== "corpus" ? ' · <span class="cmp-warn">' + esc(t.src === "team sheet" ? "encoded by the team" : t.src === "known form" ? "form known from the corpus, not yet checked here" : "suggested, not yet checked") + "</span>" : "") + "</p>";
       if (it.nec.length) {
-        body += '<table class="paradigm-table vs-alts"><thead><tr><th>Instead</th><th>Dialect</th><th>Would it scan?</th></tr></thead><tbody>' + it.nec.map((x) =>
-          '<tr><td><span class="pdg-form">' + esc(x.form) + "</span>" + (it.att.has(strip(x.form)) ? "" : '<span class="pdg-c">not attested</span>') + (x.scansion ? '<span class="vs-alt-scan">' + esc(x.scansion) + "</span>" : "") + "</td><td>" + esc(x.signature) + '</td><td class="' + x.verdict + '">' + (x.verdict === "yes" ? "yes" : x.verdict === "licence" ? "with a licence" : "no") + "</td></tr>").join("") + "</tbody></table>";
+        body += '<div class="vs-table"><table class="paradigm-table vs-alts"><thead><tr><th>Instead</th><th>Dialect</th><th>Would it scan?</th></tr></thead><tbody>' + it.nec.map((x) =>
+          '<tr><td><span class="pdg-form">' + esc(x.shown) + "</span>" + (x.attested ? "" : '<span class="pdg-c">not attested</span>') + (x.scansion && x.verdict !== "no" ? '<span class="vs-alt-scan">' + esc(x.scansion) + "</span>" : "") + "</td><td>" + esc(x.signature) + '</td><td class="' + x.verdict + '">' + (x.verdict === "yes" ? "yes" : x.verdict === "licence" ? "with a licence" : "no") + "</td></tr>").join("") + "</tbody></table></div>";
       }
       body += '<p class="vs-machine"><strong>The page reads:</strong> ' + esc(it.machine) + ".</p>";
       if (t.rep && t.rep.n) body += '<p class="vs-machine">Repeated ' + plural(t.rep.n, "more time") + ': <span class="enc-greek">' + esc(t.rep.text) + '</span> <span class="small-muted">' + esc(t.rep.refs.join(", ")) + (t.rep.n > t.rep.refs.length ? "…" : "") + "</span></p>";
@@ -286,11 +313,18 @@
       body += '<p class="vs-machine">' + (s ? 'Syllable <span class="enc-greek">' + esc(sylText(l, s)) + "</span> · " : "") + "<strong>The page reads:</strong> " + esc(it.machine) + "." +
         (it.type === "overlong" && (it.hint || it.older) ? " Suggested: " + esc([it.hint, it.older ? "older " + it.older : ""].filter(Boolean).join(", ")) + "." : "") + "</p>";
     }
-    const inputs = fields.map((f) => '<div class="field"><label><strong>' + esc(f.label) + "</strong></label>" + (f.text
-      ? '<input type="text" class="enc-greek" data-item="' + esc(it.key) + '" data-f="' + f.name + '" value="' + esc(rec[f.name] || "") + '" autocomplete="off" spellcheck="false">'
-      : '<select data-item="' + esc(it.key) + '" data-f="' + f.name + '">' + opt(f.options, rec[f.name]) + "</select>") + "</div>").join("");
+    // Until the reader saves an answer, the fields show what the page filled in.
+    const fill = it.rec ? {} : it.fill || {};
+    const filled = Object.keys(fill).some((k) => fill[k]);
+    const inputs = fields.map((f) => {
+      const v = it.rec ? rec[f.name] || "" : fill[f.name] || "", auto = !it.rec && fill[f.name] ? " auto" : "";
+      return '<div class="field' + (f.wide ? " vs-wide" : "") + '"><label><strong>' + esc(f.label) + "</strong>" + (f.help ? ' <span class="help">' + esc(f.help) + "</span>" : "") + "</label>" + (f.text
+        ? '<input type="text" class="enc-greek' + auto + '" data-item="' + esc(it.key) + '" data-f="' + f.name + '"' + (f.greek ? ' data-greek="1"' : "") + ' value="' + esc(v) + '" autocomplete="off" spellcheck="false">'
+        : '<select class="' + auto.trim() + '" data-item="' + esc(it.key) + '" data-f="' + f.name + '">' + opt(f.options, v) + "</select>") + "</div>";
+    }).join("");
     return '<div class="word-inline vs-item' + (it.rec ? " answered" : "") + '" data-key="' + esc(it.key) + '"><div class="vs-head"><span>' + esc(TITLES[it.type]) + (it.form ? ' · <span class="enc-greek">' + esc(it.form) + "</span>" : "") + '</span><span class="small-muted">' + (it.rec ? "answered" : "") + "</span></div>" + body +
-      '<div class="vs-row">' + inputs + '<div class="field" style="flex:2 1 200px"><label><strong>Note</strong></label><input type="text" data-item="' + esc(it.key) + '" data-f="note" value="' + esc(rec.note || "") + '" autocomplete="off"></div></div></div>';
+      (filled ? '<p class="help vs-filled">The tinted fields were filled in by the page. Change any that are wrong. They are saved when you change one or mark the line checked.</p>' : "") +
+      '<div class="vs-row">' + inputs + '<div class="field vs-wide"><label><strong>Note</strong></label><input type="text" data-item="' + esc(it.key) + '" data-f="note" value="' + esc(rec.note || "") + '" autocomplete="off"></div></div></div>';
   }
   function renderDesk() {
     const l = cur(), body = $("deskBody"), foot = $("deskFoot");
@@ -307,12 +341,15 @@
       if (l.resW) html += '<p class="help" style="margin:.1rem 0;">With digamma counted: ' + (l.resW.ok ? '<span style="font-family:\'IBM Plex Mono\',monospace">' + esc(V.scansionString(l.resW)) + "</span> · " + (l.resW.cost < res.cost - 0.3 ? "easier, so the digamma helps the line" : l.resW.cost > res.cost + 0.3 ? "harder, so the line goes against it" : "no different") : "the line does not scan") + ".</p>";
       html += sylControls(l);
     }
-    const ranked = l.free.ranked.slice(0, 8).map((r) => [r.pat, r.pat + (r.pat === l.free.pat ? " · the page's choice" : " · " + (r.cost - l.free.cost >= 100 ? "far off" : "harder by " + (r.cost - l.free.cost).toFixed(1)))]);
-    if (ov.pat && !ranked.some((r) => r[0] === ov.pat)) ranked.push([ov.pat, ov.pat]);
-    V.PATTERNS.forEach((p) => { if (!ranked.some((r) => r[0] === p)) ranked.push([p, p + " · does not fit as it stands"]); });
-    html += '<div class="vs-row" style="margin-top:.5rem"><div class="field"><label for="vPat"><strong>Feet 1 to 5</strong> <span class="help">D dactyl, S spondee</span></label><select id="vPat">' + opt(ranked, ov.pat, "let the page choose") + "</select></div>" +
-      '<div class="field" style="flex:2 1 220px"><label for="vNote"><strong>Note on the line</strong></label><input type="text" id="vNote" value="' + esc(ov.note || "") + '" autocomplete="off"></div></div>';
-    html += '<div class="field"><label for="vText"><strong>Text</strong> <span class="help">correct it here; the line is scanned again</span></label><input type="text" id="vText" class="enc-greek" value="' + esc(l.text) + '" autocomplete="off" spellcheck="false"></div>';
+    // The scansion the page chose stands first and is what shows; the others follow,
+    // easiest first, each with the feet it would give.
+    const feet = (p) => p.split("").map((c) => (c === "D" ? "–⏑⏑" : "––")).join(" | ") + " | –×";
+    const chosen = l.free.ok ? l.free.pat + "   " + V.scansionString(l.free) + "   · chosen by the page" : "no scansion found";
+    const ranked = l.free.ranked.filter((r) => r.pat !== l.free.pat).map((r) => [r.pat, r.pat + "   " + feet(r.pat) + "   · " + (r.cost - l.free.cost >= 100 ? "far off" : "harder by " + (r.cost - l.free.cost).toFixed(1))]);
+    V.PATTERNS.forEach((p) => { if (p !== l.free.pat && !ranked.some((r) => r[0] === p)) ranked.push([p, p + "   " + feet(p) + "   · does not fit as it stands"]); });
+    html += '<div class="vs-row" style="margin-top:.5rem"><div class="field vs-wide"><label for="vPat"><strong>Scansion</strong> <span class="help">feet 1 to 5: D dactyl, S spondee.' + (ov.pat ? " Set by hand." : "") + '</span></label><select id="vPat" class="vs-pat">' + opt(ranked, ov.pat, chosen) + "</select></div>" +
+      '<div class="field vs-wide"><label for="vNote"><strong>Note on the line</strong></label><input type="text" id="vNote" value="' + esc(ov.note || "") + '" autocomplete="off"></div></div>';
+    html += '<div class="field"><label for="vText"><strong>Text</strong> <span class="help">correct it here, in Greek or Beta Code; the line is scanned again</span></label><input type="text" id="vText" class="enc-greek" value="' + esc(l.text) + '" autocomplete="off" spellcheck="false"></div>';
     if (l.raw.alt) html += '<p class="help" style="margin:0 0 .4rem;">Other readings: ' + l.raw.alt.map((a, i) => esc(a[0]) + ' <span class="enc-greek">' + esc(a[1]) + '</span> <button type="button" class="btn btn-sm" data-act="reading" data-r="' + i + '">Scan this</button>').join(" · ") + "</p>";
     if (l.items.length) html += '<div class="enc-sub">In this line</div>' + l.items.map((it) => itemHtml(l, it)).join("");
     else if (res.ok) html += '<p class="help">Nothing in this line needs a decision.</p>';
@@ -352,13 +389,21 @@
       const w = l.res.words[it.wi];
       Object.assign(rec, { text_id: S.text.id, work: S.text.work, book: S.text.book, line: l.raw.n, type: it.type, word: it.wi != null ? it.wi + 1 : "", form: it.form, machine: it.machine,
         what: it.what || (it.type === "digamma" ? wauHead(it.lex) : it.type === "infinitive" ? [it.tok.lemma, it.ending, it.sig].join(" · ") : it.syl != null ? sylText(l, l.res.sylls[it.syl]) : "") });
-      if (it.type === "infinitive") rec.alternatives = it.nec.map((x) => x.form + ": " + x.verdict).join("; ");
+      if (it.type === "infinitive") {
+        rec.alternatives = it.nec.map((x) => x.shown + ": " + x.verdict).join("; ");
+        // what the page had filled in, so a changed answer can be told from a confirmed one
+        if (it.fill.formula) rec.machine_formula = it.fill.formula;
+        if (it.fill.variants) rec.machine_variants = it.fill.variants;
+      }
       if (it.type === "digamma" && it.site) rec.context = it.site.ctx;
       void w;
       put("vit", it.id, rec); it.rec = rec;
     }
     const box = $("deskBody").querySelector('.vs-item[data-key="' + key + '"]');
-    if (box) { box.classList.toggle("answered", !!it.rec); box.querySelector(".vs-head .small-muted").textContent = it.rec ? "answered" : ""; }
+    if (box) {
+      box.classList.toggle("answered", !!it.rec); box.querySelector(".vs-head .small-muted").textContent = it.rec ? "answered" : "";
+      if (it.rec) { box.querySelectorAll(".auto").forEach((el) => el.classList.remove("auto")); const note = box.querySelector(".vs-filled"); if (note) note.remove(); }
+    }
     renderLineRow(l); renderCounts();
   }
 
@@ -373,6 +418,8 @@
   function markChecked() {
     const l = cur();
     if (!l) return;
+    // Checking the line confirms what the page filled in and the reader left alone.
+    l.items.filter((it) => !it.rec && it.fill && Object.keys(it.fill).some((k) => it.fill[k])).forEach((it) => saveItem(l, it.key));
     if (!l.checked) { saveLine(l, (ov) => { ov.checked = true; }); renderLineRow(l); renderTally(); renderCounts(); }
     go(1);
   }
@@ -407,14 +454,18 @@
     } else if (el.id === "vPat") { saveLine(l, (ov) => { ov.pat = el.value; }); afterLineChange(l); }
     else if (el.id === "vNote") { saveLine(l, (ov) => { ov.note = el.value.trim(); }); renderLineRow(l); renderCounts(); }
     else if (el.id === "vText") {
-      const text = el.value.normalize("NFC").trim();
+      const text = greekTyped(el.value).trim();
+      el.value = text;
       if (!text) { el.value = l.text; return; }
       if (text === l.text) return;
       const apply = () => { saveLine(l, (ov) => { ov.text = text; ov.q = ov.div = ov.syn = ov.wt = {}; ov.pat = ""; }); afterLineChange(l); };
       // A new word may need its vowel lengths, which are kept in a separate file.
       if (S.lengths) apply();
       else fetch(DATA + "lengths.json").then((r) => (r.ok ? r.json() : {})).catch(() => ({})).then((o) => { S.lengths = o; apply(); });
-    } else if (el.dataset.item) saveItem(l, el.dataset.item);
+    } else if (el.dataset.item) {
+      if (el.dataset.greek) el.value = greekTyped(el.value);
+      saveItem(l, el.dataset.item);
+    }
   });
   $("deskFoot").addEventListener("click", (e) => {
     const l = cur();
