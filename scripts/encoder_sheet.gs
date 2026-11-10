@@ -1,4 +1,4 @@
-/* MoPSoS encoders: receives each save from the compound and infinitive encoder
+/* MoPSoS encoders: receives each save from the compound, infinitive and verse encoder
  * pages and keeps it in this spreadsheet. Lives in the spreadsheet under Extensions > Apps Script,
  * deployed as a web app (Execute as: Me; Who has access: Anyone).
  *
@@ -34,6 +34,22 @@ const TABS = {
   },
   nin: { title: "Not infinitives", head: ["form"], rows: (v) => [[v.form]] },
   txt: { title: "Pasted texts", head: ["title", "work", "book", "lines"], rows: (v) => [[v.title, v.work, v.book, v.lines.length]] },
+  // The verse encoder: a line checked or corrected, a decision about something
+  // in a line, and the status the team gives a digamma lexeme.
+  vln: {
+    title: "Verse lines",
+    head: ["text_id", "work", "book", "line", "text", "feet", "weights", "changed", "checked", "note"],
+    rows: (v) => [[v.text_id, v.work, v.book, v.line, v.text || v.base || "", v.feet || "", v.weights || "",
+      [v.text ? "text" : "", v.pat ? "feet" : "", v.wt ? "weight" : "", v.q ? "vowel length" : "", v.div ? "division" : "", v.syn ? "synizesis" : ""].filter(String).join(", "),
+      v.checked ? "1" : "", v.note || ""]],
+  },
+  vit: {
+    title: "Verse decisions",
+    head: ["text_id", "work", "book", "line", "type", "word", "form", "what", "machine", "answer", "detail", "note"],
+    rows: (v) => [[v.text_id, v.work, v.book, v.line, v.type, v.word || "", v.form || "", v.what || "", v.machine || "", v.answer || "",
+      ["formula", "reading", "variants", "restorable", "older", "kind", "context", "alternatives"].filter((k) => v[k]).map((k) => k + ": " + v[k]).join("; "), v.note || ""]],
+  },
+  vwl: { title: "Digamma lexemes", head: ["lexeme", "status", "note"], rows: (v) => [[v.lexeme || v.id, v.status || "", v.note || ""]] },
 };
 const DELETED = "Deleted";
 const CELL_LIMIT = 45000;   // a cell holds 50,000 characters
