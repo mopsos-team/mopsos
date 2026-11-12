@@ -695,6 +695,10 @@
       const tags = [cat ? catLabel(cat) : "", sub || ""].filter(Boolean).join(", ");
       return wlink(lemma) + (tags ? ' <span class="small-muted">(' + UI.esc(tags) + ")</span>" : "");
     };
+    // A filter matches one analysis at a time, so a compound that can be read
+    // another way is marked + and counted, as the uncertain ones are marked.
+    const nAnalyses = (lemma) => distinctAnalyses(compoundByLemma.get(lemma)).length;
+    const multi = new Set(rows.map((r) => r.lemma).filter((l) => nAnalyses(l) > 1));
     const draw = () => {
       const slice = rows.slice(page * PAGE, page * PAGE + PAGE);
       let html = '<div class="pager"><span class="pager-controls">' +
@@ -703,7 +707,8 @@
         '<button class="btn btn-sm" data-m="csv" title="Download every matching compound as CSV">\u2913 CSV (' + rows.length + ")</button>" +
         '</span><span class="pager-info">' + rows.length + " compound" + (rows.length === 1 ? "" : "s") +
         (label ? " " + UI.esc(label) : "") + " \u00b7 page " + (page + 1) + " / " + pages +
-        " \u00b7 click a compound to open its record \u00b7 * = inferred form</span></div>";
+        " \u00b7 click a compound to open its record \u00b7 * = inferred form \u00b7 + = more than one analysis (" +
+        multi.size + " compound" + (multi.size === 1 ? "" : "s") + ")</span></div>";
       html += '<div class="table-wrap"><table class="preview"><thead><tr>' +
         "<th>Compound</th><th>First member</th><th>Second member</th></tr></thead><tbody>";
       slice.forEach((r) => {
@@ -711,6 +716,7 @@
         const caseTag = caseLabel(it);
         html += "<tr><td>" + compoundLink(it) +
           (caseTag ? ' <span class="small-muted">(' + caseTag + ")</span>" : "") +
+          (multi.has(r.lemma) ? ' <span class="cmp-multi" title="' + nAnalyses(r.lemma) + ' analyses; open the record to see them all">+</span>' : "") +
           (isUncertain(r) ? ' <span class="cmp-warn" title="' + UI.esc(UNCERTAIN_NOTE) + '">\u26a0</span>' : "") + "</td>" +
           "<td>" + memberCell(r.member1, r.member1_category, r.member1_subcategory) + "</td>" +
           "<td>" + memberCell(r.member2, r.member2_category, r.member2_subcategory) + "</td></tr>";
@@ -724,10 +730,10 @@
         else if (act === "csv") {
           UI.downloadCsv("mopsos_matching_compounds",
             ["Compound", "First member", "First-member category", "First-member subcategory",
-             "Second member", "Second-member category", "Second-member subcategory"],
+             "Second member", "Second-member category", "Second-member subcategory", "Analyses"],
             rows.map((r) => [compoundByLemma.get(r.lemma).display,
               r.member1 || "", catLabel(r.member1_category || ""), r.member1_subcategory || "",
-              r.member2 || "", catLabel(r.member2_category || ""), r.member2_subcategory || ""]));
+              r.member2 || "", catLabel(r.member2_category || ""), r.member2_subcategory || "", nAnalyses(r.lemma)]));
         }
       }));
       host.querySelectorAll(".cmp-open").forEach((sp) => sp.addEventListener("click", () => {
